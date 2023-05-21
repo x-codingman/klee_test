@@ -416,6 +416,11 @@ KleeHandler::KleeHandler(int argc, char **argv)
   if ((klee_message_file = fopen(file_path.c_str(), "w")) == NULL)
     klee_error("cannot open file \"%s\": %s", file_path.c_str(), strerror(errno));
 
+  //add SXH
+  // open test_info.txt
+  file_path = getOutputFilename("test_info.txt");
+  if ((klee_test_info_file = fopen(file_path.c_str(), "w")) == NULL)
+    klee_error("cannot open file \"%s\": %s", file_path.c_str(), strerror(errno));
   // open info
   m_infoFile = openOutputFile("info");
 }

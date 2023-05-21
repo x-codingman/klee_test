@@ -262,6 +262,14 @@ private:
                     ExactResolutionList &results,
                     const std::string &name);
 
+  /// add
+  MemoryObject *lazyAlloc(ExecutionState &state,
+                            ref<Expr> size,
+                            bool isLocal,
+                            KInstruction *target,
+                            size_t allocationAlignment);
+
+
   /// Allocate and bind a new object in a particular state. NOTE: This
   /// function may fork.
   ///
@@ -320,6 +328,9 @@ private:
                               ref<Expr> address,
                               ref<Expr> value /* undef if read */,
                               KInstruction *target /* undef if write */);
+
+  void lazyMakeSymbolic(ExecutionState &state, const MemoryObject *mo,
+                        const std::string &name);
 
   void executeMakeSymbolic(ExecutionState &state, const MemoryObject *mo,
                            const std::string &name);

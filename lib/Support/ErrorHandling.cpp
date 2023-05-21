@@ -25,12 +25,13 @@ using namespace llvm;
 
 FILE *klee::klee_warning_file = NULL;
 FILE *klee::klee_message_file = NULL;
+FILE *klee::klee_test_info_file = NULL;
 
 static const char *warningPrefix = "WARNING";
 static const char *warningOncePrefix = "WARNING ONCE";
 static const char *errorPrefix = "ERROR";
 static const char *notePrefix = "NOTE";
-
+static const char *klee_debug_test="TEST";
 namespace klee {
 cl::OptionCategory MiscCat("Miscellaneous options", "");
 }
@@ -88,6 +89,15 @@ static void klee_vfmessage(FILE *fp, const char *pfx, const char *msg,
       fdos.changeColor(llvm::raw_ostream::WHITE,
                        /*bold=*/true,
                        /*bg=*/false);
+    //add SXH
+    //add test_info
+    if (shouldSetColor(pfx, msg, klee_debug_test)){
+      fdos.changeColor(llvm::raw_ostream::BLUE,
+                       /*bold=*/true,
+                       /*bg=*/false);
+      
+    }
+      
   }
 
   fdos << "KLEE: ";
@@ -123,7 +133,7 @@ static void klee_vmessage(const char *pfx, bool onlyToFile, const char *msg,
     klee_vfmessage(stderr, pfx, msg, ap2);
     va_end(ap2);
   }
-
+  
   klee_vfmessage(pfx ? klee_warning_file : klee_message_file, pfx, msg, ap);
 }
 
@@ -131,6 +141,15 @@ void klee::klee_message(const char *msg, ...) {
   va_list ap;
   va_start(ap, msg);
   klee_vmessage(NULL, false, msg, ap);
+  va_end(ap);
+}
+
+
+//add SXH
+void klee::klee_test_info(const char *msg, ...) {
+  va_list ap;
+  va_start(ap, msg);
+  klee_vfmessage(klee_test_info_file, NULL, msg, ap);
   va_end(ap);
 }
 

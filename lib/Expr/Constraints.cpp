@@ -115,6 +115,34 @@ ref<Expr> ConstraintManager::simplifyExpr(const ConstraintSet &constraints,
   return ExprReplaceVisitor2(equalities).visit(e);
 }
 
+// add
+void ConstraintManager::replaceEqConstraint(const ref<Expr> &e){
+  // try to find the constraint
+  unsigned count = constraints.size()-1;
+  std::vector<ref<Expr>>::const_iterator begin = constraints.begin();
+  std::vector<ref<Expr>>::const_iterator end = constraints.end();
+  std::vector<ref<Expr>>::const_iterator cons = end;
+  while (cons != begin) {
+    --cons;
+    const ref<Expr> constraint= *cons;
+    if (const EqExpr *eq = dyn_cast<EqExpr>(constraint)) {
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(eq->left)) {
+        const EqExpr *ee = dyn_cast<EqExpr>(e);
+        ref<Expr> simplified = simplifyExpr(constraints, ee->right);
+        if (isa<ConstantExpr>(simplified)){
+          if (CE == dyn_cast<ConstantExpr>(simplified)){
+            constraints.erase(cons);
+            constraints.insert(constraints.begin()+count, e);
+            break;
+          }
+        }
+      }
+    }
+    --count;
+  }
+}
+
+
 void ConstraintManager::addConstraintInternal(const ref<Expr> &e) {
   // rewrite any known equalities and split Ands into different conjuncts
 

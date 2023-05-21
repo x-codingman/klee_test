@@ -352,6 +352,13 @@ void ExecutionState::dumpStack(llvm::raw_ostream &out) const {
   }
 }
 
+// add
+void ExecutionState::replaceEqConstraint(ref<Expr> e){
+  ConstraintManager c(constraints);
+  c.replaceEqConstraint(e);
+}
+
+
 void ExecutionState::addConstraint(ref<Expr> e) {
   ConstraintManager c(constraints);
   c.addConstraint(e);

@@ -40,6 +40,18 @@ public:
     return constraints == b.constraints;
   }
 
+  // add
+  void erase(const_iterator position){
+    constraints.erase(position);
+  }
+  void insert(const_iterator position, ref<Expr> e){
+    constraints.insert(position, e);
+  }
+  unsigned size()
+  {
+    return constraints.size();
+  }
+
 private:
   constraints_ty constraints;
 };
@@ -60,6 +72,9 @@ public:
   static ref<Expr> simplifyExpr(const ConstraintSet &constraints,
                                 const ref<Expr> &expr);
 
+  // add
+  /// Replace eq constraint
+  void replaceEqConstraint(const ref<Expr> &e);
   /// Add constraint to the referenced constraint set
   /// \param constraint
   void addConstraint(const ref<Expr> &constraint);
@@ -69,7 +84,7 @@ private:
   /// \param visitor constraint rewriter
   /// \return true iff any constraint has been changed
   bool rewriteConstraints(ExprVisitor &visitor);
-
+  
   /// Add constraint to the set of constraints
   void addConstraintInternal(const ref<Expr> &constraint);
 

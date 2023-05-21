@@ -16,7 +16,16 @@
 #include "klee/ADT/ImmutableMap.h"
 #include "klee/System/Time.h"
 
+// add to support list
+#include <list>
+#include "klee/Module/KInstruction.h"
+
+// add to debug
+  extern unsigned long uxTopaddress;
+
 namespace klee {
+  
+
   class ExecutionState;
   class MemoryObject;
   class ObjectState;
@@ -64,14 +73,43 @@ namespace klee {
     /// \invariant forall o in objects, o->copyOnWriteOwner <= cowKey
     MemoryMap objects;
 
+    /// add a map to record the relation between symbolic expression and lazily allocated memory object
+    // std::map<ref<Expr>, const MemoryObject*> record;
+    /// add a list to record the MemoryObject allocated to symbolic pointers
+    std::list<const MemoryObject*> record;
+
     AddressSpace() : cowKey(1) {}
-    AddressSpace(const AddressSpace &b) : cowKey(++b.cowKey), objects(b.objects) { }
+    AddressSpace(const AddressSpace &b) : cowKey(++b.cowKey), objects(b.objects), record(b.record) { } // add the initialization of record 
     ~AddressSpace() {}
+
+    /// add
+    /// \return true iff is a symbolic address.
+    bool isSymbolicBaseAddress(const ref<ConstantExpr> &addr);
+    /// add
+    /// check whether an address is in the range of memory allocated to symbolic pointers.
+    /// \return true iff is a symbolic address.
+    bool isSymbolicAddress(const ref<ConstantExpr> &addr);
 
     /// Resolve address to an ObjectPair in result.
     /// \return true iff an object was found.
-    bool resolveOne(const ref<ConstantExpr> &address, 
+    bool resolveOne(const ref<ConstantExpr> &address,
                     ObjectPair &result) const;
+
+    /// add
+    /// Resolve address to an ObjectPair in result.
+    /// \param state The state this address space is part of.
+    /// \param address The address to search for.
+    /// \param bytes The size of the value in the memory
+    /// 
+    /// \param[out] result An ObjectPair this address can resolve to 
+    ///               (when returning true).
+    /// \return true iff an object was found at \a address.
+    bool lazyResolve(ExecutionState &state, 
+                    TimingSolver *solver,   
+                    ref<Expr> address,
+                    ObjectPair &result,
+                    bool &needBound) const;
+
 
     /// Resolve address to an ObjectPair in result.
     ///

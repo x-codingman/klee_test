@@ -106,6 +106,11 @@ public:
     this->name = name;
   }
 
+  // add
+  bool isAGlobal () const{
+    return isGlobal;
+  }
+
   ref<ConstantExpr> getBaseExpr() const { 
     return ConstantExpr::create(address, Context::get().getPointerWidth());
   }

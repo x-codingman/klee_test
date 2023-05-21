@@ -20,6 +20,9 @@
 
 using namespace klee;
 
+// add to debug
+unsigned long uxTopaddress = 0;
+
 ///
 
 void AddressSpace::bindObject(const MemoryObject *mo, ObjectState *os) {
@@ -29,6 +32,11 @@ void AddressSpace::bindObject(const MemoryObject *mo, ObjectState *os) {
 }
 
 void AddressSpace::unbindObject(const MemoryObject *mo) {
+  // add
+  if ( mo->isAGlobal()){
+    return;
+  }
+
   objects = objects.remove(mo);
 }
 
@@ -54,6 +62,43 @@ ObjectState *AddressSpace::getWriteable(const MemoryObject *mo,
 
 /// 
 
+// add
+bool AddressSpace::isSymbolicBaseAddress(const ref<ConstantExpr> &addr){
+  uint64_t address = addr->getZExtValue();
+  std::list<const MemoryObject*>::const_iterator begin = record.begin();
+  std::list<const MemoryObject*>::const_iterator end = record.end();
+  std::list<const MemoryObject*>::const_iterator oi = end;
+
+  while(oi != begin){
+    --oi;
+    const MemoryObject *mo = *oi;
+    if (address==mo->address) {
+      return true;
+    }
+  }
+  return false;
+
+}
+
+
+// add
+bool AddressSpace::isSymbolicAddress(const ref<ConstantExpr> &addr){
+  uint64_t address = addr->getZExtValue();
+  std::list<const MemoryObject*>::const_iterator begin = record.begin();
+  std::list<const MemoryObject*>::const_iterator end = record.end();
+  std::list<const MemoryObject*>::const_iterator oi = end;
+
+  while(oi != begin){
+    --oi;
+    const MemoryObject *mo = *oi;
+    if ((mo->size==0 && address==mo->address) ||
+        (address - mo->address < mo->size)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool AddressSpace::resolveOne(const ref<ConstantExpr> &addr, 
                               ObjectPair &result) const {
   uint64_t address = addr->getZExtValue();
@@ -61,10 +106,16 @@ bool AddressSpace::resolveOne(const ref<ConstantExpr> &addr,
 
   if (const auto res = objects.lookup_previous(&hack)) {
     const auto &mo = res->first;
+
     // Check if the provided address is between start and end of the object
     // [mo->address, mo->address + mo->size) or the object is a 0-sized object.
     if ((mo->size==0 && address==mo->address) ||
         (address - mo->address < mo->size)) {
+      // // add to debug
+      // if (mo->address == uxTopaddress){
+      //   printf("write to the address");
+      // }
+
       result.first = res->first;
       result.second = res->second.get();
       return true;
@@ -72,6 +123,142 @@ bool AddressSpace::resolveOne(const ref<ConstantExpr> &addr,
   }
 
   return false;
+}
+
+// add
+bool AddressSpace::lazyResolve(ExecutionState &state,
+                              TimingSolver *solver,
+                              ref<Expr> address,
+                              ObjectPair &result,
+                              bool &needBound) const{
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(address)) {
+    // Pay attention here, because the resolve of an constant expression may fail.
+    // However, we don't consider dealing with it.
+    return resolveOne(CE, result);
+  } else {
+    // version 3
+    // It is supposed that the solver can help get the memoryObject directly when the address is a difficult expression about array
+    ref<ConstantExpr> cex;
+    if (!solver->getValue(state.constraints, address, cex, state.queryMetaData))
+      return false;
+    uint64_t example = cex->getZExtValue();
+    MemoryObject hack(example);
+    const auto res = objects.lookup_previous(&hack);
+
+    if (res) {
+      const MemoryObject *mo = res->first;
+      if (example - mo->address < mo->size) {
+        result.first = res->first;
+        result.second = res->second.get();
+        // success = true;
+        return true;
+      }
+    }
+
+    // the auxiliary method for getValue() 
+    ref<Expr> kid;
+    switch(address.get()->getKind()) {
+    case Expr::Add:
+      kid = address.get()->getKid(0);
+      break;
+    default:
+      return false;
+    }
+
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(kid)){
+      ObjectPair op;
+      if (resolveOne(CE, op)){
+        const MemoryObject *mo = op.first;
+        bool mustBeTrue;
+        if (!solver->mustBeTrue(state.constraints,
+                               mo->getBoundsCheckPointer(address), mustBeTrue,
+                               state.queryMetaData)){
+          // klee_message("Error: solver timed out");
+        }
+        if (!mustBeTrue){
+          needBound = true;
+          printf("Error: out of bound pointer\n");
+        }
+        result.first = op.first;
+        result.second = op.second;
+        return true;
+      }
+    }
+
+
+
+    
+    // // version 2
+    // // It is supposed that the address containing symbolic index of an array will enter here
+    // ref<Expr> kid;
+    // switch(address.get()->getKind()) {
+    // case Expr::Add:
+    //   kid = address.get()->getKid(0);
+    //   break;
+    // default:
+    //   return false;
+    // }
+
+    // if (ConstantExpr *CE = dyn_cast<ConstantExpr>(kid)){
+    //   ObjectPair op;
+    //   if (resolveOne(CE, op)){
+    //     const MemoryObject *mo = op.first;
+    //     bool mustBeTrue;
+    //     if (!solver->mustBeTrue(state.constraints,
+    //                            mo->getBoundsCheckPointer(address), mustBeTrue,
+    //                            state.queryMetaData)){
+    //       // klee_message("Error: solver timed out");
+    //     }
+    //     if (!mustBeTrue){
+    //       needBound = true;
+    //       // klee_message("Error: out of bound pointer");
+    //     }
+    //     result.first = op.first;
+    //     result.second = op.second;
+
+    //     return true;
+    //   }
+    // }    
+    
+    // // version 1
+    // ref<Expr> kid;
+    // switch(address.get()->getKind()) {
+    // case Expr::Concat: 
+    //   kid = address; 
+    //   break;
+    // case Expr::Add:
+    //   kid = address.get()->getKid(1);
+    //   break;
+    // default:
+    //   break;
+    // } 
+    // std::map<ref<Expr>, const MemoryObject*>::const_iterator it = record.find(kid);
+
+    // // pointing object of the symbolic pointer has been allocated
+    // if(it != record.end()){
+    //   const MemoryObject *mo = it->second;
+    //   MemoryMap::iterator op = objects.find(mo);
+
+    //   result.first = op->first;
+    //   result.second = op->second.get();
+
+    //   return true;
+    // }
+    // else{     
+    //   // ref<Expr> size = Expr::createPointer(bytes);
+    //   // size_t allignment = bytes;
+    //   // MemoryObject *mo = state->lazyAlloc(state, size, true, ki, allignment);
+    
+    //   // std::string name = address->toString();
+    //   // state->executeMakeSymbolic(state, mo, name);
+
+    //   // // record the new relation
+    //   // record[address] = *mo;
+
+    // //   return false;
+    // }
+    return false;
+  }
 }
 
 bool AddressSpace::resolveOne(ExecutionState &state,
@@ -116,6 +303,7 @@ bool AddressSpace::resolveOne(ExecutionState &state,
       const auto &mo = oi->first;
 
       bool mayBeTrue;
+      // When getBoundsCheckPointer() must be false, it just means that the symbolic pointer cannot point to the current memoryObject.
       if (!solver->mayBeTrue(state.constraints,
                              mo->getBoundsCheckPointer(address), mayBeTrue,
                              state.queryMetaData))
@@ -180,6 +368,7 @@ int AddressSpace::checkPointerInObject(ExecutionState &state,
   bool mayBeTrue;
   if (!solver->mayBeTrue(state.constraints, inBounds, mayBeTrue,
                          state.queryMetaData)) {
+    // add: solver does not solve the problem(no answer)
     return 1;
   }
 

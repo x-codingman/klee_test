@@ -263,6 +263,8 @@ public:
 
   void addSymbolic(const MemoryObject *mo, const Array *array);
 
+  // add
+  void replaceEqConstraint(ref<Expr> e);
   void addConstraint(ref<Expr> e);
   void addCexPreference(const ref<Expr> &cond);
 

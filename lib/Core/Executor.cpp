@@ -446,6 +446,10 @@ cl::opt<bool> DebugCheckForImpliedValues(
 
 } // namespace
 
+// add to debug
+extern unsigned long uxTopaddress;
+unsigned allocname = 1;
+
 // XXX hack
 extern "C" unsigned dumpStates, dumpPTree;
 unsigned dumpStates = 0, dumpPTree = 0;
@@ -843,6 +847,39 @@ void Executor::initializeGlobalObjects(ExecutionState &state) {
     } else {
       os->initializeToRandom();
     }
+
+    // add
+    // klee_message("Global variables: %s", v.getName().str().c_str());
+    if (v.getName().str() == "pxReadyTasksLists" || v.getName().str() == "xSuspendedTaskList" || v.getName().str() == "xPendingReadyList"){
+      // klee_message("Global variables: %s", v.getName().str().c_str());
+      klee_message("Global variable is pointer type: %lu ", mo->address);
+
+      std::string name = "";//address->toString();
+      executeMakeSymbolic(state, mo, name);
+      uxTopaddress = mo->address;
+    }
+
+    // add to allocate memory for global pointer
+    // version 2
+    Type *ty = v.getType()->getElementType();
+    if(ty->isPointerTy()){   
+      Type * elementType = v.getType()->getElementType()->getPointerElementType();      
+      // Pay attention here, the type may be an array
+      // However, we don't consider dealing with it
+      unsigned elementSize = kmodule->targetData->getTypeStoreSize(elementType);
+      size_t alignment = 8;
+      MemoryObject *newMo = memory->allocate(elementSize, /*isLocal=*/false,
+                                        /*isGlobal=*/true, /*allocSite=*/&v,
+                                        /*alignment=*/alignment);
+
+      std::string name = "";//address->toString();
+      executeMakeSymbolic(state, newMo, name);
+
+      // record the new relation
+      state.addressSpace.record.push_back(newMo);
+
+      os->write(0, newMo->getBaseExpr());
+    }
   }
 
   // initialise constant memory that is potentially used with external calls
@@ -1020,6 +1057,8 @@ ref<Expr> Executor::maxStaticPctChecks(ExecutionState &current,
 Executor::StatePair Executor::fork(ExecutionState &current, ref<Expr> condition,
                                    bool isInternal, BranchType reason) {
   Solver::Validity res;
+
+  klee_message("TEST: forking state!!!");
   std::map< ExecutionState*, std::vector<SeedInfo> >::iterator it = 
     seedMap.find(&current);
   bool isSeeding = it != seedMap.end();
@@ -2084,6 +2123,8 @@ Function* Executor::getTargetFunction(Value *calledVal, ExecutionState &state) {
 
 void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   Instruction *i = ki->inst;
+  // add to locate instruction
+  klee_message("Execute: %s:%d", ki->info->file.c_str(), ki->info->line);
   switch (i->getOpcode()) {
     // Control flow
   case Instruction::Ret: {
@@ -2759,7 +2800,15 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   case Instruction::Store: {
     ref<Expr> base = eval(ki, 1, state).value;
     ref<Expr> value = eval(ki, 0, state).value;
-    executeMemoryOperation(state, true, base, value, 0);
+
+    // add
+    // if (ConstantExpr *CE = dyn_cast<ConstantExpr>(base)){
+    //   if(state.addressSpace.isSymbolicAddress(CE)){
+    //     klee_message("Error: symbolic pointer to write");
+    //   }
+    // }
+
+    executeMemoryOperation(state, true, base, value, ki);
     break;
   }
 
@@ -2824,6 +2873,184 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 
   case Instruction::BitCast: {
     ref<Expr> result = eval(ki, 0, state).value;
+
+    // add to reallocate memory for symbolic pointer to conversion type
+    // version 3
+    // Type * fromType = ki->inst->getOperand(0)->getType()->getPointerElementType();
+    // unsigned fromSize = kmodule->targetData->getTypeStoreSize(fromType);
+    // Type * elementType = ki->inst->getType()->getPointerElementType();      
+    // unsigned elementSize = kmodule->targetData->getTypeStoreSize(elementType);
+    // if (isa<ConcatExpr>(result) && ki->inst->getOperand(0)->getType()->isPointerTy() && ki->inst->getType()->isPointerTy() && elementSize > fromSize){
+    //   ObjectPair op;
+    //   bool needBound = false;
+    //   if (state.addressSpace.lazyResolve(state, solver, result, op, needBound)){
+    //     const MemoryObject *oldMo = op.first;
+    //     if (state.addressSpace.isSymbolicBaseAddress(oldMo->getBaseExpr())){
+    //       // first to delete the old memory
+    //       // Fix here, the old memory is not really deleted
+    //       // remove the memory object from the record
+    //       state.addressSpace.record.remove(oldMo);
+
+    //       // second to reallocate new memory
+    //       ref<Expr> size = Expr::createPointer(elementSize);
+    //       size_t alignment = 8;
+    //       MemoryObject *newMo = lazyAlloc(state, size, true, ki, alignment);
+    //       std::string name = "";//address->toString();
+    //       executeMakeSymbolic(state, newMo, name);
+
+    //       // ref<Expr> Bound = EqExpr::create(newMo->getBaseExpr(), result);
+    //       // state.replaceEqConstraint(Bound);
+
+    //       // record the new relation
+    //       state.addressSpace.record.push_back(newMo);
+
+    //       klee_message("The pointer is converted");
+    //     }
+    //     else{
+    //       terminateStateOnError(state, "resolve doesn't return the newly allocated memory",
+    //                             StateTerminationType::Ptr);
+    //     }      
+    //   }
+    // }
+
+
+    // add to reallocate memory for symbolic pointer to conversion type
+    // version 2
+    Type * fromType = ki->inst->getOperand(0)->getType()->getPointerElementType();
+    unsigned fromSize = kmodule->targetData->getTypeStoreSize(fromType);
+    Type * elementType = ki->inst->getType()->getPointerElementType();      
+    unsigned elementSize = kmodule->targetData->getTypeStoreSize(elementType);
+
+    if(ki->inst->getOperand(0)->getType()->isPointerTy() && ki->inst->getType()->isPointerTy() && elementSize > fromSize){
+      ObjectPair op;
+      bool needBound = false;
+      if (state.addressSpace.lazyResolve(state, solver, result, op, needBound)){
+        const MemoryObject *oldMo = op.first;
+        if (state.addressSpace.isSymbolicBaseAddress(oldMo->getBaseExpr())){
+          KInstIterator prevIR = state.prevPC;
+          --prevIR;
+          if (isa<LoadInst>(prevIR->inst)){
+            KInstruction *prevIn = prevIR;
+            ref<Expr> left = getDestCell(state, prevIn).value;
+            if (left == result){
+              // first to delete the old memory
+              // Fix here, the old memory is not really deleted
+              // remove the memory object from the record
+              state.addressSpace.objects.remove(oldMo);
+              state.addressSpace.record.remove(oldMo);
+
+              // second to reallocate new memory
+              ref<Expr> size = Expr::createPointer(elementSize);
+              size_t alignment = 8;
+              MemoryObject *newMo = lazyAlloc(state, size, !oldMo->isAGlobal(), ki, alignment);
+              std::string name = "";//address->toString();
+              executeMakeSymbolic(state, newMo, name);
+              // record the new relation
+              state.addressSpace.record.push_back(newMo);
+
+              // third to backtrack the IR to modify the value of the symbolic pointer
+              // It is supposed that a corresponding load instruciton before it
+              ref<Expr> base = eval(prevIR, 0, state).value;
+              ObjectPair op;
+              bool needBound = false;
+              if(state.addressSpace.lazyResolve(state, solver, base, op, needBound)){
+                const MemoryObject *mo = op.first;
+                const ObjectState *os = op.second;
+                ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+                wos->write(mo->getOffsetExpr(base), newMo->getBaseExpr());
+                // update the result
+                // result = newMo->getBaseExpr();
+                result = wos->read(mo->getOffsetExpr(base), 64);
+              }
+              klee_message("TEST: Load-bitcast:The pointer is converted, states size: %d",(int)states.size());
+            }else{
+              terminateStateOnError(state, "Not the corresponding load instruction before symbol pointer type conversion",
+                                     StateTerminationType::Ptr);
+            }
+          }else{
+            klee_message("TEST: Not a load instruction before symbol pointer type conversion");
+
+          }
+        }
+      }else{
+        // klee_message("Bitcast: The pointer has not been allocated");
+
+        // // it is used to handle the stack
+        // ref<Expr> size = Expr::createPointer(elementSize);
+        // size_t alignment = 8;
+        // MemoryObject *newMo = lazyAlloc(state, size, false, ki, alignment);
+        // std::string name = "";//address->toString();
+        // executeMakeSymbolic(state, newMo, name);
+
+        // ref<Expr> Bound = EqExpr::create(newMo->getBaseExpr(), result);
+        // addConstraint(state, Bound);
+
+        // // record the new relation
+        // state.addressSpace.record.push_back(newMo);
+
+        // klee_message("Stack: The pointer is converted");
+
+      }
+
+        // ConstantExpr *CE = dyn_cast<ConstantExpr>(result);
+        // uint64_t address = CE->getZExtValue();
+        // std::list<const MemoryObject*>::const_iterator begin = state.addressSpace.record.begin();
+        // std::list<const MemoryObject*>::const_iterator end = state.addressSpace.record.end();
+        // std::list<const MemoryObject*>::const_iterator oi = end;
+        // while (oi!=begin) {
+        //   --oi;
+        //   const MemoryObject *oldMo = *oi;
+        //   if(address == oldMo->address){
+        //     // first to delete the old memory
+        //     // Fix here, the old memory is not really deleted
+        //     // remove the memory object from the record
+        //     state.addressSpace.record.remove(oldMo);
+
+        //     // second to reallocate new memory
+        //     ref<Expr> size = Expr::createPointer(elementSize);
+        //     size_t alignment = 8;
+        //     MemoryObject *newMo = lazyAlloc(state, size, true, ki, alignment);
+        //     std::string name = "";//address->toString();
+        //     executeMakeSymbolic(state, newMo, name);
+        //     // record the new relation
+        //     state.addressSpace.record.push_back(newMo);
+
+        //     // third to backtrack the IR to modify the value of the symbolic pointer
+        //     // It is supposed that a corresponding load instruciton before it
+        //     KInstIterator prevIR = state.prevPC;
+        //     --prevIR;
+        //     if (isa<LoadInst>(prevIR->inst)){
+        //       KInstruction *prevIn = prevIR;
+        //       ref<Expr> left = getDestCell(state, prevIn).value;
+        //       if (left == result){
+        //         ref<Expr> base = eval(prevIR, 0, state).value;
+        //         ObjectPair op;
+        //         bool needBound = false;
+        //         if(state.addressSpace.lazyResolve(state, solver, base, op, needBound)){
+        //           const MemoryObject *mo = op.first;
+        //           const ObjectState *os = op.second;
+        //           ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+        //           wos->write(mo->getOffsetExpr(base), newMo->getBaseExpr());
+        //           // update the result
+        //           result = newMo->getBaseExpr();
+        //           // result = wos->read(mo->getOffsetExpr(base), 8);
+        //         }
+        //         klee_message("The pointer is converted");
+        //       }else{
+        //         terminateStateOnError(state, "Not the corresponding load instruction before symbol pointer type conversion",
+        //                              StateTerminationType::Ptr);
+        //       }
+        //     }else{
+        //       terminateStateOnError(state, "Not a load instruction before symbol pointer type conversion",
+        //                             StateTerminationType::Ptr);
+
+        //     }
+
+        //     break;
+        //   }
+        // }
+    }
+
     bindLocal(ki, state, result);
     break;
   }
@@ -3987,6 +4214,41 @@ ObjectState *Executor::bindObjectInState(ExecutionState &state,
   return os;
 }
 
+// add 
+// If there is symbolic size, fix the code.
+MemoryObject *Executor::lazyAlloc(ExecutionState &state,
+                            ref<Expr> size,
+                            bool isLocal,
+                            KInstruction *target,
+                            size_t allocationAlignment){
+  size = toUnique(state, size);
+  MemoryObject *mo = NULL;
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(size)) {
+    const llvm::Value *allocSite = state.prevPC->inst;
+    // mo = memory->allocate(CE->getZExtValue(), isLocal, /*isGlobal=*/false, allocSite, allocationAlignment);
+
+    if(!isLocal){
+      klee_message("TEST: Allocate global memory!!!states size: %d",(int)states.size());
+    }
+
+    mo = memory->allocate(CE->getZExtValue(), isLocal, 1, allocSite, allocationAlignment);
+    if (!mo) {
+      bindLocal(target, state, 
+                ConstantExpr::alloc(0, Context::get().getPointerWidth()));
+    } else {
+      ObjectState *os = bindObjectInState(state, mo, isLocal);
+      os->initializeToZero();
+      bindLocal(target, state, mo->getBaseExpr());
+    }
+  }
+  else {
+    terminateStateOnError(state, "Pointing object of the symbolic pointer has symbolic size",
+                          StateTerminationType::Ptr);
+  }
+
+  return mo;
+}
+
 void Executor::executeAlloc(ExecutionState &state,
                             ref<Expr> size,
                             bool isLocal,
@@ -4003,6 +4265,9 @@ void Executor::executeAlloc(ExecutionState &state,
     MemoryObject *mo =
         memory->allocate(CE->getZExtValue(), isLocal, /*isGlobal=*/false,
                          allocSite, allocationAlignment);
+    if (CE->getZExtValue()==8){
+      klee_message("TEST: Allocate 8 bytes!!!,mo address: %lu", mo->address);
+    }
     if (!mo) {
       bindLocal(target, state, 
                 ConstantExpr::alloc(0, Context::get().getPointerWidth()));
@@ -4182,122 +4447,279 @@ void Executor::executeMemoryOperation(ExecutionState &state,
                      getWidthForLLVMType(target->inst->getType()));
   unsigned bytes = Expr::getMinBytesForWidth(type);
 
-  if (SimplifySymIndices) {
-    if (!isa<ConstantExpr>(address))
-      address = ConstraintManager::simplifyExpr(state.constraints, address);
-    if (isWrite && !isa<ConstantExpr>(value))
-      value = ConstraintManager::simplifyExpr(state.constraints, value);
-  }
+
+  if (!isa<ConstantExpr>(address))
+    address = ConstraintManager::simplifyExpr(state.constraints, address);
+  if (isWrite && !isa<ConstantExpr>(value))
+    value = ConstraintManager::simplifyExpr(state.constraints, value);
+  
 
   address = optimizer.optimizeExpr(address, true);
-
-  // fast path: single in-bounds resolution
+  
   ObjectPair op;
-  bool success;
-  solver->setTimeout(coreSolverTimeout);
-  if (!state.addressSpace.resolveOne(state, solver, address, op, success)) {
-    address = toConstant(state, address, "resolveOne failure");
-    success = state.addressSpace.resolveOne(cast<ConstantExpr>(address), op);
+  bool needBound = false;
+  if(!state.addressSpace.lazyResolve(state, solver, address, op, needBound)){
+    terminateStateOnError(state, "Symbolic pointer has no new allocation",
+                          StateTerminationType::Ptr);
+    // version 1
+    // ref<Expr> size = Expr::createPointer(bytes);
+    // size_t alignment = bytes;
+    // MemoryObject *mo = lazyAlloc(state, size, true, target, alignment);
+
+    // std::string name = "";//address->toString();
+    // // lazyMakeSymbolic will not call addSymbolics
+    // // lazyMakeSymbolic(state, mo, name);
+    // // executeMakeSymbolic will call addSymbolics 
+    // executeMakeSymbolic(state, mo, name);
+
+    // ref<Expr> Bound = mo->getBoundsCheckPointer(address, bytes);
+    // addConstraint(state, Bound);
+
+    // // record the new relation
+    // state.addressSpace.record.insert(std::make_pair(address, mo));
+
+    // op.first = mo;
+    // op.second = state.addressSpace.objects.find(mo)->second.get();
   }
-  solver->setTimeout(time::Span());
 
-  if (success) {
-    const MemoryObject *mo = op.first;
+  const MemoryObject *mo = op.first;
+  const ObjectState *os = op.second;
 
-    if (MaxSymArraySize && mo->size >= MaxSymArraySize) {
-      address = toConstant(state, address, "max-sym-array-size");
+  // It is supposed that the address containing symbolic index of an array need to be bounded
+  if (needBound){
+    addConstraint(state, mo->getBoundsCheckPointer(address));
+  }
+
+  if (state.addressSpace.isSymbolicBaseAddress(mo->getBaseExpr()))
+  {
+    if (isWrite)
+      klee_test_info("Error: symbolic pointer to write on file %s: line %d",target->info->file.c_str(),target->info->line);
+    // else
+    //   klee_message("Error: symbolic pointer to read");
+  }
+
+
+  if (isWrite) {
+    if (os->readOnly) {
+      terminateStateOnError(state, "memory error: object read only",
+                            StateTerminationType::ReadOnly);
+    } else {
+      ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+      wos->write(mo->getOffsetExpr(address), value);
     }
-    
-    ref<Expr> offset = mo->getOffsetExpr(address);
-    ref<Expr> check = mo->getBoundsCheckOffset(offset, bytes);
-    check = optimizer.optimizeExpr(check, true);
+  } else {
+    ref<Expr> result = os->read(mo->getOffsetExpr(address), type);
 
-    bool inBounds;
-    solver->setTimeout(coreSolverTimeout);
-    bool success = solver->mustBeTrue(state.constraints, check, inBounds,
-                                      state.queryMetaData);
-    solver->setTimeout(time::Span());
-    if (!success) {
-      state.pc = state.prevPC;
-      terminateStateOnSolverError(state, "Query timed out (bounds check).");
-      return;
-    }
+    // target->info->assemblyLine !=13830
+    if(target->inst->getType()->isPointerTy() && dyn_cast<ConcatExpr>(result)){
+      // It needs resolve here to determine whether the pointer represented by the result has been allocated 
+      // the pointer cannot be resolved, so allocate memory
+      ObjectPair resultOp;
+      bool resultNeedBound = false;
+      if(!state.addressSpace.lazyResolve(state, solver, result, resultOp, resultNeedBound)){
 
-    if (inBounds) {
-      const ObjectState *os = op.second;
-      if (isWrite) {
+      // std::map<ref<Expr>, const MemoryObject*>::const_iterator it = state.addressSpace.record.find(result);
+
+      // if(it == state.addressSpace.record.end()){
+
+        Type * elementType = target->inst->getType()->getPointerElementType();      
+        // Pay attention here, the type may be an array
+        // However, we don't consider dealing with it
+        unsigned elementSize = kmodule->targetData->getTypeStoreSize(elementType);
+        ref<Expr> size = Expr::createPointer(elementSize);
+        size_t alignment = bytes;
+        MemoryObject *newMo = lazyAlloc(state, size, !mo->isAGlobal(), target, alignment);
+        // MemoryObject *newMo = lazyAlloc(state, size, true, target, alignment);
+
+        std::string name = "alloc" + llvm::utostr(++allocname);//address->toString();
+        // lazyMakeSymbolic will not call addSymbolics
+        // lazyMakeSymbolic(state, mo, name);
+        // executeMakeSymbolic will call addSymbolics 
+        executeMakeSymbolic(state, newMo, name);
+
+        // ref<Expr> Bound = EqExpr::create(newMo->getBaseExpr(), result);
+        // addConstraint(state, Bound);
+
+        // record the new relation
+        // state.addressSpace.record.insert(std::make_pair(result, newMo));
+        state.addressSpace.record.push_back(newMo);
+
         if (os->readOnly) {
           terminateStateOnError(state, "memory error: object read only",
                                 StateTerminationType::ReadOnly);
         } else {
           ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-          wos->write(offset, value);
-        }          
-      } else {
-        ref<Expr> result = os->read(offset, type);
-        
-        if (interpreterOpts.MakeConcreteSymbolic)
-          result = replaceReadWithSymbolic(state, result);
-        
-        bindLocal(target, state, result);
-      }
-
-      return;
-    }
-  } 
-
-  // we are on an error path (no resolution, multiple resolution, one
-  // resolution with out of bounds)
-
-  address = optimizer.optimizeExpr(address, true);
-  ResolutionList rl;  
-  solver->setTimeout(coreSolverTimeout);
-  bool incomplete = state.addressSpace.resolve(state, solver, address, rl,
-                                               0, coreSolverTimeout);
-  solver->setTimeout(time::Span());
-  
-  // XXX there is some query wasteage here. who cares?
-  ExecutionState *unbound = &state;
-  
-  for (ResolutionList::iterator i = rl.begin(), ie = rl.end(); i != ie; ++i) {
-    const MemoryObject *mo = i->first;
-    const ObjectState *os = i->second;
-    ref<Expr> inBounds = mo->getBoundsCheckPointer(address, bytes);
-    
-    StatePair branches = fork(*unbound, inBounds, true, BranchType::MemOp);
-    ExecutionState *bound = branches.first;
-
-    // bound can be 0 on failure or overlapped 
-    if (bound) {
-      if (isWrite) {
-        if (os->readOnly) {
-          terminateStateOnError(*bound, "memory error: object read only",
-                                StateTerminationType::ReadOnly);
-        } else {
-          ObjectState *wos = bound->addressSpace.getWriteable(mo, os);
-          wos->write(mo->getOffsetExpr(address), value);
+          wos->write(mo->getOffsetExpr(address), newMo->getBaseExpr());
+          // result = newMo->getBaseExpr();
+          result = wos->read(mo->getOffsetExpr(address), type);
         }
-      } else {
-        ref<Expr> result = os->read(mo->getOffsetExpr(address), type);
-        bindLocal(target, *bound, result);
+
+        klee_message("The Pointer need to be allocated");
+      // }
+      }
+      // the pointer has been allocated
+      // check whether the memoryObject is newly allocated one
+      // It needs to make sure that the lazyResolve() will return the exact memoryObject if the pointer is allocated
+      else{
+        const MemoryObject *resultMo = resultOp.first;
+        if (!state.addressSpace.isSymbolicBaseAddress(resultMo->getBaseExpr())){
+          terminateStateOnError(state, "resolve doesn't return the newly allocated memory",
+                          StateTerminationType::Ptr);
+        }
       }
     }
 
-    unbound = branches.second;
-    if (!unbound)
-      break;
+    bindLocal(target, state, result);
   }
   
-  // XXX should we distinguish out of bounds and overlapped cases?
-  if (unbound) {
-    if (incomplete) {
-      terminateStateOnSolverError(*unbound, "Query timed out (resolve).");
-    } else {
-      terminateStateOnError(*unbound, "memory error: out of bound pointer",
-                            StateTerminationType::Ptr,
-                            getAddressInfo(*unbound, address));
-    }
+  // // add to check target->inst->getType()
+  // if (!isWrite){
+  //   llvm::Type::TypeID id = target->inst->getType()->getTypeID();
+  //   klee_message("TypeID: %d", id);
+  // }
+  
+  // Expr::Width type = (isWrite ? value->getWidth() : 
+  //                    getWidthForLLVMType(target->inst->getType()));
+  // unsigned bytes = Expr::getMinBytesForWidth(type);
+
+  // if (SimplifySymIndices) {
+  //   if (!isa<ConstantExpr>(address))
+  //     address = ConstraintManager::simplifyExpr(state.constraints, address);
+  //   if (isWrite && !isa<ConstantExpr>(value))
+  //     value = ConstraintManager::simplifyExpr(state.constraints, value);
+  // }
+
+  // address = optimizer.optimizeExpr(address, true);
+
+  // // fast path: single in-bounds resolution
+  // ObjectPair op;
+  // bool success;
+  // solver->setTimeout(coreSolverTimeout);
+  // if (!state.addressSpace.resolveOne(state, solver, address, op, success)) {
+  //   address = toConstant(state, address, "resolveOne failure");
+  //   success = state.addressSpace.resolveOne(cast<ConstantExpr>(address), op);
+  // }
+  // solver->setTimeout(time::Span());
+
+  // if (success) {
+  //   const MemoryObject *mo = op.first;
+
+  //   if (MaxSymArraySize && mo->size >= MaxSymArraySize) {
+  //     address = toConstant(state, address, "max-sym-array-size");
+  //   }
+    
+  //   ref<Expr> offset = mo->getOffsetExpr(address);
+  //   ref<Expr> check = mo->getBoundsCheckOffset(offset, bytes);
+  //   check = optimizer.optimizeExpr(check, true);
+
+  //   bool inBounds;
+  //   solver->setTimeout(coreSolverTimeout);
+  //   bool success = solver->mustBeTrue(state.constraints, check, inBounds,
+  //                                     state.queryMetaData);
+  //   solver->setTimeout(time::Span());
+  //   if (!success) {
+  //     state.pc = state.prevPC;
+  //     terminateStateOnSolverError(state, "Query timed out (bounds check).");
+  //     return;
+  //   }
+
+  //   if (inBounds) {
+  //     const ObjectState *os = op.second;
+  //     if (isWrite) {
+  //       if (os->readOnly) {
+  //         terminateStateOnError(state, "memory error: object read only",
+  //                               StateTerminationType::ReadOnly);
+  //       } else {
+  //         ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+  //         wos->write(offset, value);
+  //       }          
+  //     } else {
+  //       ref<Expr> result = os->read(offset, type);
+        
+  //       if (interpreterOpts.MakeConcreteSymbolic)
+  //         result = replaceReadWithSymbolic(state, result);
+        
+  //       bindLocal(target, state, result);
+  //     }
+
+  //     return;
+  //   }
+  // } 
+
+  // // we are on an error path (no resolution, multiple resolution, one
+  // // resolution with out of bounds)
+
+  // address = optimizer.optimizeExpr(address, true);
+  // ResolutionList rl;  
+  // solver->setTimeout(coreSolverTimeout);
+  // bool incomplete = state.addressSpace.resolve(state, solver, address, rl,
+  //                                              0, coreSolverTimeout);
+  // solver->setTimeout(time::Span());
+  
+  // // XXX there is some query wasteage here. who cares?
+  // ExecutionState *unbound = &state;
+  
+  // for (ResolutionList::iterator i = rl.begin(), ie = rl.end(); i != ie; ++i) {
+  //   const MemoryObject *mo = i->first;
+  //   const ObjectState *os = i->second;
+  //   ref<Expr> inBounds = mo->getBoundsCheckPointer(address, bytes);
+
+
+  //   // add to print the constraints and condition of special case
+  //   // if (target->info->assemblyLine==742){
+  //   //   for (ConstraintSet::constraints_ty::const_iterator i1=unbound->constraints.begin(), ie1=unbound->constraints.end();i1!=ie1;++i1){
+  //   //     (*i1)->dump();
+  //   //   }
+  //   //   inBounds.get()->dump();
+  //   // }
+    
+  //   StatePair branches = fork(*unbound, inBounds, true, BranchType::MemOp);
+  //   ExecutionState *bound = branches.first;
+
+  //   // bound can be 0 on failure or overlapped 
+  //   if (bound) {
+  //     if (isWrite) {
+  //       if (os->readOnly) {
+  //         terminateStateOnError(*bound, "memory error: object read only",
+  //                               StateTerminationType::ReadOnly);
+  //       } else {
+  //         ObjectState *wos = bound->addressSpace.getWriteable(mo, os);
+  //         wos->write(mo->getOffsetExpr(address), value);
+  //       }
+  //     } else {
+  //       ref<Expr> result = os->read(mo->getOffsetExpr(address), type);
+  //       bindLocal(target, *bound, result);
+  //     }
+  //   }
+
+  //   unbound = branches.second;
+  //   if (!unbound)
+  //     break;
+  // }
+  
+  // // XXX should we distinguish out of bounds and overlapped cases?
+  // if (unbound) {
+  //   if (incomplete) {
+  //     terminateStateOnSolverError(*unbound, "Query timed out (resolve).");
+  //   } else {
+  //     terminateStateOnError(*unbound, "memory error: out of bound pointer",
+  //                           StateTerminationType::Ptr,
+  //                           getAddressInfo(*unbound, address));
+  //   }
+  // }
+}
+
+// add
+void Executor::lazyMakeSymbolic(ExecutionState &state, 
+                                   const MemoryObject *mo,
+                                   const std::string &name) {
+  unsigned id = 0;
+  std::string uniqueName = name;
+  while (!state.arrayNames.insert(uniqueName).second) {
+    uniqueName = name + "_" + llvm::utostr(++id);
   }
+  const Array *array = arrayCache.CreateArray(uniqueName, mo->size);
+  bindObjectInState(state, mo, false, array);
 }
 
 void Executor::executeMakeSymbolic(ExecutionState &state, 

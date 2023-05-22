@@ -92,6 +92,9 @@ typedef unsigned TypeSize;
 #include <sys/mman.h>
 #include <vector>
 
+//add sxh
+#include "TestInfoRecord.h"
+
 using namespace llvm;
 using namespace klee;
 
@@ -4492,8 +4495,16 @@ void Executor::executeMemoryOperation(ExecutionState &state,
 
   if (state.addressSpace.isSymbolicBaseAddress(mo->getBaseExpr()))
   {
-    if (isWrite)
-      klee_test_info("Error: symbolic pointer to write on file %s: line %d",target->info->file.c_str(),target->info->line);
+    if (isWrite){
+      std::string currentVulnerabilityInfo=target->info->file+":"+std::to_string(target->info->line);
+      auto it = testInfoRecordSet.find(currentVulnerabilityInfo);
+      if(it == testInfoRecordSet.end()){
+        testInfoRecordSet.insert(currentVulnerabilityInfo);
+        klee_test_info("Error: symbolic pointer to write on file %s: line %d",target->info->file.c_str(),target->info->line);
+      }
+        
+    }
+      
     // else
     //   klee_message("Error: symbolic pointer to read");
   }

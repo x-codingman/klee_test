@@ -140,6 +140,14 @@ namespace {
             cl::init(""),
             cl::cat(StartCat));
 
+  //add sxh
+  //Config the test_info.txt output directory
+  cl::opt<std::string>
+  TestInfoOutputDir("test-info-output-dir",
+                    cl::desc("Directory in which to write the test info result (default=path of the  input file)"),
+                    cl::init(""),
+                    cl::cat(StartCat));
+
   cl::opt<std::string>
   Environ("env-file",
           cl::desc("Parse environment from the given file (in \"env\" format)"),
@@ -300,6 +308,7 @@ private:
   std::unique_ptr<llvm::raw_ostream> m_infoFile;
 
   SmallString<128> m_outputDirectory;
+ 
 
   unsigned m_numTotalTests;     // Number of tests received from the interpreter
   unsigned m_numGeneratedTests; // Number of tests successfully generated
@@ -406,6 +415,22 @@ KleeHandler::KleeHandler(int argc, char **argv)
 
   klee_message("output directory is \"%s\"", m_outputDirectory.c_str());
 
+  //add sxh
+  // create test info output directory
+  bool test_info_dir_given = TestInfoOutputDir!="";
+  SmallString<128> test_info_directory(test_info_dir_given ? TestInfoOutputDir: InputFile);
+  if (!test_info_dir_given) sys::path::remove_filename(test_info_directory);
+  if (auto ec = sys::fs::make_absolute(test_info_directory)) {
+    klee_error("unable to determine absolute path: %s", ec.message().c_str());
+  }
+  if (test_info_dir_given) {
+    // OutputDir
+    if (mkdir(test_info_directory.c_str(), 0775) < 0)
+      klee_error("cannot create \"%s\": %s", test_info_directory.c_str(), strerror(errno));
+  }
+
+
+
   // open warnings.txt
   std::string file_path = getOutputFilename("warnings.txt");
   if ((klee_warning_file = fopen(file_path.c_str(), "w")) == NULL)
@@ -418,7 +443,14 @@ KleeHandler::KleeHandler(int argc, char **argv)
 
   //add SXH
   // open test_info.txt
-  file_path = getOutputFilename("test_info.txt");
+  if(test_info_dir_given){
+     SmallString<128> test_info_path = test_info_directory;
+  sys::path::append(test_info_path,"test_info.txt");
+  file_path = test_info_path.c_str();
+  }else{
+    file_path = getOutputFilename("test_info.txt");
+  }
+ 
   if ((klee_test_info_file = fopen(file_path.c_str(), "w")) == NULL)
     klee_error("cannot open file \"%s\": %s", file_path.c_str(), strerror(errno));
   // open info

@@ -62,7 +62,7 @@ ObjectState *AddressSpace::getWriteable(const MemoryObject *mo,
 
 /// 
 
-// add
+// add wym
 bool AddressSpace::isSymbolicBaseAddress(const ref<ConstantExpr> &addr){
   uint64_t address = addr->getZExtValue();
   std::list<const MemoryObject*>::const_iterator begin = record.begin();
@@ -81,7 +81,7 @@ bool AddressSpace::isSymbolicBaseAddress(const ref<ConstantExpr> &addr){
 }
 
 
-// add
+// add wym
 bool AddressSpace::isSymbolicAddress(const ref<ConstantExpr> &addr){
   uint64_t address = addr->getZExtValue();
   std::list<const MemoryObject*>::const_iterator begin = record.begin();

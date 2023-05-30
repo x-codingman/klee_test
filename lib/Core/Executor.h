@@ -269,6 +269,16 @@ private:
                             KInstruction *target,
                             size_t allocationAlignment);
 
+ /// add
+  MemoryObject *lazyAllocTCBSymbolic(ExecutionState &state,
+                            size_t size,
+                            size_t stackSize,
+                            bool isLocal,
+                            size_t allocationAlignment);
+
+/// add
+  bool isDesiredType(llvm::Type  *ty);
+
 
   /// Allocate and bind a new object in a particular state. NOTE: This
   /// function may fork.

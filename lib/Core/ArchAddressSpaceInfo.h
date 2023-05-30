@@ -1,0 +1,8 @@
+#ifndef ARCH_ADDRESS_SPACE_INFO_H
+#define ARCH_ADDRESS_SPACE_INFO_H
+
+
+#define MPU_ENABLE_ADDRESS 0xefff3000
+
+
+#endif

@@ -31,7 +31,7 @@ static const char *warningPrefix = "WARNING";
 static const char *warningOncePrefix = "WARNING ONCE";
 static const char *errorPrefix = "ERROR";
 static const char *notePrefix = "NOTE";
-static const char *klee_debug_test="TEST";
+static const char *klee_debug="DEBUG";
 namespace klee {
 cl::OptionCategory MiscCat("Miscellaneous options", "");
 }
@@ -91,7 +91,7 @@ static void klee_vfmessage(FILE *fp, const char *pfx, const char *msg,
                        /*bg=*/false);
     //add SXH
     //add test_info
-    if (shouldSetColor(pfx, msg, klee_debug_test)){
+    if (shouldSetColor(pfx, msg, klee_debug)){
       fdos.changeColor(llvm::raw_ostream::BLUE,
                        /*bold=*/true,
                        /*bg=*/false);

@@ -20,6 +20,8 @@ docs/doxygen.cfg
 include/klee/Config/CompileTimeInfo.h
 *.config
 
+.vscode
+
 config.h
 site.exp
 

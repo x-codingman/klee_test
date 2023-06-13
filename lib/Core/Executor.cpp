@@ -829,12 +829,18 @@ void Executor::initializeGlobalObjects(ExecutionState &state) {
         v.getName().str() == "xSuspendedTaskList" ||
         v.getName().str() == "xPendingReadyList") {
       // klee_message("Global variables: %s", v.getName().str().c_str());
-      klee_message("Global variable is pointer type: %lu ", mo->address);
+      // klee_message("Global variable is pointer type: %lu ", mo->address);
 
       std::string name = ""; // address->toString();
       executeMakeSymbolic(state, mo, name);
       uxTopaddress = mo->address;
     }
+
+    // concrete uxCurrentNumberOfTasks to support some calls
+    if ( v.getName().str() == "uxCurrentNumberOfTasks") {
+      os->write(0, ConstantExpr::create(5,64));
+    }
+
 
     // add to allocate memory for global pointer
     // version 2
@@ -2839,6 +2845,9 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     ref<Expr> base = eval(ki, 1, state).value;
     ref<Expr> value = eval(ki, 0, state).value;
 
+    if(ki->info->assemblyLine==17637)
+      base.get()->dump();
+
     // add
     // if (ConstantExpr *CE = dyn_cast<ConstantExpr>(base)){
     //   if(state.addressSpace.isSymbolicAddress(CE)){
@@ -4683,7 +4692,7 @@ void Executor::executeMemoryOperation(
       uint64_t desired_value = 0;
       solver->setTimeout(coreSolverTimeout);
       bool result = false;
-      bool success = solver->mustBeTrue(
+      bool success = solver->mayBeTrue(
           state.constraints,
           EqExpr::create(ConstantExpr::create(desired_value, type), value),
           result, state.queryMetaData);
@@ -4694,7 +4703,7 @@ void Executor::executeMemoryOperation(
         auto it = testInfoRecordSet.find(currentVulnerabilityInfo);
         if (it == testInfoRecordSet.end()) {
           testInfoRecordSet.insert(currentVulnerabilityInfo);
-          klee_test_info("Error: symbolic pointer to write a desired value %d "
+          klee_test_info("Error: symbolic pointer to write a desired value %lu "
                          "on file %s: line %d",
                          desired_value, target->info->file.c_str(),
                          target->info->line);
@@ -4727,6 +4736,8 @@ void Executor::executeMemoryOperation(
       bool resultNeedBound = false;
       if (!state.addressSpace.lazyResolve(state, solver, result, resultOp,
                                           resultNeedBound)) {
+        address.get()->dump();
+        result.get()->dump();
 
         // std::map<ref<Expr>, const MemoryObject*>::const_iterator it =
         // state.addressSpace.record.find(result);
@@ -4742,8 +4753,16 @@ void Executor::executeMemoryOperation(
 
         // Pay attention here, the type may be an array
         // However, we don't consider dealing with it
-        unsigned elementSize =
-            kmodule->targetData->getTypeStoreSize(elementType);
+        // It is supposed that the pointer points to either a function or a variable
+        unsigned elementSize;
+        if (elementType->isFunctionTy()){
+          // just allocate 8 bytes for a virtual function
+          elementSize = 8;
+        }
+        else{
+          elementSize = kmodule->targetData->getTypeStoreSize(elementType);
+        }
+
         ref<Expr> size = Expr::createPointer(elementSize);
         size_t alignment = bytes;
         MemoryObject *newMo=NULL;

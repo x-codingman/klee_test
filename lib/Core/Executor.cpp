@@ -823,30 +823,31 @@ void Executor::initializeGlobalObjects(ExecutionState &state) {
       os->initializeToRandom();
     }
 
+    // Commented by sxh
+    // These variables will be initialized in the target application
     // add global variable as symbol
     // klee_message("Global variables: %s", v.getName().str().c_str());
-    if (v.getName().str() == "pxReadyTasksLists" ||
-        v.getName().str() == "xSuspendedTaskList" ||
-        v.getName().str() == "xPendingReadyList") {
-      // klee_message("Global variables: %s", v.getName().str().c_str());
-      // klee_message("Global variable is pointer type: %lu ", mo->address);
+    // if (v.getName().str() == "pxReadyTasksLists" ||
+    //     v.getName().str() == "xSuspendedTaskList" ||
+    //     v.getName().str() == "xPendingReadyList") {
+    //   // klee_message("Global variables: %s", v.getName().str().c_str());
+    //   // klee_message("Global variable is pointer type: %lu ", mo->address);
 
-      std::string name = ""; // address->toString();
-      executeMakeSymbolic(state, mo, name);
-      uxTopaddress = mo->address;
-    }
+    //   std::string name = ""; // address->toString();
+    //   executeMakeSymbolic(state, mo, name);
+    //   uxTopaddress = mo->address;
+    // }
 
-    // concrete uxCurrentNumberOfTasks to support some calls
-    if ( v.getName().str() == "uxCurrentNumberOfTasks") {
-      os->write(0, ConstantExpr::create(5,64));
-    }
-
+    // // concrete uxCurrentNumberOfTasks to support some calls
+    // if ( v.getName().str() == "uxCurrentNumberOfTasks") {
+    //   os->write(0, ConstantExpr::create(5,64));
+    // }
 
     // add to allocate memory for global pointer
     // version 2
     Type *ty = v.getType()->getElementType();
 
-    if (ty->isPointerTy()) {
+    if (ty->isPointerTy() && v.getName().str() != "pxCurrentTCB") {
 
       Type *elementType =
           v.getType()->getElementType()->getPointerElementType();
@@ -857,14 +858,13 @@ void Executor::initializeGlobalObjects(ExecutionState &state) {
       size_t alignment = 8;
       MemoryObject *newMo = NULL;
       if (isDesiredType(elementType)) {
-       
-          klee_message(
-              "Debug: find struct.tskTaskControlBlock in global initilization, its name is: %s",
-              v.getName().str().c_str());
-          size_t stackSize = 0x200;
-          newMo = lazyAllocTCBSymbolic(state, elementSize, stackSize, false,
-                                       alignment);
-        
+
+        klee_debug_message("Debug: find struct.tskTaskControlBlock in global "
+                           "initilization, its name is: %s",
+                           v.getName().str().c_str());
+        size_t stackSize = 0x200;
+        newMo = lazyAllocTCBSymbolic(state, elementSize, stackSize, false,
+                                     alignment);
       }
       if (newMo == NULL) {
         newMo = memory->allocate(elementSize, /*isLocal=*/false,
@@ -1087,7 +1087,7 @@ Executor::StatePair Executor::fork(ExecutionState &current, ref<Expr> condition,
                                    bool isInternal, BranchType reason) {
   Solver::Validity res;
 
-  klee_message("DEBUG: forking state!!!");
+  klee_debug_message("DEBUG: forking state!!!");
   std::map<ExecutionState *, std::vector<SeedInfo>>::iterator it =
       seedMap.find(&current);
   bool isSeeding = it != seedMap.end();
@@ -2845,7 +2845,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     ref<Expr> base = eval(ki, 1, state).value;
     ref<Expr> value = eval(ki, 0, state).value;
 
-    if(ki->info->assemblyLine==17637)
+    if (ki->info->assemblyLine == 17637)
       base.get()->dump();
 
     // add
@@ -2978,14 +2978,14 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     // as i8 pointer
     llvm::LLVMContext context;
     Type *i8Type = llvm::Type::getInt8Ty(context);
-    klee_message("DEBUG: Bitcast: typeID :%d", fromType->getTypeID());
-    klee_message("DEBUG: Bitcast: typeID :%d", i8Type->getTypeID());
-    klee_message("DEBUG: Bitcast: type from size :%d", fromSize);
-    klee_message("DEBUG: Bitcast: type element size :%d", elementSize);
-    if(ConstantExpr *CE=dyn_cast<ConstantExpr>(result)){
-      klee_message("DEBUG: Bitcast: address:%lu", CE->getZExtValue());
+    klee_debug_message("DEBUG: Bitcast: typeID :%d", fromType->getTypeID());
+    klee_debug_message("DEBUG: Bitcast: typeID :%d", i8Type->getTypeID());
+    klee_debug_message("DEBUG: Bitcast: type from size :%d", fromSize);
+    klee_debug_message("DEBUG: Bitcast: type element size :%d", elementSize);
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(result)) {
+      klee_debug_message("DEBUG: Bitcast: address:%lu", CE->getZExtValue());
     }
-    
+
     if (elementSize > fromSize &&
         ki->inst->getOperand(0)->getType()->isPointerTy() &&
         ki->inst->getType()->isPointerTy()) {
@@ -2997,7 +2997,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         const MemoryObject *oldMo = op.first;
 
         // check the memory object size
-        klee_message("DEBUG: object size: %d", oldMo->size);
+        klee_debug_message("DEBUG: object size: %d", oldMo->size);
         if (state.addressSpace.isSymbolicBaseAddress(oldMo->getBaseExpr())) {
           KInstIterator prevIR = state.prevPC;
           --prevIR;
@@ -3015,17 +3015,13 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
               ref<Expr> size = Expr::createPointer(elementSize);
               size_t alignment = 8;
               MemoryObject *newMo = NULL;
-              if(isDesiredType(elementType)){
-                  newMo= lazyAllocTCBSymbolic(state,elementSize,0x1000,false,alignment);
-              }else{
-                  newMo = lazyAlloc(state, size, !oldMo->isAGlobal(), ki, alignment);
+              if (isDesiredType(elementType)) {
+                newMo = lazyAllocTCBSymbolic(state, elementSize, 0x1000, false,
+                                             alignment);
+              } else {
+                newMo =
+                    lazyAlloc(state, size, !oldMo->isAGlobal(), ki, alignment);
               }
-                  
-
-                 
-              
-                  
-              
 
               // third to backtrack the IR to modify the value of the symbolic
               // pointer It is supposed that a corresponding load instruciton
@@ -3043,107 +3039,32 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
                 // result = newMo->getBaseExpr();
                 result = wos->read(mo->getOffsetExpr(base), 64);
               }
-              klee_message("DEBUG: Bitcast: Load-bitcast:The pointer is converted, "
-                           "states size: %d",
-                           (int)states.size());
+              klee_debug_message(
+                  "DEBUG: Bitcast: Load-bitcast:The pointer is converted, "
+                  "states size: %d",
+                  (int)states.size());
             } else {
 
-              terminateStateOnError(state,
-                                    "Bitcast: Not the corresponding load instruction "
-                                    "before symbol pointer type conversion",
-                                    StateTerminationType::Ptr);
+              terminateStateOnError(
+                  state,
+                  "Bitcast: Not the corresponding load instruction "
+                  "before symbol pointer type conversion",
+                  StateTerminationType::Ptr);
             }
           } else {
-            klee_message("DEBUG: Bitcast: Not a load instruction before symbol pointer "
-                         "type conversion");
+            klee_debug_message(
+                "DEBUG: Bitcast: Not a load instruction before symbol pointer "
+                "type conversion");
           }
         } else {
-          klee_message("DEBUG: Bitcas: Not a symbolic base address ");
+          klee_debug_message("DEBUG: Bitcas: Not a symbolic base address ");
         }
 
       } else {
-        klee_message("DEBUG: Bitcast: The pointer has not been allocated");
-
-        // // it is used to handle the stack
-        // ref<Expr> size = Expr::createPointer(elementSize);
-        // size_t alignment = 8;
-        // MemoryObject *newMo = lazyAlloc(state, size, false, ki, alignment);
-        // std::string name = "";//address->toString();
-        // executeMakeSymbolic(state, newMo, name);
-
-        // ref<Expr> Bound = EqExpr::create(newMo->getBaseExpr(), result);
-        // addConstraint(state, Bound);
-
-        // // record the new relation
-        // state.addressSpace.record.push_back(newMo);
-
-        // klee_message("Stack: The pointer is converted");
+        klee_debug_message(
+            "DEBUG: Bitcast: The pointer has not been allocated");
       }
-
-      // ConstantExpr *CE = dyn_cast<ConstantExpr>(result);
-      // uint64_t address = CE->getZExtValue();
-      // std::list<const MemoryObject*>::const_iterator begin =
-      // state.addressSpace.record.begin(); std::list<const
-      // MemoryObject*>::const_iterator end = state.addressSpace.record.end();
-      // std::list<const MemoryObject*>::const_iterator oi = end;
-      // while (oi!=begin) {
-      //   --oi;
-      //   const MemoryObject *oldMo = *oi;
-      //   if(address == oldMo->address){
-      //     // first to delete the old memory
-      //     // Fix here, the old memory is not really deleted
-      //     // remove the memory object from the record
-      //     state.addressSpace.record.remove(oldMo);
-
-      //     // second to reallocate new memory
-      //     ref<Expr> size = Expr::createPointer(elementSize);
-      //     size_t alignment = 8;
-      //     MemoryObject *newMo = lazyAlloc(state, size, true, ki, alignment);
-      //     std::string name = "";//address->toString();
-      //     executeMakeSymbolic(state, newMo, name);
-      //     // record the new relation
-      //     state.addressSpace.record.push_back(newMo);
-
-      //     // third to backtrack the IR to modify the value of the symbolic
-      //     pointer
-      //     // It is supposed that a corresponding load instruciton before it
-      //     KInstIterator prevIR = state.prevPC;
-      //     --prevIR;
-      //     if (isa<LoadInst>(prevIR->inst)){
-      //       KInstruction *prevIn = prevIR;
-      //       ref<Expr> left = getDestCell(state, prevIn).value;
-      //       if (left == result){
-      //         ref<Expr> base = eval(prevIR, 0, state).value;
-      //         ObjectPair op;
-      //         bool needBound = false;
-      //         if(state.addressSpace.lazyResolve(state, solver, base, op,
-      //         needBound)){
-      //           const MemoryObject *mo = op.first;
-      //           const ObjectState *os = op.second;
-      //           ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-      //           wos->write(mo->getOffsetExpr(base), newMo->getBaseExpr());
-      //           // update the result
-      //           result = newMo->getBaseExpr();
-      //           // result = wos->read(mo->getOffsetExpr(base), 8);
-      //         }
-      //         klee_message("The pointer is converted");
-      //       }else{
-      //         terminateStateOnError(state, "Not the corresponding load
-      //         instruction before symbol pointer type conversion",
-      //                              StateTerminationType::Ptr);
-      //       }
-      //     }else{
-      //       terminateStateOnError(state, "Not a load instruction before
-      //       symbol pointer type conversion",
-      //                             StateTerminationType::Ptr);
-
-      //     }
-
-      //     break;
-      //   }
-      // }
     }
-
     bindLocal(ki, state, result);
     break;
   }
@@ -3913,9 +3834,9 @@ void Executor::run(ExecutionState &initialState) {
       dumpStates();
     if (::dumpPTree)
       dumpPTree();
-
+    klee_debug_message("DEBUG: states size %d", (int)states.size());
     updateStates(&state);
-
+    klee_debug_message("DEBUG: states size %d", (int)states.size());
     if (!checkMemoryUsage()) {
       // update searchers when states were terminated early due to memory
       // pressure
@@ -4358,12 +4279,13 @@ MemoryObject *Executor::lazyAlloc(ExecutionState &state, ref<Expr> size,
     // mo = memory->allocate(CE->getZExtValue(), isLocal, /*isGlobal=*/false,
     // allocSite, allocationAlignment);
 
+    uint32_t uintSize=CE->getZExtValue();
     if (!isLocal) {
-      klee_message("DEBUG: Allocate global memory!!!states size: %d",
-                   (int)states.size());
+      klee_debug_message("DEBUG: Allocate global memory!!!alloc size: %lu, states size: %d",
+                         uintSize,(int)states.size());
     }
 
-    mo = memory->allocate(CE->getZExtValue(), isLocal, 1, allocSite,
+    mo = memory->allocate(uintSize, isLocal, 1, allocSite,
                           allocationAlignment);
     if (!mo) {
       bindLocal(target, state,
@@ -4379,9 +4301,9 @@ MemoryObject *Executor::lazyAlloc(ExecutionState &state, ref<Expr> size,
         StateTerminationType::Ptr);
   }
   std::string name =
-            "alloc" + llvm::utostr(++allocname); // address->toString();
-        executeMakeSymbolic(state, mo, name);
-        state.addressSpace.record.push_back(mo);
+      "alloc" + llvm::utostr(++allocname); // address->toString();
+  executeMakeSymbolic(state, mo, name);
+  state.addressSpace.record.push_back(mo);
 
   return mo;
 }
@@ -4398,17 +4320,19 @@ MemoryObject *Executor::lazyAllocTCBSymbolic(ExecutionState &state, size_t size,
   // allocSite, allocationAlignment);
 
   if (!isLocal) {
-    klee_message("DEBUG: Allocate global memory!!!states size: %d",
-                 (int)states.size());
+    klee_debug_message(
+        "DEBUG: Allocate global memory for TCB!!!states size: %d",
+        (int)states.size());
   }
 
   MemoryObject *stackMo = memory->allocate(stackSize, isLocal, !isLocal,
                                            allocSite, allocationAlignment);
   if (!stackMo) {
-    klee_message("DEBUG: Allocate stack failed!!! states size: %d",
-                 (int)states.size());
+    klee_debug_message("DEBUG: Allocate stack failed!!! states size: %d",
+                       (int)states.size());
   } else {
-    klee_message("DEBUG: Alloc stack, top address: %lu",stackMo->address+stackSize/2);
+    klee_debug_message("DEBUG: Alloc stack, top address: %lu",
+                       stackMo->address + stackSize / 2);
     ObjectState *sos = bindObjectInState(state, stackMo, isLocal);
     executeMakeSymbolic(state, stackMo, "symbolic stack");
     state.addressSpace.record.push_back(stackMo);
@@ -4416,11 +4340,11 @@ MemoryObject *Executor::lazyAllocTCBSymbolic(ExecutionState &state, size_t size,
   mo =
       memory->allocate(size, isLocal, !isLocal, allocSite, allocationAlignment);
   if (!mo) {
-    klee_message("DEBUG: Allocate memory object failed in "
-                 "lazyAllocTCBSymbolic!!! states size: %d",
-                 (int)states.size());
+    klee_debug_message("DEBUG: Allocate memory object failed in "
+                       "lazyAllocTCBSymbolic!!! states size: %d",
+                       (int)states.size());
   } else {
-    executeMakeSymbolic(state, mo, "symbolic TCB");
+    executeMakeSymbolic(state, mo, "symbolic_TCB");
     state.addressSpace.record.push_back(mo);
     bool needBound = false;
     ObjectPair op;
@@ -4429,7 +4353,7 @@ MemoryObject *Executor::lazyAllocTCBSymbolic(ExecutionState &state, size_t size,
       const ObjectState *os = op.second;
       ObjectState *wos = state.addressSpace.getWriteable(mo, os);
       wos->write(0, ConstantExpr::create(
-                        stackMo->getBaseExpr()->getZExtValue() + stackSize/2,
+                        stackMo->getBaseExpr()->getZExtValue() + stackSize / 2,
                         Expr::Int64));
     } else {
       terminateStateOnError(
@@ -4458,7 +4382,8 @@ void Executor::executeAlloc(ExecutionState &state, ref<Expr> size, bool isLocal,
         memory->allocate(CE->getZExtValue(), isLocal, /*isGlobal=*/false,
                          allocSite, allocationAlignment);
     if (CE->getZExtValue() == 8) {
-      klee_message("DEBUG: Allocate 8 bytes!!!,mo address: %lu", mo->address);
+      klee_debug_message("DEBUG: Allocate 8 bytes!!!,mo address: %lu",
+                         mo->address);
     }
     if (!mo) {
       bindLocal(target, state,
@@ -4646,33 +4571,44 @@ void Executor::executeMemoryOperation(
 
   ObjectPair op;
   bool needBound = false;
-  if (!state.addressSpace.lazyResolve(state, solver, address, op, needBound)) {
+  bool success =
+      state.addressSpace.lazyResolve(state, solver, address, op, needBound);
+  if (!success) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(address)) {
-      klee_message("DEBUG: is constant address: %lu",CE->getZExtValue());
+      klee_debug_message("DEBUG: lazyResolve failed, found a constant address, "
+                         "its value is: %lu",
+                         CE->getZExtValue());
+    } else {
+      klee_debug_message("DEBUG: lazyResolve failed, found a symbolic pointer");
+    }
+    address->dump();
+    ref<Expr> kid;
+    switch(address.get()->getKind()) {
+      case Expr::Add:
+        kid = address.get()->getKid(1);
+        break;
+      default:
+        kid = address;
+        break;
+    }
+    if(state.addressSpace.record_map.count(kid)>0){
+      const MemoryObject *newMo = state.addressSpace.record_map[kid];
+      addConstraint(state, EqExpr::create(kid,newMo->getBaseExpr()));
+    }else{
+      klee_debug_message("DEBUG: FIX ME resolve failed, cannot find the recorded symbolic pointer");
+      terminateStateOnError(state, "resolve failed", StateTerminationType::Ptr);
     }
     
-    terminateStateOnError(state, "Symbolic pointer has no new allocation",
-                          StateTerminationType::Ptr);
-    // version 1
-    // ref<Expr> size = Expr::createPointer(bytes);
-    // size_t alignment = bytes;
-    // MemoryObject *mo = lazyAlloc(state, size, true, target, alignment);
-
-    // std::string name = "";//address->toString();
-    // // lazyMakeSymbolic will not call addSymbolics
-    // // lazyMakeSymbolic(state, mo, name);
-    // // executeMakeSymbolic will call addSymbolics
-    // executeMakeSymbolic(state, mo, name);
-
-    // ref<Expr> Bound = mo->getBoundsCheckPointer(address, bytes);
-    // addConstraint(state, Bound);
-
-    // // record the new relation
-    // state.addressSpace.record.insert(std::make_pair(address, mo));
-
-    // op.first = mo;
-    // op.second = state.addressSpace.objects.find(mo)->second.get();
   }
+  // Check if the address can be resolved after allocation
+  if (!success) {
+    if (!state.addressSpace.lazyResolve(state, solver, address, op,
+                                        needBound)) {
+      klee_debug_message("DEBUG: FIX ME resolve failed");
+      terminateStateOnError(state, "resolve failed", StateTerminationType::Ptr);
+    }
+  }
+
 
   const MemoryObject *mo = op.first;
   const ObjectState *os = op.second;
@@ -4710,9 +4646,6 @@ void Executor::executeMemoryOperation(
         }
       }
     }
-
-    // else
-    //   klee_message("Error: symbolic pointer to read");
   }
 
   if (isWrite) {
@@ -4726,37 +4659,29 @@ void Executor::executeMemoryOperation(
   } else {
     ref<Expr> result = os->read(mo->getOffsetExpr(address), type);
 
-    // target->info->assemblyLine !=13830
     if (target->inst->getType()->isPointerTy() &&
         dyn_cast<ConcatExpr>(result)) {
-      // It needs resolve here to determine whether the pointer represented by
+      // It needs resolve here to determine whether the pointer represented
+      
       // the result has been allocated the pointer cannot be resolved, so
       // allocate memory
       ObjectPair resultOp;
       bool resultNeedBound = false;
       if (!state.addressSpace.lazyResolve(state, solver, result, resultOp,
                                           resultNeedBound)) {
-        address.get()->dump();
-        result.get()->dump();
-
-        // std::map<ref<Expr>, const MemoryObject*>::const_iterator it =
-        // state.addressSpace.record.find(result);
-
-        // if(it == state.addressSpace.record.end()){
+        //address.get()->dump();
+        //result.get()->dump();
 
         llvm::Type *elementType =
             target->inst->getType()->getPointerElementType();
 
-        // // Get the struct type name
-
-        
-
         // Pay attention here, the type may be an array
         // However, we don't consider dealing with it
-        // It is supposed that the pointer points to either a function or a variable
-        unsigned elementSize;
+        // It is supposed that the pointer points to either a function or avariable 
+        unsigned elementSize; 
         if (elementType->isFunctionTy()){
           // just allocate 8 bytes for a virtual function
+         klee_debug_message("DEBUG: found a function pointer here!!");
           elementSize = 8;
         }
         else{
@@ -4767,28 +4692,29 @@ void Executor::executeMemoryOperation(
         size_t alignment = bytes;
         MemoryObject *newMo=NULL;
         if (isDesiredType(elementType)) {
-            klee_message("DEBUG: alloc TCB in executionMemoryOperation!!");
+            klee_debug_message("DEBUG: alloc TCB in executionMemoryOperation!!"); 
             size_t stackSize=0x1000;
             newMo=lazyAllocTCBSymbolic(state,(size_t)elementSize,stackSize,false,alignment);
         }
-        
+
         if(newMo==NULL)
-          newMo = lazyAlloc(state, size, !mo->isAGlobal(), target, alignment);
-        // MemoryObject *newMo = lazyAlloc(state, size, true, target,
-        // alignment)
+          newMo = lazyAlloc(state, size, !mo->isAGlobal(), target,
+          alignment);
 
-        if (os->readOnly) {
-          terminateStateOnError(state, "memory error: object read only",
-                                StateTerminationType::ReadOnly);
-        } else {
-          ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-          wos->write(mo->getOffsetExpr(address), newMo->getBaseExpr());
-          // result = newMo->getBaseExpr();
-          result = wos->read(mo->getOffsetExpr(address), type);
-        }
-
-        klee_message("The Pointer need to be allocated");
+        // if (os->readOnly) {
+        //   terminateStateOnError(state, "memory error: object read only",
+        //                         StateTerminationType::ReadOnly);
+        // } else {
+        //   ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+        //   wos->write(mo->getOffsetExpr(address), newMo->getBaseExpr());
+        //   // result = newMo->getBaseExpr();
+        //   result = wos->read(mo->getOffsetExpr(address), type);
         // }
+        //addConstraint(state, EqExpr::create(result, newMo->getBaseExpr()));
+        state.addressSpace.record_map[result]=newMo;
+        result->dump();
+        klee_debug_message("DEBUG: The symbolic pointer has been allocated, alloc size: %lu,\
+        alloc address: %lu",elementSize,newMo->address);
       }
       // the pointer has been allocated
       // check whether the memoryObject is newly allocated one
@@ -5430,15 +5356,13 @@ Interpreter *Interpreter::create(LLVMContext &ctx,
   return new Executor(ctx, opts, ih);
 }
 
-
-
-// add 
-bool Executor::isDesiredType(llvm::Type *ty){
+// add
+bool Executor::isDesiredType(llvm::Type *ty) {
   if (ty->isStructTy()) {
-        llvm::StringRef typeName = ty->getStructName();
-        if (typeName.equals("struct.tskTaskControlBlock")) {
-          return true;
-        }
+    llvm::StringRef typeName = ty->getStructName();
+    if (typeName.equals("struct.tskTaskControlBlock")) {
+      return true;
+    }
   }
   return false;
 }

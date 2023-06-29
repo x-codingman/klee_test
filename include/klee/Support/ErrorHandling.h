@@ -44,6 +44,9 @@ void klee_warning(const char *msg, ...) __attribute__((format(printf, 1, 2)));
 //add SXH
 void klee_test_info(const char *msg, ...)__attribute__((format(printf, 1, 2)));
 
+// ADD DEBUG OUTPUT BY SXH
+void klee_debug_message(const char *msg, ...) __attribute__((format(printf, 1, 2)));
+
 /// Print "KLEE: WARNING: " followed by the msg in printf format and a
 /// newline on stderr and to warnings.txt. However, the warning is only
 /// printed once for each unique (id, msg) pair (as pointers).

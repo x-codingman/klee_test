@@ -73,8 +73,8 @@ namespace klee {
     /// \invariant forall o in objects, o->copyOnWriteOwner <= cowKey
     MemoryMap objects;
 
-    /// add a map to record the relation between symbolic expression and lazily allocated memory object
-    // std::map<ref<Expr>, const MemoryObject*> record;
+    // add a map to record the relation between symbolic expression and lazily allocated memory object
+    std::map<ref<Expr>, const MemoryObject*> record_map;
     /// add a list to record the MemoryObject allocated to symbolic pointers
     std::list<const MemoryObject*> record;
 

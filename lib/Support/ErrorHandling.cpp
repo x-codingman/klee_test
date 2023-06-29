@@ -32,6 +32,8 @@ static const char *warningOncePrefix = "WARNING ONCE";
 static const char *errorPrefix = "ERROR";
 static const char *notePrefix = "NOTE";
 static const char *klee_debug="DEBUG";
+
+#define DEBUG_SXH
 namespace klee {
 cl::OptionCategory MiscCat("Miscellaneous options", "");
 }
@@ -137,12 +139,24 @@ static void klee_vmessage(const char *pfx, bool onlyToFile, const char *msg,
   klee_vfmessage(pfx ? klee_warning_file : klee_message_file, pfx, msg, ap);
 }
 
+
 void klee::klee_message(const char *msg, ...) {
-  va_list ap;
+ 
+}
+
+
+#ifndef DEBUG_SXH
+void klee::klee_debug_message(const char *msg, ...) {}
+#endif
+
+#ifdef DEBUG_SXH
+void klee::klee_debug_message(const char *msg, ...) {
+   va_list ap;
   va_start(ap, msg);
   klee_vmessage(NULL, false, msg, ap);
   va_end(ap);
 }
+#endif
 
 
 //add SXH

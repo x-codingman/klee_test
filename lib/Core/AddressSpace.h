@@ -79,7 +79,7 @@ namespace klee {
     std::list<const MemoryObject*> record;
 
     AddressSpace() : cowKey(1) {}
-    AddressSpace(const AddressSpace &b) : cowKey(++b.cowKey), objects(b.objects), record(b.record) { } // add the initialization of record 
+    AddressSpace(const AddressSpace &b) : cowKey(++b.cowKey), objects(b.objects), record(b.record), record_map(b.record_map) { } // add the initialization of record 
     ~AddressSpace() {}
 
     /// add

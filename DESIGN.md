@@ -38,15 +38,22 @@
 
 对于第二种情况，我们最终生成的test case是所有分配的辅助检测的符号化memory object的一个snapshot,其中存在一个漏洞指针是可以完成漏洞利用的。由于这些memory object都是在攻击者控制的范围之内，攻击者可以在其可控制的内存中构造出相同的memory object以及对应的漏洞指针，是其指向对应的区域，完成对漏洞的利用。
 
+---
+
+问题3: 如果一个系统API对所有的指针都做了检查，那是否就不存在问题了？具体来说，指针可以分为以下几种类型。
+
+* 指向kernel object指针，这类指针需要对其指向的内容进行检查，检查其是否是一个合法kernel object。然而，这往往需要kernel object只能在程序在kernel态创建。
+* 指向user data的指针，这类指针需要对其指向的data区域做权限检查。
+
 ## Case Study
 
 该API存在越权任意写漏洞，攻击者可以通过构造内存块完成对任意内存的写操作。
 
 ```c
-privileged_api（ANYTYPE *input1，ANYTYPE *input2）
+privileged_api（Struct *input1，Struct *input2）
 {
   Char b = input2->b;
-	Struct c = input1->c;
+	Struct* c = input1->c;
 	Char * bomb = c->a;
   if(c->d == 0)
 		*bomb = b;                   // Vulnerability 
@@ -114,3 +121,86 @@ E-->I2
 
 
 ![attacker-based-memory-object-resolving](./DESIGN.assets/attacker-based-memory-object-resolving.png)
+
+
+
+
+
+---
+
+## 7.9
+
+
+
+#### 定义
+
+* controllable是对一个memory object而言的，不管是指针类型或者非指针类型。controllable属性是存在memory object里面的，对应Control flag。control flag是在分配memory object的时候决定的，取决于该memory object是否可以被攻击者构造。
+
+* 危险区域[DR_S,DR_E] （离线确定，固定静态范围）
+
+* 危险操作范围，对于写操作来说，即在危险区域可以写的范围，表示为[V_S, V_E]。（离线确定，固定静态范围，根据attack model定义）
+
+* 攻击者能力**AC（Attack Capability）**为所有unprivileged权限下可以读写memory范围，记为\[AC_S,AC_E]。（离线确定，固定静态范围）
+
+#### 检查结果类型
+
+1. 存在vulnerability，并给出相应的test case
+2. 可能存在vulnerability，需要某些特定条件出发，比如某些攻击者不可控的global的值需要满足一定条件。
+
+#### 检查机制
+
+在遇到待检测的指令执行时，我们需要判断的是变量的两个属性，是否能够被controllable，以及其限制范围。执行以下操作。
+
+1. 判断address是否是controllable，若可以，执行2。
+2. 判断指令的address是否能指向危险区域，具体来说，判断DR_S<address<DR_E是否可以满足；若可以，执行3。
+3. 判断是否可以写指定的操作，即判断V_S<value<V_E是否可以满足。执行4。
+4. 若3可以满足，则存在**完全可控的vulnerability**。若不满足，可能存在vulnerability，这里可以先记录，后面有时间对这些情况具体分析。
+5. 
+
+### Case Study 2
+
+```c
+privileged_api（ANYTYPE *input1，ANYTYPE *input2）
+{
+  if(mpu_region1_start < input1 < mpu_region1_start + mpu_region1_size){
+  	Char b = input2->b;
+		Struct* c = input1->c;
+		Char * bomb = c->a;
+  	if(c->d == 0)
+			*bomb = b;                   // Vulnerability 
+		return;
+  }
+}
+```
+
+#### 基于目前Memory Model的程序执行过程：
+
+初始化：对所有参数（以及部分全局变量，上述例子中未展示）进行符号化处理，其对应的memory object为controllable。
+
+* 执行第3行，input1是一个符号，遇到条件判断，KLEE对其进行分支的fork，并对分支为True的分支加上约束（mpu_region1_start < input1 < mpu_region1_start + mpu_region1_size）
+* 执行第4行，input2是一个符号，遇到解引用操作。由于input2无法直接解引用，我们为input2分配一个符号化的MO_2(memory object)，该MO的地址为addr_2, 并增加约束addr2==input2。然后把对input2进行解引用，并将input2指向的MO_2中的成员变量b复制给局部变量b，由于上述MO_2是符号，根据符号的传播性，b也为符号。
+* 执行第5行，与第四行类似，然而，由于input1存在约束，首先判断约束mpu_region1_start < input1 < mpu_region1_start + mpu_region1_size与攻击者能力约束[AC_S,AC_E]是否有重合，若没有，则分配的MO的control flag为uncontrollable，反之则为controllable。然后为input1分配对应的MO_1，该MO_1对应的地址为addr_1,并加上约束addr_1==input1，由于地址空间对应关系以及约束冲突，需要将代码第三行的约束从KLEE的运行环境中删除，并将其移到MO_1的Address Info中存储以便后续使用。同样的，将MO_1的c复制给局部变量c，局部变量c为符号。
+* 执行第6行，由于c是符号指针，同样的，为其分配MO_3，其地址为addr_3，增加约束（c==addr_3）。然后将其成员变量a复制给局部变量bomb。bomb为符号。
+* 执行第7行，条件判断，KLEE会进行fork。对于True的分支，首先对c进行解引用，由于存在约束（c==addr_3），所以可以找到MO_3，并得到其成员变量d，d也是一个符号。在判断d==0时，增加约束（d==0）以保证能进入True的分支。
+* 执行第八行，遇到符号指针的赋值操作，检测机制将会去检查其对应的address和value值，首先发现address bomb是一个符号指针，判断(DR_S<bomb<DR_E)是否满足，对于value b，判断[V_S,<b<V_E]是否满足。如果两个条件同时满足，则输出存在Vulnerability，并输出对应的test case。如果两个条件仅有一个满足或者都不满足，对其进行记录以供后续分析。
+
+
+
+## 讨论 1
+
+```c
+func (ANYTYPE* input, ANYTYPE b){
+  *input = b;
+}
+
+```
+
+对于上述函数, 执行过程如下：
+
+1. 初始化：input 和 b 都是符号且都为controllable。
+2. 执行第2行，程序遇到input这个符号指针，由于是解引用操作，首先分配MO，该MO为controllable，地址为addr_1。然后增加约束input==addr_1。
+3. 执行第2行，进行赋值操作，此时address是input，value是b，根据上述检测机制，通过MO信息，判断address指向的MO是否controllable，判断b是否能满足危险操作的写范围。如果是，则一定存在攻击者可控的vulnerability。反之，则可能存在有限制的写，这个可以后续再讨论。
+4. 执行赋值操作，程序继续运行。
+
+
+

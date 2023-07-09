@@ -135,7 +135,7 @@ E-->I2
 #### 1. 定义
 
 * <font color="red">Control flag:</font> 定义一个MO是否是controllable。controllable是对一个memory object而言的，不管是指针类型或者非指针类型。controllable属性是存在memory object里面的，对应Control flag。control flag是在分配memory object的时候决定的，取决于该memory object是否可以被攻击者构造。
-* <font color="red">Address Space Constraints Info</font>，定义一个MO的在真实地址空间的地址范围约束，记为ASCI。该约束从程序运行过程中获得。初始化为全域。
+* <font color="red">Address Space Constraints Info</font>，定义一个MO的在真实地址空间的范围约束，记为ASCI。对于指针类型，记录指向地址范围以及该变量所处的地址范围。对于非指针类型，记录该变量所处的地址范围。该约束从程序运行过程中获得，在每一次对指针变量进行分支判断的时候会更新该ASCI。离线初始化，根据真实地址空间定义。
 
 * <font color="red">危险区域[DR_S,DR_E]</font> （离线确定，固定静态范围）
 
@@ -145,26 +145,29 @@ E-->I2
 
 #### 2. 内存模型运行
 
-本文针对under constrained环境下对Embedded OS的API进行符号执行，符号执行引擎为KLEE，整个执行过程与KLEE原有框架一致，然后由于缺少参数以及一些全局变量的context，本文将参数以及全局变量定义为under constrained变量(UC变量）。程序遇到UC变量将会对原有KLEE运行带来挑战，为此设计了修改了KLEE原有内存模型，对UC的非指针变量进行符号化，为UC的指针变量进行符号化并且在解引用时做lazy initialization。lazy initialization即为符号指针分配对应的memory object使该符号指针指向它。以下面程序为例，简述对UC的指针变量和非指针变量的处理。其具体执行过程如下:
+本文针对under constrained环境下对Embedded OS的API进行符号执行，符号执行引擎为KLEE，整个执行过程与KLEE原有框架一致，然后由于缺少参数以及一些全局变量的context，本文将参数以及全局变量定义为under constrained变量(UC变量）。程序遇到UC变量将会对原有KLEE运行带来挑战，为此设计了修改了KLEE原有内存模型，对UC的非指针变量进行符号化，为UC的指针变量进行符号化并且在**解引用**时做lazy initialization。lazy initialization即为符号指针分配对应的memory object使该符号指针指向它。以下面程序为例，简述对UC的指针变量和非指针变量的处理。其具体执行过程如下:
 
 ```c
 char global_c;                     // treat global varible as symbilic varible
-func (ANYTYPE* input, ANYTYPE b){
-  char local_a = input->a;
-  char local_d = global_c;
+func (ANYTYPE* input1, ANYTYPE b){
+  if(mpu_region1_start < input1 < mpu_region1_start + mpu_region1_size){
+  	char local_a = input1->a;
+  	char local_d = global_c;
+  }
 }
 
 ```
 
-1. 程序运行第3行，程序需要对input指针做解引用操作然后取得其成员变量a；然而，由于input为符号指针，我们为符号指针input做lazy initialization，分配类型为ANYTYPE的MO（memory object）并将input指向它，该MO的地址为addr，该MO同时也符号化，并且增加约束（input == addr）。然后，通过MO找到成员变量a的内容并将其赋值给local_a。
-2. 程序运行第4行，将全局变量global_c赋值给局部变量local_d，由于global_c是未初始化的全局变量（UC非指针变量），故将其作为一个符号值并赋值给local_d。
+1. 程序运行第3行，对input1进行分支判断，此时KLEE对两个不同分支进行fork，并把分支判断的约束加入input1所在MO的ASCI中。以便后面遇到对该指针的分支判断时用到。
+2. 程序运行第4行，程序需要对input指针做解引用操作然后取得其成员变量a；然而，由于input1为符号指针，我们为符号指针input1做lazy initialization，分配类型为ANYTYPE的MO（memory object）并将input1指向它，该MO的地址为addr，该MO同时也符号化，并且增加约束（input1 == addr）。然后，通过MO找到成员变量a的内容并将其赋值给local_a。
+3. 程序运行第5行，将全局变量global_c赋值给局部变量local_d，由于global_c是未初始化的全局变量（UC非指针变量），故将其作为一个符号值并赋值给local_d。
 
 #### 3. 检查机制
 
 在遇到待检测的指令执行时，我们需要判断的是变量的两个属性，是否能够被controllable，以及其限制范围。执行以下四个判断操作。
 
 1. 判断address变量的MO是否是controllable。
-2. 判断指令的address变量的MO对应的APCI是否能指向危险区域。具体来说，判断APCI与是否与[DR_S,DR_E]有交集。
+2. 判断指令的address变量的MO对应的ASCI是否能指向危险区域。具体来说，判断ASCI与是否与[DR_S,DR_E]有交集。
 3. 判断vlaue变量的MO是否是controllable。
 4. 判断value是否可以写指定的操作，即判断V_S<value<V_E是否可以满足。
 
@@ -173,16 +176,11 @@ func (ANYTYPE* input, ANYTYPE b){
 检查结果有四种，分别是完全可控的vulnerability、不存在vulnerability、存在写地址限制的vulnerability、存在写内容限制的vulnerability。
 
 1. 若可以满足1、2、3、4，则存在**完全可控的vulnerability**。
-
 2. 若不满足2或者不满足4，不存在vulnerability。
-
 3. 针对剩下的可能性，则存在受限制的vulnerability。
-
    1. 满足234，address不可控，即表示写的地址不可控，存在写地址限制的vulnerability。比如对全局变量指针进行赋值操作。赋值的value的可控的情况。触发vulnerability的情况取决于全局变量指针的初始化值。
    2. 满足124，存在写内容限制的vulnerability。value不可控，即表示value变量不可控。然后可以触发value为固定值的vulnerability，比如只能对某一个地址赋值为0。
    3. 满足24，存在写内容限制和写地址限制的vulnerability。
-
-   
 
 ### Case Study 2
 
@@ -200,16 +198,16 @@ privileged_api（ANYTYPE *input1，ANYTYPE *input2）
 }
 ```
 
-#### 基于目前Memory Model的程序执行过程：
+#### 5. 基于目前Memory Model的程序执行过程：
 
 初始化：对所有参数（以及部分全局变量，上述例子中未展示）进行符号化处理，其对应的memory object为controllable。
 
-* 执行第3行，input1是一个符号，遇到条件判断，KLEE对其进行分支的fork，并对分支为True的分支加上约束（mpu_region1_start < input1 < mpu_region1_start + mpu_region1_size），将该约束放入input所在MO的ASCI中。
-* 执行第4行，input2是一个符号，遇到解引用操作。由于input2无法直接解引用，我们为input2分配一个符号化的MO_2(memory object)，该MO的地址为addr_2, 并增加约束addr2==input2。然后把对input2进行解引用，并将input2指向的MO_2中的成员变量b复制给局部变量b，由于上述MO_2是符号，根据符号的传播性，b也为符号。
-* 执行第5行，与第四行类似，然而，由于input1存在约束，首先判断约束mpu_region1_start < input1 < mpu_region1_start + mpu_region1_size与攻击者能力约束[AC_S,AC_E]是否有重合，若没有，则分配的MO的control flag为uncontrollable，反之则为controllable。然后为input1分配对应的MO_1，该MO_1对应的地址为addr_1,并加上约束addr_1==input1，将MO_1的c复制给局部变量c，局部变量c为符号。
-* 执行第6行，由于c是符号指针，同样的，为其分配MO_3，其地址为addr_3，增加约束（c==addr_3）。然后将其成员变量a复制给局部变量bomb。bomb为符号。
-* 执行第7行，条件判断，KLEE会进行fork。对于True的分支，首先对c进行解引用，由于存在约束（c==addr_3），所以可以找到MO_3，并得到其成员变量d，d也是一个符号。在判断d==0时，增加约束（d==0）以保证能进入True的分支。
-* 执行第八行，遇到符号指针的赋值操作，检测机制将会去检查其对应的address和value值，根据检测机制的判断条件输出对应的vulnerability。
+1. 执行第3行，input1是一个符号，遇到条件判断，KLEE对其进行分支的fork，并对分支为True的分支加上约束（mpu_region1_start < input1 < mpu_region1_start + mpu_region1_size），将该约束放入input所在MO的ASCI中。
+2. 执行第4行，input2是一个符号，遇到解引用操作。由于input2无法直接解引用，我们为input2分配一个符号化的MO_2(memory object)，该MO的地址为addr_2, 并增加约束addr2==input2。然后把对input2进行解引用，并将input2指向的MO_2中的成员变量b复制给局部变量b，由于上述MO_2是符号，根据符号的传播性，b也为符号。
+3. 执行第5行，与第四行类似，然而，由于input1存在约束，首先判断约束mpu_region1_start < input1 < mpu_region1_start + mpu_region1_size与攻击者能力约束[AC_S,AC_E]是否有重合，若没有，则分配的MO的control flag为uncontrollable，反之则为controllable。然后为input1分配对应的MO_1，该MO_1对应的地址为addr_1,并加上约束addr_1==input1，将MO_1的成员变量c复制给局部变量c，这里假设MO_1是controllable。局部变量c为符号。根据符号传播性，c也为controllable。
+4. 执行第6行，由于c是符号指针，同样的，为其分配MO_3，其地址为addr_3，增加约束（c==addr_3）。然后将其成员变量a复制给局部变量bomb。bomb为符号，其为controllable。
+5. 执行第7行，条件判断，KLEE会进行fork。对于True的分支，首先对c进行解引用，由于存在约束（c==addr_3），所以可以找到MO_3，并得到其成员变量d，d也是一个符号。在判断d==0时，增加约束（d==0）以保证能进入True的分支。
+6. 进入True的分支，执行第八行，遇到符号指针的赋值操作，检测机制将会去检查其对应的address和value值，根据检测机制的判断条件输出对应的vulnerability。在这里，address对应的是bomb是controllable，其ASCI为全域，value对应的是b，b也为controllable，并判断b是否可以属于危险操作范围。根据这些信息，结合检查机制，判断此处为完全可控的vulnerability。
 
 
 
@@ -226,7 +224,7 @@ func (ANYTYPE* input, ANYTYPE b){
 
 1. 初始化：input 和 b 都是符号且都为controllable。
 2. 执行第2行，程序遇到input这个符号指针，由于是解引用操作，首先分配MO，该MO为controllable，地址为addr_1。然后增加约束input==addr_1。
-3. 执行第2行，进行赋值操作，此时address是input，value是b，根据上述检测机制，通过MO信息，判断address指向的MO是否controllable，判断b是否能满足危险操作的写范围。如果是，则一定存在攻击者可控的vulnerability。反之，则可能存在有限制的写，这个可以后续再讨论。
+3. 执行第2行，进行赋值操作，此时address是input，value是b，根据上述检测机制，通过MO的control flag以及ASCI，判断是否存在vulnerability。
 4. 执行赋值操作，程序继续运行。
 
 

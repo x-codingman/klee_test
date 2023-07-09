@@ -132,30 +132,57 @@ E-->I2
 
 
 
-#### 定义
+#### 1. 定义
 
-* controllable是对一个memory object而言的，不管是指针类型或者非指针类型。controllable属性是存在memory object里面的，对应Control flag。control flag是在分配memory object的时候决定的，取决于该memory object是否可以被攻击者构造。
+* <font color="red">Control flag:</font> 定义一个MO是否是controllable。controllable是对一个memory object而言的，不管是指针类型或者非指针类型。controllable属性是存在memory object里面的，对应Control flag。control flag是在分配memory object的时候决定的，取决于该memory object是否可以被攻击者构造。
+* <font color="red">Address Space Constraints Info</font>，定义一个MO的在真实地址空间的地址范围约束，记为ASCI。该约束从程序运行过程中获得。初始化为全域。
 
-* 危险区域[DR_S,DR_E] （离线确定，固定静态范围）
+* <font color="red">危险区域[DR_S,DR_E]</font> （离线确定，固定静态范围）
 
-* 危险操作范围，对于写操作来说，即在危险区域可以写的范围，表示为[V_S, V_E]。（离线确定，固定静态范围，根据attack model定义）
+* <font color="red">危险操作范围[V_S, V_E]</font> 对于写操作来说，即在危险区域可以写的范围，表示为[V_S, V_E]。（离线确定，固定静态范围，根据attack model定义）
 
-* 攻击者能力**AC（Attack Capability）**为所有unprivileged权限下可以读写memory范围，记为\[AC_S,AC_E]。（离线确定，固定静态范围）
+* <font color="red">攻击者能力**AC（Attack Capability）**</font>为所有unprivileged权限下可以读写memory范围，记为\[AC_S,AC_E]。（离线确定，固定静态范围）
 
-#### 检查结果类型
+#### 2. 内存模型运行
 
-1. 存在vulnerability，并给出相应的test case
-2. 可能存在vulnerability，需要某些特定条件出发，比如某些攻击者不可控的global的值需要满足一定条件。
+本文针对under constrained环境下对Embedded OS的API进行符号执行，符号执行引擎为KLEE，整个执行过程与KLEE原有框架一致，然后由于缺少参数以及一些全局变量的context，本文将参数以及全局变量定义为under constrained变量(UC变量）。程序遇到UC变量将会对原有KLEE运行带来挑战，为此设计了修改了KLEE原有内存模型，对UC的非指针变量进行符号化，为UC的指针变量进行符号化并且在解引用时做lazy initialization。lazy initialization即为符号指针分配对应的memory object使该符号指针指向它。以下面程序为例，简述对UC的指针变量和非指针变量的处理。其具体执行过程如下:
 
-#### 检查机制
+```c
+char global_c;                     // treat global varible as symbilic varible
+func (ANYTYPE* input, ANYTYPE b){
+  char local_a = input->a;
+  char local_d = global_c;
+}
 
-在遇到待检测的指令执行时，我们需要判断的是变量的两个属性，是否能够被controllable，以及其限制范围。执行以下操作。
+```
 
-1. 判断address是否是controllable，若可以，执行2。
-2. 判断指令的address是否能指向危险区域，具体来说，判断DR_S<address<DR_E是否可以满足；若可以，执行3。
-3. 判断是否可以写指定的操作，即判断V_S<value<V_E是否可以满足。执行4。
-4. 若3可以满足，则存在**完全可控的vulnerability**。若不满足，可能存在vulnerability，这里可以先记录，后面有时间对这些情况具体分析。
-5. 
+1. 程序运行第3行，程序需要对input指针做解引用操作然后取得其成员变量a；然而，由于input为符号指针，我们为符号指针input做lazy initialization，分配类型为ANYTYPE的MO（memory object）并将input指向它，该MO的地址为addr，该MO同时也符号化，并且增加约束（input == addr）。然后，通过MO找到成员变量a的内容并将其赋值给local_a。
+2. 程序运行第4行，将全局变量global_c赋值给局部变量local_d，由于global_c是未初始化的全局变量（UC非指针变量），故将其作为一个符号值并赋值给local_d。
+
+#### 3. 检查机制
+
+在遇到待检测的指令执行时，我们需要判断的是变量的两个属性，是否能够被controllable，以及其限制范围。执行以下四个判断操作。
+
+1. 判断address变量的MO是否是controllable。
+2. 判断指令的address变量的MO对应的APCI是否能指向危险区域。具体来说，判断APCI与是否与[DR_S,DR_E]有交集。
+3. 判断vlaue变量的MO是否是controllable。
+4. 判断value是否可以写指定的操作，即判断V_S<value<V_E是否可以满足。
+
+#### 4. 检查结果分析
+
+检查结果有四种，分别是完全可控的vulnerability、不存在vulnerability、存在写地址限制的vulnerability、存在写内容限制的vulnerability。
+
+1. 若可以满足1、2、3、4，则存在**完全可控的vulnerability**。
+
+2. 若不满足2或者不满足4，不存在vulnerability。
+
+3. 针对剩下的可能性，则存在受限制的vulnerability。
+
+   1. 满足234，address不可控，即表示写的地址不可控，存在写地址限制的vulnerability。比如对全局变量指针进行赋值操作。赋值的value的可控的情况。触发vulnerability的情况取决于全局变量指针的初始化值。
+   2. 满足124，存在写内容限制的vulnerability。value不可控，即表示value变量不可控。然后可以触发value为固定值的vulnerability，比如只能对某一个地址赋值为0。
+   3. 满足24，存在写内容限制和写地址限制的vulnerability。
+
+   
 
 ### Case Study 2
 
@@ -177,12 +204,12 @@ privileged_api（ANYTYPE *input1，ANYTYPE *input2）
 
 初始化：对所有参数（以及部分全局变量，上述例子中未展示）进行符号化处理，其对应的memory object为controllable。
 
-* 执行第3行，input1是一个符号，遇到条件判断，KLEE对其进行分支的fork，并对分支为True的分支加上约束（mpu_region1_start < input1 < mpu_region1_start + mpu_region1_size）
+* 执行第3行，input1是一个符号，遇到条件判断，KLEE对其进行分支的fork，并对分支为True的分支加上约束（mpu_region1_start < input1 < mpu_region1_start + mpu_region1_size），将该约束放入input所在MO的ASCI中。
 * 执行第4行，input2是一个符号，遇到解引用操作。由于input2无法直接解引用，我们为input2分配一个符号化的MO_2(memory object)，该MO的地址为addr_2, 并增加约束addr2==input2。然后把对input2进行解引用，并将input2指向的MO_2中的成员变量b复制给局部变量b，由于上述MO_2是符号，根据符号的传播性，b也为符号。
-* 执行第5行，与第四行类似，然而，由于input1存在约束，首先判断约束mpu_region1_start < input1 < mpu_region1_start + mpu_region1_size与攻击者能力约束[AC_S,AC_E]是否有重合，若没有，则分配的MO的control flag为uncontrollable，反之则为controllable。然后为input1分配对应的MO_1，该MO_1对应的地址为addr_1,并加上约束addr_1==input1，由于地址空间对应关系以及约束冲突，需要将代码第三行的约束从KLEE的运行环境中删除，并将其移到MO_1的Address Info中存储以便后续使用。同样的，将MO_1的c复制给局部变量c，局部变量c为符号。
+* 执行第5行，与第四行类似，然而，由于input1存在约束，首先判断约束mpu_region1_start < input1 < mpu_region1_start + mpu_region1_size与攻击者能力约束[AC_S,AC_E]是否有重合，若没有，则分配的MO的control flag为uncontrollable，反之则为controllable。然后为input1分配对应的MO_1，该MO_1对应的地址为addr_1,并加上约束addr_1==input1，将MO_1的c复制给局部变量c，局部变量c为符号。
 * 执行第6行，由于c是符号指针，同样的，为其分配MO_3，其地址为addr_3，增加约束（c==addr_3）。然后将其成员变量a复制给局部变量bomb。bomb为符号。
 * 执行第7行，条件判断，KLEE会进行fork。对于True的分支，首先对c进行解引用，由于存在约束（c==addr_3），所以可以找到MO_3，并得到其成员变量d，d也是一个符号。在判断d==0时，增加约束（d==0）以保证能进入True的分支。
-* 执行第八行，遇到符号指针的赋值操作，检测机制将会去检查其对应的address和value值，首先发现address bomb是一个符号指针，判断(DR_S<bomb<DR_E)是否满足，对于value b，判断[V_S,<b<V_E]是否满足。如果两个条件同时满足，则输出存在Vulnerability，并输出对应的test case。如果两个条件仅有一个满足或者都不满足，对其进行记录以供后续分析。
+* 执行第八行，遇到符号指针的赋值操作，检测机制将会去检查其对应的address和value值，根据检测机制的判断条件输出对应的vulnerability。
 
 
 

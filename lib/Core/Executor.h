@@ -276,8 +276,10 @@ private:
                             bool isLocal,
                             size_t allocationAlignment);
 
-/// add
+/// add 
   bool isDesiredType(llvm::Type  *ty);
+  // Check if the MO pointed by the address can be controlled by the attacker.
+  bool isControllableAddress(ExecutionState &state, ref<Expr> address);
 
 
   /// Allocate and bind a new object in a particular state. NOTE: This

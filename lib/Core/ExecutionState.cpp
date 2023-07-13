@@ -92,6 +92,7 @@ ExecutionState::ExecutionState(const ExecutionState& state):
     depth(state.depth),
     addressSpace(state.addressSpace),
     constraints(state.constraints),
+    addressConstraintsForTargetApp(state.addressConstraintsForTargetApp),
     pathOS(state.pathOS),
     symPathOS(state.symPathOS),
     coveredLines(state.coveredLines),
@@ -366,4 +367,11 @@ void ExecutionState::addConstraint(ref<Expr> e) {
 
 void ExecutionState::addCexPreference(const ref<Expr> &cond) {
   cexPreferences = cexPreferences.insert(cond);
+}
+
+
+//
+void ExecutionState::addAddressConstraintsForTargetApp(ref<Expr> e){
+  ConstraintManager c(addressConstraintsForTargetApp);
+  c.addConstraint(e);
 }

@@ -131,6 +131,9 @@ bool AddressSpace::lazyResolve(ExecutionState &state,
                               ref<Expr> address,
                               ObjectPair &result,
                               bool &needBound) const{
+
+
+  
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(address)) {
     // Pay attention here, because the resolve of an constant expression may fail.
     // However, we don't consider dealing with it.

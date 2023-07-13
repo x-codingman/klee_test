@@ -14,6 +14,7 @@ set(SRC_FILES
         memcpy.c
         memmove.c
         memset.c
+        zephyr-os-support.c
         )
 
 # Build it

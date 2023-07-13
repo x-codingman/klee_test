@@ -183,6 +183,9 @@ public:
   /// @brief Constraints collected so far
   ConstraintSet constraints;
 
+  // Add constraints for the address space info in the target application.
+  ConstraintSet addressConstraintsForTargetApp;
+
   /// Statistics and information
 
   /// @brief Metadata utilized and collected by solvers for this state
@@ -265,6 +268,8 @@ public:
 
   // add
   void replaceEqConstraint(ref<Expr> e);
+  void addAddressConstraintsForTargetApp(ref<Expr> e);
+
   void addConstraint(ref<Expr> e);
   void addCexPreference(const ref<Expr> &cond);
 

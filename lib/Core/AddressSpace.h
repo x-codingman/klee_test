@@ -73,13 +73,15 @@ namespace klee {
     /// \invariant forall o in objects, o->copyOnWriteOwner <= cowKey
     MemoryMap objects;
 
-    // add a map to record the relation between symbolic expression and lazily allocated memory object
-    std::map<ref<Expr>, const MemoryObject*> record_map;
+    // Add a map to record whether the memory object can be constructed by the attacker.
+    std::map<const MemoryObject*, bool> mo_controllable_info;
+    // add a map to record the relation between symbolic pointer expression and lazily allocated memory object
+    std::map<ref<Expr>, const MemoryObject*> address_record_map;
     /// add a list to record the MemoryObject allocated to symbolic pointers
     std::list<const MemoryObject*> record;
 
     AddressSpace() : cowKey(1) {}
-    AddressSpace(const AddressSpace &b) : cowKey(++b.cowKey), objects(b.objects), record(b.record), record_map(b.record_map) { } // add the initialization of record 
+    AddressSpace(const AddressSpace &b) : cowKey(++b.cowKey), objects(b.objects), record(b.record), address_record_map(b.address_record_map) { } // add the initialization of record 
     ~AddressSpace() {}
 
     /// add

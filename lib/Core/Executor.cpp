@@ -94,6 +94,7 @@ typedef unsigned TypeSize;
 
 // add sxh
 #include "TestInfoRecord.h"
+#include "ArchAddressSpaceInfo.h"
 
 using namespace llvm;
 using namespace klee;
@@ -879,37 +880,9 @@ void Executor::initializeGlobalObjects(ExecutionState &state) {
       }
 
       os->write(0, newMo->getBaseExpr());
-
-      // Add stack allocation for the tskControlBlock structure in FreeRTOS
-      // if(elementType->isStructTy()){
-      //   llvm::StringRef typeName = elementType->getStructName();
-      //   klee_message(typeName.str().c_str());
-      //   if(typeName.equals("struct.tskTaskControlBlock")){
-      //       klee_message("Debug: find struct.tskTaskControlBlock, its name
-      //       is: %s", v.getName().str().c_str());
-
-      //       unsigned int stackSize=0x200;
-      //       MemoryObject *stackMo =
-      //       memory->allocate(stackSize,/*isLocal=*/false,
-      //                                   /*isGlobal=*/true, /*allocSite=*/&v,
-      //                                   /*alignment=*/alignment);
-      //       executeMakeSymbolic(state, stackMo, name);
-      //       state.addressSpace.record.push_back(stackMo);
-      //       bool needBound=false;
-      //       ObjectPair op;
-      //       ref<Expr> result=newMo->getBaseExpr();
-      //       if (state.addressSpace.lazyResolve(state, solver, result, op,
-      //       needBound)){
-      //           const ObjectState *os = op.second;
-      //           ObjectState *sos = state.addressSpace.getWriteable(newMo,
-      //           os);
-      //           sos->write(0,ConstantExpr::create(stackMo->getBaseExpr()->getZExtValue()+0x100,Expr::Int64));
-      //       }else{
-      //           terminateStateOnError(state, "Allocing stack for
-      //           struct.tskTaskControlBlock failed at global initialization",
-      //                     StateTerminationType::Ptr);
-      //       }
+      state.addressSpace.mo_controllable_info[newMo]=false;
     }
+    state.addressSpace.mo_controllable_info[mo]=false;
   }
 
   // initialise constant memory that is potentially used with external calls
@@ -1265,8 +1238,26 @@ Executor::StatePair Executor::fork(ExecutionState &current, ref<Expr> condition,
       }
     }
 
-    addConstraint(*trueState, condition);
-    addConstraint(*falseState, Expr::createIsZero(condition));
+    //TODO check if the condition contains the symbolic pointer
+    ref<Expr> left_value, right_value;
+    left_value=condition->getKid(0);
+    right_value=condition->getKid(1);
+    
+    condition->dump();
+    left_value->dump();
+    right_value->dump();
+    // If the condition contains symbolic pointer ,we just ingore it.
+    if(current.addressSpace.address_record_map.count(left_value)==0 && 
+    current.addressSpace.address_record_map.count(right_value)==0){
+      addConstraint(*trueState, condition);
+      addConstraint(*falseState, Expr::createIsZero(condition));
+    }else{
+      klee_debug_message("DEBUG: add constraints in addressConstraintsForTargetApp");
+      trueState->addAddressConstraintsForTargetApp(condition);
+      falseState->addAddressConstraintsForTargetApp(Expr::createIsZero(condition));
+    }
+    // addConstraint(*trueState, condition);
+    // addConstraint(*falseState, Expr::createIsZero(condition));
 
     // Kinda gross, do we even really still want this option?
     if (MaxDepth && MaxDepth <= trueState->depth) {
@@ -4333,7 +4324,6 @@ MemoryObject *Executor::lazyAllocTCBSymbolic(ExecutionState &state, size_t size,
   } else {
     klee_debug_message("DEBUG: Alloc stack, top address: %lu",
                        stackMo->address + stackSize / 2);
-    ObjectState *sos = bindObjectInState(state, stackMo, isLocal);
     executeMakeSymbolic(state, stackMo, "symbolic stack");
     state.addressSpace.record.push_back(stackMo);
   }
@@ -4367,6 +4357,8 @@ MemoryObject *Executor::lazyAllocTCBSymbolic(ExecutionState &state, size_t size,
 
   return mo;
 }
+
+
 
 void Executor::executeAlloc(ExecutionState &state, ref<Expr> size, bool isLocal,
                             KInstruction *target, bool zeroMemory,
@@ -4591,14 +4583,17 @@ void Executor::executeMemoryOperation(
         kid = address;
         break;
     }
-    if(state.addressSpace.record_map.count(kid)>0){
-      const MemoryObject *newMo = state.addressSpace.record_map[kid];
+    if(state.addressSpace.address_record_map.count(kid)>0){
+      const MemoryObject *newMo = state.addressSpace.address_record_map[kid];
       addConstraint(state, EqExpr::create(kid,newMo->getBaseExpr()));
+ 
+      if(state.addressSpace.mo_controllable_info[newMo]==true)
+        state.addressSpace.mo_controllable_info[newMo]= isControllableAddress(state,kid);
+
     }else{
       klee_debug_message("DEBUG: FIX ME resolve failed, cannot find the recorded symbolic pointer");
       terminateStateOnError(state, "resolve failed", StateTerminationType::Ptr);
     }
-    
   }
   // Check if the address can be resolved after allocation
   if (!success) {
@@ -4626,25 +4621,54 @@ void Executor::executeMemoryOperation(
       // add memory address constraint
       //  Test if the attacker can write a desired value on the memory.
       uint64_t desired_value = 0;
+      uint64_t desired_address_start=MPU_ENABLE_ADDRESS;
+      uint64_t desired_address_end=MPU_ENABLE_ADDRESS;
       solver->setTimeout(coreSolverTimeout);
-      bool result = false;
-      bool success = solver->mayBeTrue(
-          state.constraints,
-          EqExpr::create(ConstantExpr::create(desired_value, type), value),
-          result, state.queryMetaData);
-      assert(success && "FIXME: Unhandled solver failure");
-      if (result) {
-        std::string currentVulnerabilityInfo =
-            target->info->file + ":" + std::to_string(target->info->line);
-        auto it = testInfoRecordSet.find(currentVulnerabilityInfo);
-        if (it == testInfoRecordSet.end()) {
-          testInfoRecordSet.insert(currentVulnerabilityInfo);
-          klee_test_info("Error: symbolic pointer to write a desired value %lu "
-                         "on file %s: line %d",
-                         desired_value, target->info->file.c_str(),
-                         target->info->line);
+      bool value_test_result = false;
+      bool address_test_result = false;
+      bool success;
+      
+      //Check if the MO is controllable
+      bool address_controllable = state.addressSpace.mo_controllable_info[mo];
+      if(address_controllable){
+                //Check the address to see whether it can reach dangrous region.
+        //First we check if address > desired_address_start has a solution
+        success = solver->mayBeTrue(
+        state.addressConstraintsForTargetApp,
+        UgeExpr::create(address, ConstantExpr::create(desired_address_start, address->getWidth())),
+        address_test_result, state.queryMetaData);
+        assert(success && "FIXME: Unhandled solver failure");
+
+        //If so, then we check if address < desired_address_end has a solution
+        if(address_test_result){
+          success = solver->mayBeTrue(
+          state.addressConstraintsForTargetApp,
+          UleExpr::create(address,ConstantExpr::create(desired_address_end, address->getWidth())),
+          address_test_result, state.queryMetaData);
+        }
+        assert(success && "FIXME: Unhandled solver failure");
+
+        //After that, we check if the value can be written with desired value. 
+        success = solver->mayBeTrue(
+            state.constraints,
+            EqExpr::create(ConstantExpr::create(desired_value, type), value),
+            value_test_result, state.queryMetaData);
+        assert(success && "FIXME: Unhandled solver failure");
+        if (value_test_result && address_test_result ) {
+          std::string currentVulnerabilityInfo =
+              target->info->file + ":" + std::to_string(target->info->line);
+          auto it = testInfoRecordSet.find(currentVulnerabilityInfo);
+          if (it == testInfoRecordSet.end()) {
+            testInfoRecordSet.insert(currentVulnerabilityInfo);
+            klee_test_info("Error: write vulnerability"
+                          "on file %s: line %d. desired value: %lu, desired address %lu-%lu",
+                            target->info->file.c_str(),
+                          target->info->line, desired_value,
+                          desired_address_start,desired_address_end);
+          }
         }
       }
+
     }
   }
 
@@ -4692,7 +4716,7 @@ void Executor::executeMemoryOperation(
         size_t alignment = bytes;
         MemoryObject *newMo=NULL;
         if (isDesiredType(elementType)) {
-            klee_debug_message("DEBUG: alloc TCB in executionMemoryOperation!!"); 
+            klee_debug_message("DEBUG: alloc TCB in executeMemoryOperation!!"); 
             size_t stackSize=0x1000;
             newMo=lazyAllocTCBSymbolic(state,(size_t)elementSize,stackSize,false,alignment);
         }
@@ -4711,7 +4735,17 @@ void Executor::executeMemoryOperation(
         //   result = wos->read(mo->getOffsetExpr(address), type);
         // }
         //addConstraint(state, EqExpr::create(result, newMo->getBaseExpr()));
-        state.addressSpace.record_map[result]=newMo;
+        state.addressSpace.address_record_map[result]=newMo;
+
+        //Initialize the mo if there is no record for whether it is controllable.
+        if(state.addressSpace.mo_controllable_info.count(mo)==0){
+          state.addressSpace.mo_controllable_info[mo]=true;
+        }
+        // Assign the controllable flag as same as its pointer
+        state.addressSpace.mo_controllable_info[newMo]=state.addressSpace.mo_controllable_info[mo];
+
+        
+        
         result->dump();
         klee_debug_message("DEBUG: The symbolic pointer has been allocated, alloc size: %lu,\
         alloc address: %lu",elementSize,newMo->address);
@@ -5364,5 +5398,28 @@ bool Executor::isDesiredType(llvm::Type *ty) {
       return true;
     }
   }
+  return false;
+}
+
+
+
+bool Executor::isControllableAddress(ExecutionState &state, ref<Expr> address){
+  ref<Expr> e1 = UleExpr::create(address,ConstantExpr::alloc(ATTACK_CAPABILITY_REGION_END,address->getWidth()));
+  ref<Expr> e2 = UgeExpr::create(address,ConstantExpr::alloc(ATTACK_CAPABILITY_REGION_START,address->getWidth()));
+  address->dump();
+  bool success1,result1,success2, result2;
+  success1 = solver->mayBeTrue(state.addressConstraintsForTargetApp, e1, result1,state.queryMetaData);
+  assert(success1 && "FIXME: Unhandled solver failure");
+  if(result1){
+      success2 = solver->mayBeTrue(state.addressConstraintsForTargetApp, e2, result2,state.queryMetaData);
+      assert(success2 && "FIXME: Unhandled solver failure");
+      if (result2){
+        address->dump();
+        klee_debug_message("DEBUG: detect controllable address");
+        return true;
+      }
+
+  }
+  klee_debug_message("DEBUG: detect uncontrollable address");
   return false;
 }

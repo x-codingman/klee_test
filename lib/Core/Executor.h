@@ -279,7 +279,7 @@ private:
 /// add 
   bool isDesiredType(llvm::Type  *ty);
   // Check if the MO pointed by the address can be controlled by the attacker.
-  bool isControllableAddress(ExecutionState &state, ref<Expr> address);
+  bool isControllableAddress(ExecutionState &state, ref<Expr> addr);
 
 
   /// Allocate and bind a new object in a particular state. NOTE: This
@@ -346,6 +346,8 @@ private:
 
   void executeMakeSymbolic(ExecutionState &state, const MemoryObject *mo,
                            const std::string &name);
+  void executeMakeSymbolic(ExecutionState &state, const MemoryObject *mo,
+                           const std::string &name,bool isControllable);
 
   /// Create a new state where each input condition has been added as
   /// a constraint and return the results. The input state is included

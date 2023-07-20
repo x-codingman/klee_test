@@ -81,7 +81,7 @@ bool AddressSpace::isSymbolicBaseAddress(const ref<ConstantExpr> &addr){
 }
 
 
-// add wym
+// Test  if the address is a symbolic address.
 bool AddressSpace::isSymbolicAddress(const ref<ConstantExpr> &addr){
   uint64_t address = addr->getZExtValue();
   std::list<const MemoryObject*>::const_iterator begin = record.begin();
@@ -98,6 +98,42 @@ bool AddressSpace::isSymbolicAddress(const ref<ConstantExpr> &addr){
   }
   return false;
 }
+
+std::pair< MemoryObject*, uint64_t > AddressSpace::findMemoryObject(const ref<ConstantExpr> &addr){
+  std::pair< MemoryObject*, uint64_t >result;
+  uint64_t address = addr->getZExtValue();
+  std::list<const MemoryObject*>::const_iterator begin = record.begin();
+  std::list<const MemoryObject*>::const_iterator end = record.end();
+  std::list<const MemoryObject*>::const_iterator oi = end;
+
+  while(oi != begin){
+    --oi;
+    const MemoryObject *mo = *oi;
+    if ((mo->size==0 && address==mo->address) ||
+        (address - mo->address < mo->size)) {
+      result.first = const_cast<MemoryObject *>(mo);
+      result.second = address - mo->address;
+      break;
+    }
+  }
+  return result;
+}
+
+ref<Expr> AddressSpace::getOriginalExprFromMo(MemoryObject * mo){
+  assert(mo!=NULL && "Invalid mo in getOriginalExprFromMo");
+  std::map<ref<Expr>, const MemoryObject*>::const_iterator begin = address_mo_info.begin();
+  std::map<ref<Expr>, const MemoryObject*>::const_iterator end = address_mo_info.end();
+  std::map<ref<Expr>, const MemoryObject*>::const_iterator oi = end;
+  while(oi != begin){
+    oi--;
+    if (oi->second == mo){
+      return oi->first;
+    }
+  }
+  return NULL;
+}
+
+
 
 bool AddressSpace::resolveOne(const ref<ConstantExpr> &addr, 
                               ObjectPair &result) const {

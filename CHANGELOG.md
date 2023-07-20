@@ -14,3 +14,11 @@
 - 更新发现vulnerability的输出内容，输出address以及value的值。
 - 更新检查机制,对地址范围进行判断，对MO的可控属性进行判断。
 - 更新对global变量的MO初始化，暂把所有global变量设置为不可控。
+
+## [3.5.2] - 2023-7-18 - 2023-7-20
+- 增加mo_controllable_info的初始化。
+- 增加klee_make_symbolic_controllable函数
+- 修复load阶段多次分配mo的问题，导致controllable flag无法有效传播。
+- 修改mo_controllable_info的初始化，之前修改有误。
+- 增加findMemoryObject，用于根据一个具体值找到其对应的MO。
+- 修改isControllableAddress，cover 存在address被具体化后的情况。

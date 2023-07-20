@@ -12,6 +12,7 @@
 
 #include "stdint.h"
 #include "stddef.h"
+#include "stdbool.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,6 +37,11 @@ extern "C" {
    */
   void klee_make_symbolic(void *addr, size_t nbytes, const char *name);
 
+
+  /* klee_make_symbolic_controllable - Add controllable info based on klee_make_symbolic.
+   * \arg isControllable - the controllable info of the corresponding memory object. 
+   */
+  void klee_make_symbolic_controllable(void *addr, size_t nbytes, const char *name, bool isControllable);
   /* klee_range - Construct a symbolic value in the signed interval
    * [begin,end).
    *

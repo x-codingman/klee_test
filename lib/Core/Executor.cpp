@@ -1247,8 +1247,8 @@ Executor::StatePair Executor::fork(ExecutionState &current, ref<Expr> condition,
     left_value->dump();
     right_value->dump();
     // If the condition contains symbolic pointer ,we just ingore it.
-    if(current.addressSpace.address_record_map.count(left_value)==0 && 
-    current.addressSpace.address_record_map.count(right_value)==0){
+    if(current.addressSpace.address_mo_info.count(left_value)==0 && 
+    current.addressSpace.address_mo_info.count(right_value)==0){
       addConstraint(*trueState, condition);
       addConstraint(*falseState, Expr::createIsZero(condition));
     }else{
@@ -2913,149 +2913,165 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 
     // add to reallocate memory for symbolic pointer to conversion type
     // version 3
-    // Type * fromType =
-    // ki->inst->getOperand(0)->getType()->getPointerElementType(); unsigned
-    // fromSize = kmodule->targetData->getTypeStoreSize(fromType); Type *
-    // elementType = ki->inst->getType()->getPointerElementType(); unsigned
-    // elementSize = kmodule->targetData->getTypeStoreSize(elementType); if
-    // (isa<ConcatExpr>(result) &&
-    // ki->inst->getOperand(0)->getType()->isPointerTy() &&
-    // ki->inst->getType()->isPointerTy() && elementSize > fromSize){
+    Type * fromType =
+    ki->inst->getOperand(0)->getType()->getPointerElementType(); unsigned
+    fromSize = kmodule->targetData->getTypeStoreSize(fromType); Type *
+    elementType = ki->inst->getType()->getPointerElementType(); unsigned
+    elementSize = kmodule->targetData->getTypeStoreSize(elementType); if
+    (isa<ConcatExpr>(result) &&
+    ki->inst->getOperand(0)->getType()->isPointerTy() &&
+    ki->inst->getType()->isPointerTy() && elementSize > fromSize){
+      ObjectPair op;
+      bool needBound = false;
+      if (state.addressSpace.address_mo_info.count(result)!=0)
+      {
+        const MemoryObject *oldMo = state.addressSpace.address_mo_info[result];
+        
+        // Fix here, the old memory is not really deleted
+        // remove the memory object from the record
+        state.addressSpace.record.remove(oldMo);
+        size_t alignment = 8;
+        ref<Expr> size = Expr::createPointer(elementSize);
+        MemoryObject* newMo = NULL;
+        if (isDesiredType(elementType)) {
+            klee_debug_message("DEBUG: alloc TCB in executeMemoryOperation!!"); 
+            size_t stackSize=0x1000;
+            newMo=lazyAllocTCBSymbolic(state,(size_t)elementSize,stackSize,false,alignment);
+        }
+
+        if(newMo==NULL)
+          newMo = lazyAlloc(state, size, false, ki, alignment);
+        std::string name = "";
+        executeMakeSymbolic(state, newMo, name);
+        state.addressSpace.address_mo_info[result] = newMo;
+        state.addressSpace.mo_controllable_info[newMo] = state.addressSpace.mo_controllable_info[oldMo];
+      }
+    }
+
+    // //       // second to reallocate new memory
+    // //       ref<Expr> size = Expr::createPointer(elementSize);
+    // //       size_t alignment = 8;
+    // //       MemoryObject *newMo = lazyAlloc(state, size, true, ki, alignment);
+    // //       std::string name = "";//address->toString();
+    // //       executeMakeSymbolic(state, newMo, name);
+
+    // //       // ref<Expr> Bound = EqExpr::create(newMo->getBaseExpr(), result);
+    // //       // state.replaceEqConstraint(Bound);
+
+    // //       // record the new relation
+    // //       state.addressSpace.record.push_back(newMo);
+
+    // //       klee_message("The pointer is converted");
+    // //     }
+    // //     else{
+    // //       terminateStateOnError(state, "resolve doesn't return the newly
+    // //       allocated memory",
+    // //                             StateTerminationType::Ptr);
+    // //     }
+    // //   }
+    // // }
+
+    // // add to reallocate memory for symbolic pointer to conversion type
+    // // version 2
+
+    // Type *fromType =
+    //     ki->inst->getOperand(0)->getType()->getPointerElementType();
+    // unsigned fromSize = kmodule->targetData->getTypeStoreSize(fromType);
+    // Type *elementType = ki->inst->getType()->getPointerElementType();
+    // unsigned elementSize = kmodule->targetData->getTypeStoreSize(elementType);
+
+    // // We only convert the void pointer to other type pointers because LLVM can
+    // // not identify void pointer at this version. LLVM will treat void pointer
+    // // as i8 pointer
+    // llvm::LLVMContext context;
+    // Type *i8Type = llvm::Type::getInt8Ty(context);
+    // klee_debug_message("DEBUG: Bitcast: typeID :%d", fromType->getTypeID());
+    // klee_debug_message("DEBUG: Bitcast: typeID :%d", i8Type->getTypeID());
+    // klee_debug_message("DEBUG: Bitcast: type from size :%d", fromSize);
+    // klee_debug_message("DEBUG: Bitcast: type element size :%d", elementSize);
+    // if (ConstantExpr *CE = dyn_cast<ConstantExpr>(result)) {
+    //   klee_debug_message("DEBUG: Bitcast: address:%lu", CE->getZExtValue());
+    // }
+
+    // if (elementSize > fromSize &&
+    //     ki->inst->getOperand(0)->getType()->isPointerTy() &&
+    //     ki->inst->getType()->isPointerTy()) {
+
     //   ObjectPair op;
     //   bool needBound = false;
     //   if (state.addressSpace.lazyResolve(state, solver, result, op,
-    //   needBound)){
+    //                                      needBound)) {
     //     const MemoryObject *oldMo = op.first;
-    //     if (state.addressSpace.isSymbolicBaseAddress(oldMo->getBaseExpr())){
-    //       // first to delete the old memory
-    //       // Fix here, the old memory is not really deleted
-    //       // remove the memory object from the record
-    //       state.addressSpace.record.remove(oldMo);
 
-    //       // second to reallocate new memory
-    //       ref<Expr> size = Expr::createPointer(elementSize);
-    //       size_t alignment = 8;
-    //       MemoryObject *newMo = lazyAlloc(state, size, true, ki, alignment);
-    //       std::string name = "";//address->toString();
-    //       executeMakeSymbolic(state, newMo, name);
+    //     // check the memory object size
+    //     klee_debug_message("DEBUG: object size: %d", oldMo->size);
+    //     if (state.addressSpace.isSymbolicBaseAddress(oldMo->getBaseExpr())) {
+    //       KInstIterator prevIR = state.prevPC;
+    //       --prevIR;
+    //       if (isa<LoadInst>(prevIR->inst)) {
+    //         KInstruction *prevIn = prevIR;
+    //         ref<Expr> left = getDestCell(state, prevIn).value;
+    //         if (left == result) {
+    //           // first to delete the old memory
+    //           // Fix here, the old memory is not really deleted
+    //           // remove the memory object from the record
+    //           state.addressSpace.objects.remove(oldMo);
+    //           state.addressSpace.record.remove(oldMo);
 
-    //       // ref<Expr> Bound = EqExpr::create(newMo->getBaseExpr(), result);
-    //       // state.replaceEqConstraint(Bound);
+    //           // second to reallocate new memory
+    //           ref<Expr> size = Expr::createPointer(elementSize);
+    //           size_t alignment = 8;
+    //           MemoryObject *newMo = NULL;
+    //           if (isDesiredType(elementType)) {
+    //             newMo = lazyAllocTCBSymbolic(state, elementSize, 0x1000, false,
+    //                                          alignment);
+    //           } else {
+    //             newMo =
+    //                 lazyAlloc(state, size, !oldMo->isAGlobal(), ki, alignment);
+    //           }
 
-    //       // record the new relation
-    //       state.addressSpace.record.push_back(newMo);
+    //           // third to backtrack the IR to modify the value of the symbolic
+    //           // pointer It is supposed that a corresponding load instruciton
+    //           // before it
+    //           ref<Expr> base = eval(prevIR, 0, state).value;
+    //           ObjectPair op;
+    //           bool needBound = false;
+    //           if (state.addressSpace.lazyResolve(state, solver, base, op,
+    //                                              needBound)) {
+    //             const MemoryObject *mo = op.first;
+    //             const ObjectState *os = op.second;
+    //             ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+    //             wos->write(mo->getOffsetExpr(base), newMo->getBaseExpr());
+    //             // update the result
+    //             // result = newMo->getBaseExpr();
+    //             result = wos->read(mo->getOffsetExpr(base), 64);
+    //           }
+    //           klee_debug_message(
+    //               "DEBUG: Bitcast: Load-bitcast:The pointer is converted, "
+    //               "states size: %d",
+    //               (int)states.size());
+    //         } else {
 
-    //       klee_message("The pointer is converted");
+    //           terminateStateOnError(
+    //               state,
+    //               "Bitcast: Not the corresponding load instruction "
+    //               "before symbol pointer type conversion",
+    //               StateTerminationType::Ptr);
+    //         }
+    //       } else {
+    //         klee_debug_message(
+    //             "DEBUG: Bitcast: Not a load instruction before symbol pointer "
+    //             "type conversion");
+    //       }
+    //     } else {
+    //       klee_debug_message("DEBUG: Bitcas: Not a symbolic base address ");
     //     }
-    //     else{
-    //       terminateStateOnError(state, "resolve doesn't return the newly
-    //       allocated memory",
-    //                             StateTerminationType::Ptr);
-    //     }
+
+    //   } else {
+    //     klee_debug_message(
+    //         "DEBUG: Bitcast: The pointer has not been allocated");
     //   }
     // }
-
-    // add to reallocate memory for symbolic pointer to conversion type
-    // version 2
-
-    Type *fromType =
-        ki->inst->getOperand(0)->getType()->getPointerElementType();
-    unsigned fromSize = kmodule->targetData->getTypeStoreSize(fromType);
-    Type *elementType = ki->inst->getType()->getPointerElementType();
-    unsigned elementSize = kmodule->targetData->getTypeStoreSize(elementType);
-
-    // We only convert the void pointer to other type pointers because LLVM can
-    // not identify void pointer at this version. LLVM will treat void pointer
-    // as i8 pointer
-    llvm::LLVMContext context;
-    Type *i8Type = llvm::Type::getInt8Ty(context);
-    klee_debug_message("DEBUG: Bitcast: typeID :%d", fromType->getTypeID());
-    klee_debug_message("DEBUG: Bitcast: typeID :%d", i8Type->getTypeID());
-    klee_debug_message("DEBUG: Bitcast: type from size :%d", fromSize);
-    klee_debug_message("DEBUG: Bitcast: type element size :%d", elementSize);
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(result)) {
-      klee_debug_message("DEBUG: Bitcast: address:%lu", CE->getZExtValue());
-    }
-
-    if (elementSize > fromSize &&
-        ki->inst->getOperand(0)->getType()->isPointerTy() &&
-        ki->inst->getType()->isPointerTy()) {
-
-      ObjectPair op;
-      bool needBound = false;
-      if (state.addressSpace.lazyResolve(state, solver, result, op,
-                                         needBound)) {
-        const MemoryObject *oldMo = op.first;
-
-        // check the memory object size
-        klee_debug_message("DEBUG: object size: %d", oldMo->size);
-        if (state.addressSpace.isSymbolicBaseAddress(oldMo->getBaseExpr())) {
-          KInstIterator prevIR = state.prevPC;
-          --prevIR;
-          if (isa<LoadInst>(prevIR->inst)) {
-            KInstruction *prevIn = prevIR;
-            ref<Expr> left = getDestCell(state, prevIn).value;
-            if (left == result) {
-              // first to delete the old memory
-              // Fix here, the old memory is not really deleted
-              // remove the memory object from the record
-              state.addressSpace.objects.remove(oldMo);
-              state.addressSpace.record.remove(oldMo);
-
-              // second to reallocate new memory
-              ref<Expr> size = Expr::createPointer(elementSize);
-              size_t alignment = 8;
-              MemoryObject *newMo = NULL;
-              if (isDesiredType(elementType)) {
-                newMo = lazyAllocTCBSymbolic(state, elementSize, 0x1000, false,
-                                             alignment);
-              } else {
-                newMo =
-                    lazyAlloc(state, size, !oldMo->isAGlobal(), ki, alignment);
-              }
-
-              // third to backtrack the IR to modify the value of the symbolic
-              // pointer It is supposed that a corresponding load instruciton
-              // before it
-              ref<Expr> base = eval(prevIR, 0, state).value;
-              ObjectPair op;
-              bool needBound = false;
-              if (state.addressSpace.lazyResolve(state, solver, base, op,
-                                                 needBound)) {
-                const MemoryObject *mo = op.first;
-                const ObjectState *os = op.second;
-                ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-                wos->write(mo->getOffsetExpr(base), newMo->getBaseExpr());
-                // update the result
-                // result = newMo->getBaseExpr();
-                result = wos->read(mo->getOffsetExpr(base), 64);
-              }
-              klee_debug_message(
-                  "DEBUG: Bitcast: Load-bitcast:The pointer is converted, "
-                  "states size: %d",
-                  (int)states.size());
-            } else {
-
-              terminateStateOnError(
-                  state,
-                  "Bitcast: Not the corresponding load instruction "
-                  "before symbol pointer type conversion",
-                  StateTerminationType::Ptr);
-            }
-          } else {
-            klee_debug_message(
-                "DEBUG: Bitcast: Not a load instruction before symbol pointer "
-                "type conversion");
-          }
-        } else {
-          klee_debug_message("DEBUG: Bitcas: Not a symbolic base address ");
-        }
-
-      } else {
-        klee_debug_message(
-            "DEBUG: Bitcast: The pointer has not been allocated");
-      }
-    }
     bindLocal(ki, state, result);
     break;
   }
@@ -4293,6 +4309,7 @@ MemoryObject *Executor::lazyAlloc(ExecutionState &state, ref<Expr> size,
   }
   std::string name =
       "alloc" + llvm::utostr(++allocname); // address->toString();
+  klee_debug_message("DEBUG: Lazy alloc name: %s",name.c_str());
   executeMakeSymbolic(state, mo, name);
   state.addressSpace.record.push_back(mo);
 
@@ -4583,8 +4600,9 @@ void Executor::executeMemoryOperation(
         kid = address;
         break;
     }
-    if(state.addressSpace.address_record_map.count(kid)>0){
-      const MemoryObject *newMo = state.addressSpace.address_record_map[kid];
+    kid->dump();
+    if(state.addressSpace.address_mo_info.count(kid)>0){
+      const MemoryObject *newMo = state.addressSpace.address_mo_info[kid];
       addConstraint(state, EqExpr::create(kid,newMo->getBaseExpr()));
  
       if(state.addressSpace.mo_controllable_info[newMo]==true)
@@ -4625,7 +4643,7 @@ void Executor::executeMemoryOperation(
       uint64_t desired_address_end=MPU_ENABLE_ADDRESS;
       solver->setTimeout(coreSolverTimeout);
       bool value_test_result = false;
-      bool address_test_result = false;
+      bool address_test_result = true;
       bool success;
       
       //Check if the MO is controllable
@@ -4633,20 +4651,20 @@ void Executor::executeMemoryOperation(
       if(address_controllable){
                 //Check the address to see whether it can reach dangrous region.
         //First we check if address > desired_address_start has a solution
-        success = solver->mayBeTrue(
-        state.addressConstraintsForTargetApp,
-        UgeExpr::create(address, ConstantExpr::create(desired_address_start, address->getWidth())),
-        address_test_result, state.queryMetaData);
-        assert(success && "FIXME: Unhandled solver failure");
+        // success = solver->mayBeTrue(
+        // state.addressConstraintsForTargetApp,
+        // UgeExpr::create(address, ConstantExpr::create(desired_address_start, address->getWidth())),
+        // address_test_result, state.queryMetaData);
+        // assert(success && "FIXME: Unhandled solver failure");
 
-        //If so, then we check if address < desired_address_end has a solution
-        if(address_test_result){
-          success = solver->mayBeTrue(
-          state.addressConstraintsForTargetApp,
-          UleExpr::create(address,ConstantExpr::create(desired_address_end, address->getWidth())),
-          address_test_result, state.queryMetaData);
-        }
-        assert(success && "FIXME: Unhandled solver failure");
+        // //If so, then we check if address < desired_address_end has a solution
+        // if(address_test_result){
+        //   success = solver->mayBeTrue(
+        //   state.addressConstraintsForTargetApp,
+        //   UleExpr::create(address,ConstantExpr::create(desired_address_end, address->getWidth())),
+        //   address_test_result, state.queryMetaData);
+        // }
+        // assert(success && "FIXME: Unhandled solver failure");
 
         //After that, we check if the value can be written with desired value. 
         success = solver->mayBeTrue(
@@ -4677,14 +4695,17 @@ void Executor::executeMemoryOperation(
       terminateStateOnError(state, "memory error: object read only",
                             StateTerminationType::ReadOnly);
     } else {
+      address.get()->dump();
+      value.get()->dump();
       ObjectState *wos = state.addressSpace.getWriteable(mo, os);
       wos->write(mo->getOffsetExpr(address), value);
     }
   } else {
     ref<Expr> result = os->read(mo->getOffsetExpr(address), type);
-
+    
     if (target->inst->getType()->isPointerTy() &&
-        dyn_cast<ConcatExpr>(result)) {
+        dyn_cast<ConcatExpr>(result)
+        && state.addressSpace.address_mo_info.count(result)==0) {
       // It needs resolve here to determine whether the pointer represented
       
       // the result has been allocated the pointer cannot be resolved, so
@@ -4693,8 +4714,9 @@ void Executor::executeMemoryOperation(
       bool resultNeedBound = false;
       if (!state.addressSpace.lazyResolve(state, solver, result, resultOp,
                                           resultNeedBound)) {
-        //address.get()->dump();
-        //result.get()->dump();
+        klee_debug_message("dump address and result");
+        address.get()->dump();
+        result.get()->dump();
 
         llvm::Type *elementType =
             target->inst->getType()->getPointerElementType();
@@ -4735,18 +4757,24 @@ void Executor::executeMemoryOperation(
         //   result = wos->read(mo->getOffsetExpr(address), type);
         // }
         //addConstraint(state, EqExpr::create(result, newMo->getBaseExpr()));
-        state.addressSpace.address_record_map[result]=newMo;
+        state.addressSpace.address_mo_info[result]=newMo;
 
         //Initialize the mo if there is no record for whether it is controllable.
         if(state.addressSpace.mo_controllable_info.count(mo)==0){
-          state.addressSpace.mo_controllable_info[mo]=true;
+          state.addressSpace.mo_controllable_info[mo]=false;
         }
         // Assign the controllable flag as same as its pointer
         state.addressSpace.mo_controllable_info[newMo]=state.addressSpace.mo_controllable_info[mo];
+        klee_debug_message("mo address: %lu",mo->address);
+        klee_debug_message("newMo address: %lu",newMo->address);
+        if(state.addressSpace.mo_controllable_info[newMo]){
+          klee_debug_message("alloc controllable mo!!!");
+        }else{
+          klee_debug_message("alloc uncontrollable mo!!!");
+        }
 
         
         
-        result->dump();
         klee_debug_message("DEBUG: The symbolic pointer has been allocated, alloc size: %lu,\
         alloc address: %lu",elementSize,newMo->address);
       }
@@ -4764,7 +4792,6 @@ void Executor::executeMemoryOperation(
         }
       }
     }
-
     bindLocal(target, state, result);
   }
 
@@ -4994,6 +5021,17 @@ void Executor::executeMakeSymbolic(ExecutionState &state,
     }
   }
 }
+
+
+// Add overloaded function of executeMakeSymbolic to add controllable info.
+void Executor::executeMakeSymbolic(ExecutionState &state,
+                                   const MemoryObject *mo,
+                                   const std::string &name,
+                                   bool isControllable) {
+  state.addressSpace.mo_controllable_info[mo] = isControllable;
+  executeMakeSymbolic(state,mo,name);
+}
+
 
 /***/
 
@@ -5403,7 +5441,13 @@ bool Executor::isDesiredType(llvm::Type *ty) {
 
 
 
-bool Executor::isControllableAddress(ExecutionState &state, ref<Expr> address){
+bool Executor::isControllableAddress(ExecutionState &state, ref<Expr> addr){
+  ref<Expr> address = addr;
+  if(ConstantExpr *CE = dyn_cast<ConstantExpr>(addr)){
+    std::pair<MemoryObject*, uint64_t> moPair = state.addressSpace.findMemoryObject(CE);
+    address = state.addressSpace.getOriginalExprFromMo(moPair.first);
+    assert(address && "FIX ME: find mo with no existing record");
+  }
   ref<Expr> e1 = UleExpr::create(address,ConstantExpr::alloc(ATTACK_CAPABILITY_REGION_END,address->getWidth()));
   ref<Expr> e2 = UgeExpr::create(address,ConstantExpr::alloc(ATTACK_CAPABILITY_REGION_START,address->getWidth()));
   address->dump();
@@ -5423,3 +5467,7 @@ bool Executor::isControllableAddress(ExecutionState &state, ref<Expr> address){
   klee_debug_message("DEBUG: detect uncontrollable address");
   return false;
 }
+
+
+
+

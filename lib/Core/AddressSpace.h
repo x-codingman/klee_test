@@ -76,12 +76,12 @@ namespace klee {
     // Add a map to record whether the memory object can be constructed by the attacker.
     std::map<const MemoryObject*, bool> mo_controllable_info;
     // add a map to record the relation between symbolic pointer expression and lazily allocated memory object
-    std::map<ref<Expr>, const MemoryObject*> address_record_map;
+    std::map<ref<Expr>, const MemoryObject*> address_mo_info;
     /// add a list to record the MemoryObject allocated to symbolic pointers
     std::list<const MemoryObject*> record;
 
     AddressSpace() : cowKey(1) {}
-    AddressSpace(const AddressSpace &b) : cowKey(++b.cowKey), objects(b.objects), record(b.record), address_record_map(b.address_record_map) { } // add the initialization of record 
+    AddressSpace(const AddressSpace &b) : cowKey(++b.cowKey), objects(b.objects), record(b.record),mo_controllable_info(b.mo_controllable_info), address_mo_info(b.address_mo_info) { } // add the initialization of record 
     ~AddressSpace() {}
 
     /// add
@@ -92,6 +92,11 @@ namespace klee {
     /// \return true iff is a symbolic address.
     bool isSymbolicAddress(const ref<ConstantExpr> &addr);
 
+    // add
+    // Find the mo according to the constant address.
+    std::pair< MemoryObject*, uint64_t > findMemoryObject(const ref<ConstantExpr> &addr);
+
+    ref<Expr> getOriginalExprFromMo(MemoryObject * mo);
     /// Resolve address to an ObjectPair in result.
     /// \return true iff an object was found.
     bool resolveOne(const ref<ConstantExpr> &address,

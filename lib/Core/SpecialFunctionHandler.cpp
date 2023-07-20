@@ -102,6 +102,7 @@ static SpecialFunctionHandler::HandlerInfo handlerInfo[] = {
 #endif
   add("klee_is_symbolic", handleIsSymbolic, true),
   add("klee_make_symbolic", handleMakeSymbolic, false),
+  add("klee_make_symbolic_controllable",handleMakeSymbolicControllable,false),
   add("klee_mark_global", handleMarkGlobal, false),
   add("klee_open_merge", handleOpenMerge, false),
   add("klee_close_merge", handleCloseMerge, false),
@@ -849,6 +850,59 @@ void SpecialFunctionHandler::handleMakeSymbolic(ExecutionState &state,
     
     if (res) {
       executor.executeMakeSymbolic(*s, mo, name);
+    } else {      
+      executor.terminateStateOnUserError(*s, "Wrong size given to klee_make_symbolic");
+    }
+  }
+}
+
+void SpecialFunctionHandler::handleMakeSymbolicControllable(ExecutionState &state,
+                                                KInstruction *target,
+                                                std::vector<ref<Expr> > &arguments) {
+  std::string name;
+
+  if (arguments.size() != 4) {
+    executor.terminateStateOnUserError(state,
+        "Incorrect number of arguments to klee_make_symbolic_controllable(void*, size_t, char*)");
+    return;
+  }
+
+  name = arguments[2]->isZero() ? "" : readStringAtAddress(state, arguments[2]);
+
+  bool isControllable = arguments[3]->isZero() ? false : true;
+  if (name.length() == 0) {
+    name = "unnamed";
+    klee_warning("klee_make_symbolic: renamed empty name to \"unnamed\"");
+  }
+
+  Executor::ExactResolutionList rl;
+  executor.resolveExact(state, arguments[0], rl, "make_symbolic");
+  
+  for (Executor::ExactResolutionList::iterator it = rl.begin(), 
+         ie = rl.end(); it != ie; ++it) {
+    const MemoryObject *mo = it->first.first;
+    mo->setName(name);
+    
+    const ObjectState *old = it->first.second;
+    ExecutionState *s = it->second;
+    
+    if (old->readOnly) {
+      executor.terminateStateOnUserError(*s, "cannot make readonly object symbolic");
+      return;
+    } 
+
+    // FIXME: Type coercion should be done consistently somewhere.
+    bool res;
+    bool success __attribute__((unused)) = executor.solver->mustBeTrue(
+        s->constraints,
+        EqExpr::create(
+            ZExtExpr::create(arguments[1], Context::get().getPointerWidth()),
+            mo->getSizeExpr()),
+        res, s->queryMetaData);
+    assert(success && "FIXME: Unhandled solver failure");
+    
+    if (res) {
+      executor.executeMakeSymbolic(*s, mo, name, isControllable);
     } else {      
       executor.terminateStateOnUserError(*s, "Wrong size given to klee_make_symbolic");
     }

@@ -123,6 +123,7 @@ namespace klee {
     HANDLER(handleGetValue);
     HANDLER(handleIsSymbolic);
     HANDLER(handleMakeSymbolic);
+    HANDLER(handleMakeSymbolicControllable);
     HANDLER(handleMalloc);
     HANDLER(handleMemalign);
     HANDLER(handleMarkGlobal);

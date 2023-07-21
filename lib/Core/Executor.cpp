@@ -4573,8 +4573,11 @@ void Executor::executeMemoryOperation(
 
   if (!isa<ConstantExpr>(address))
     address = ConstraintManager::simplifyExpr(state.constraints, address);
-  if (isWrite && !isa<ConstantExpr>(value))
+  if (isWrite && !isa<ConstantExpr>(value)){
+  
     value = ConstraintManager::simplifyExpr(state.constraints, value);
+  }
+    
 
   address = optimizer.optimizeExpr(address, true);
 
@@ -4600,13 +4603,16 @@ void Executor::executeMemoryOperation(
         kid = address;
         break;
     }
-    kid->dump();
+    
     if(state.addressSpace.address_mo_info.count(kid)>0){
       const MemoryObject *newMo = state.addressSpace.address_mo_info[kid];
       addConstraint(state, EqExpr::create(kid,newMo->getBaseExpr()));
+      if (!isa<ConstantExpr>(address))
+        address = ConstraintManager::simplifyExpr(state.constraints, address);
+      klee_debug_message("DEBUG: Binding a symbolic pointer with address expression:");
+      kid.get()->dump();
  
-      if(state.addressSpace.mo_controllable_info[newMo]==true)
-        state.addressSpace.mo_controllable_info[newMo]= isControllableAddress(state,kid);
+     
 
     }else{
       klee_debug_message("DEBUG: FIX ME resolve failed, cannot find the recorded symbolic pointer");
@@ -4643,28 +4649,37 @@ void Executor::executeMemoryOperation(
       uint64_t desired_address_end=MPU_ENABLE_ADDRESS;
       solver->setTimeout(coreSolverTimeout);
       bool value_test_result = false;
-      bool address_test_result = true;
+      bool address_test_result = false;
       bool success;
       
-      //Check if the MO is controllable
-      bool address_controllable = state.addressSpace.mo_controllable_info[mo];
+      //Check if the MO of the address is controllable
+      bool address_controllable = state.addressSpace.pointer_of_mo_controllable_info[mo];
       if(address_controllable){
-                //Check the address to see whether it can reach dangrous region.
-        //First we check if address > desired_address_start has a solution
-        // success = solver->mayBeTrue(
-        // state.addressConstraintsForTargetApp,
-        // UgeExpr::create(address, ConstantExpr::create(desired_address_start, address->getWidth())),
-        // address_test_result, state.queryMetaData);
-        // assert(success && "FIXME: Unhandled solver failure");
 
-        // //If so, then we check if address < desired_address_end has a solution
-        // if(address_test_result){
-        //   success = solver->mayBeTrue(
-        //   state.addressConstraintsForTargetApp,
-        //   UleExpr::create(address,ConstantExpr::create(desired_address_end, address->getWidth())),
-        //   address_test_result, state.queryMetaData);
-        // }
-        // assert(success && "FIXME: Unhandled solver failure");
+        
+        ref<Expr> address_test = address;
+        if(ConstantExpr *CE = dyn_cast<ConstantExpr>(address)){
+          std::pair<MemoryObject*, uint64_t> moPair = state.addressSpace.findMemoryObject(CE);
+          address_test = state.addressSpace.getOriginalExprFromMo(moPair.first);
+          assert(address && "FIX ME: find mo with no existing record");
+        }
+          //Check the address to see whether it can reach dangrous region.
+        //First we check if address > desired_address_start has a solution
+
+        success = solver->mayBeTrue(
+        state.addressConstraintsForTargetApp,
+        UgeExpr::create(address_test, ConstantExpr::create(desired_address_start, address_test->getWidth())),
+        address_test_result, state.queryMetaData);
+        assert(success && "FIXME: Unhandled solver failure");
+
+        //If so, then we check if address < desired_address_end has a solution
+        if(address_test_result){
+          success = solver->mayBeTrue(
+          state.addressConstraintsForTargetApp,
+          UleExpr::create(address_test,ConstantExpr::create(desired_address_end, address_test->getWidth())),
+          address_test_result, state.queryMetaData);
+        }
+        assert(success && "FIXME: Unhandled solver failure");
 
         //After that, we check if the value can be written with desired value. 
         success = solver->mayBeTrue(
@@ -4702,7 +4717,7 @@ void Executor::executeMemoryOperation(
     }
   } else {
     ref<Expr> result = os->read(mo->getOffsetExpr(address), type);
-    
+    result.get()->dump();
     if (target->inst->getType()->isPointerTy() &&
         dyn_cast<ConcatExpr>(result)
         && state.addressSpace.address_mo_info.count(result)==0) {
@@ -4758,13 +4773,18 @@ void Executor::executeMemoryOperation(
         // }
         //addConstraint(state, EqExpr::create(result, newMo->getBaseExpr()));
         state.addressSpace.address_mo_info[result]=newMo;
-
         //Initialize the mo if there is no record for whether it is controllable.
         if(state.addressSpace.mo_controllable_info.count(mo)==0){
           state.addressSpace.mo_controllable_info[mo]=false;
         }
-        // Assign the controllable flag as same as its pointer
-        state.addressSpace.mo_controllable_info[newMo]=state.addressSpace.mo_controllable_info[mo];
+        // Assign the controllable flag as same as its pointer.
+        bool controllable = state.addressSpace.mo_controllable_info[mo];
+        state.addressSpace.mo_controllable_info[newMo]=controllable;
+        // Record the controllable info of the pointer.
+        state.addressSpace.pointer_of_mo_controllable_info[newMo] = controllable;
+        if(state.addressSpace.mo_controllable_info[newMo]==true)
+          state.addressSpace.mo_controllable_info[newMo]= isControllableAddress(state,result);
+
         klee_debug_message("mo address: %lu",mo->address);
         klee_debug_message("newMo address: %lu",newMo->address);
         if(state.addressSpace.mo_controllable_info[newMo]){

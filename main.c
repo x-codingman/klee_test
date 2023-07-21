@@ -10,7 +10,7 @@
 #include <list.h>
 
 #define STACK_SIZE 200
-#define MPU_ENABLE_ADDRESS_START 0xefff3000
+#define MPU_ENABLE_ADDRESS_START 0xefff2000
 #define MPU_ENABLE_ADDRESS_END 0xefff4000
 
 
@@ -78,9 +78,9 @@ int main()
     const BaseType_t xCopyPosition;
     klee_make_symbolic_controllable(&xCopyPosition,sizeof(xCopyPosition),"xCopyPosition",true);
    
-    //  xTaskCreate(vTaskFunction1, "Task1", STACK_SIZE, NULL, 1, NULL);
-    // if(xQueue>MPU_ENABLE_ADDRESS_START && xQueue<MPU_ENABLE_ADDRESS_END)
-    //     xQueueGenericSend(xQueue,pvItemToQueue,xTicksToWait,xCopyPosition );
+     xTaskCreate(vTaskFunction1, "Task1", STACK_SIZE, NULL, 1, NULL);
+    if(xQueue>MPU_ENABLE_ADDRESS_START && xQueue<MPU_ENABLE_ADDRESS_END)
+        xQueueGenericSend(xQueue,pvItemToQueue,xTicksToWait,xCopyPosition );
     
 
 

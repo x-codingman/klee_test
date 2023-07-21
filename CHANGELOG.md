@@ -22,3 +22,12 @@
 - 修改mo_controllable_info的初始化，之前修改有误。
 - 增加findMemoryObject，用于根据一个具体值找到其对应的MO。
 - 修改isControllableAddress，cover 存在address被具体化后的情况。
+
+
+## [3.5.3] - 2023-7-21
+- 在做address的binding时，增加对address的简化操作，保证在地址在传播时的一致性。
+- 增加pointer_of_mo_controllable_info，用于记录分配当前mo的指针的可控信息。
+- 在检查机制中，通过判断address所在mo的可控信息以判断当前address是否可控。
+- 在检查机制中，增加对address的判断。
+- TODO，通过具体值得到符号表达式暂未考虑offset。
+- 修改main.c中的MPU范围，之前范围不够准确，导致一些漏洞未发现。

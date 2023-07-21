@@ -75,13 +75,17 @@ namespace klee {
 
     // Add a map to record whether the memory object can be constructed by the attacker.
     std::map<const MemoryObject*, bool> mo_controllable_info;
-    // add a map to record the relation between symbolic pointer expression and lazily allocated memory object
+    // Add a map to record the relationship between symbolic pointer expression and lazily allocated memory object
     std::map<ref<Expr>, const MemoryObject*> address_mo_info;
     /// add a list to record the MemoryObject allocated to symbolic pointers
     std::list<const MemoryObject*> record;
 
+    // Add a map to record the relationship between the allocated mo and its pointer
+    std::map<const MemoryObject*, bool> pointer_of_mo_controllable_info;
+  
+
     AddressSpace() : cowKey(1) {}
-    AddressSpace(const AddressSpace &b) : cowKey(++b.cowKey), objects(b.objects), record(b.record),mo_controllable_info(b.mo_controllable_info), address_mo_info(b.address_mo_info) { } // add the initialization of record 
+    AddressSpace(const AddressSpace &b) : cowKey(++b.cowKey), objects(b.objects), record(b.record),pointer_of_mo_controllable_info(b.pointer_of_mo_controllable_info), mo_controllable_info(b.mo_controllable_info), address_mo_info(b.address_mo_info) { } // add the initialization of record 
     ~AddressSpace() {}
 
     /// add

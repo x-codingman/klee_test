@@ -79,9 +79,21 @@ int main()
     klee_make_symbolic_controllable(&xCopyPosition,sizeof(xCopyPosition),"xCopyPosition",true);
    
      xTaskCreate(vTaskFunction1, "Task1", STACK_SIZE, NULL, 1, NULL);
-    if(xQueue>MPU_ENABLE_ADDRESS_START && xQueue<MPU_ENABLE_ADDRESS_END)
-        xQueueGenericSend(xQueue,pvItemToQueue,xTicksToWait,xCopyPosition );
-    
+    // if(xQueue>MPU_ENABLE_ADDRESS_START && xQueue<MPU_ENABLE_ADDRESS_END)
+    //     xQueueGenericSend(xQueue,pvItemToQueue,xTicksToWait,xCopyPosition );
+
+
+    // TaskHandle_t xTaskToNotify;
+    // UBaseType_t uxIndexToNotify;
+    // uint32_t ulValue;
+    // eNotifyAction eAction;
+    // uint32_t * pulPreviousNotificationValue;
+    // klee_make_symbolic_controllable(&xTaskToNotify,sizeof(xTaskToNotify),"xTaskToNotify",true);
+    // klee_make_symbolic_controllable(&uxIndexToNotify,sizeof(uxIndexToNotify),"uxIndexToNotify",true);
+    // klee_make_symbolic_controllable(&ulValue,sizeof(ulValue),"ulValue",true);
+    // klee_make_symbolic_controllable(&eAction,sizeof(eAction),"eAction",true);
+    // klee_make_symbolic_controllable(&pulPreviousNotificationValue,sizeof(pulPreviousNotificationValue),"pulPreviousNotificationValue",true);
+    // xTaskGenericNotify(xTaskToNotify,uxIndexToNotify,ulValue,eAction,pulPreviousNotificationValue);
 
 
     // // Test function parameters passing
@@ -119,12 +131,14 @@ int main()
     // }
 
     // // Test uncontrollable varible after a controllable assignment
-    {
-        ts_uncontrollable->p_a = ts->p_a;
-        *(ts_uncontrollable->p_a) = 0;
-    }
+    // {
+    //     ts_uncontrollable->p_a = ts->p_a;
+    //     *(ts_uncontrollable->p_a) = 0;
+    // }
 
 
+    // Test bool
+    *p = 0x2;
 
     
     return 0;

@@ -280,7 +280,9 @@ private:
   bool isDesiredType(llvm::Type  *ty);
   // Check if the MO pointed by the address can be controlled by the attacker.
   bool isControllableAddress(ExecutionState &state, ref<Expr> addr);
-
+  // Get all kid expression of the expression.
+  // We now only handle ADD expressions.
+  std::vector<ref<Expr>> getAddKids(ref<Expr> addExpr);
 
   /// Allocate and bind a new object in a particular state. NOTE: This
   /// function may fork.

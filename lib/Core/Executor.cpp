@@ -4593,31 +4593,32 @@ void Executor::executeMemoryOperation(
     } else {
       klee_debug_message("DEBUG: lazyResolve failed, found a symbolic pointer");
     }
-    address->dump();
-    ref<Expr> kid;
-    switch(address.get()->getKind()) {
-      case Expr::Add:
-        kid = address.get()->getKid(1);
-        break;
-      default:
-        kid = address;
-        break;
-    }
-    
-    if(state.addressSpace.address_mo_info.count(kid)>0){
-      const MemoryObject *newMo = state.addressSpace.address_mo_info[kid];
-      addConstraint(state, EqExpr::create(kid,newMo->getBaseExpr()));
+
+    std::vector<ref<Expr>> kids = getAddKids(address);
+    for(int i=0; i<kids.size();i++){
+
+      if(state.addressSpace.address_mo_info.count(kids[i])>0){
+      const MemoryObject *newMo = state.addressSpace.address_mo_info[kids[i]];
+      addConstraint(state, EqExpr::create(kids[i],newMo->getBaseExpr()));
       if (!isa<ConstantExpr>(address))
         address = ConstraintManager::simplifyExpr(state.constraints, address);
       klee_debug_message("DEBUG: Binding a symbolic pointer with address expression:");
-      kid.get()->dump();
- 
-     
+      kids[i].get()->dump();
+      }
 
-    }else{
-      klee_debug_message("DEBUG: FIX ME resolve failed, cannot find the recorded symbolic pointer");
-      terminateStateOnError(state, "resolve failed", StateTerminationType::Ptr);
     }
+    // if(state.addressSpace.address_mo_info.count(kid)>0){
+    //   const MemoryObject *newMo = state.addressSpace.address_mo_info[kid];
+    //   addConstraint(state, EqExpr::create(kid,newMo->getBaseExpr()));
+    //   if (!isa<ConstantExpr>(address))
+    //     address = ConstraintManager::simplifyExpr(state.constraints, address);
+    //   klee_debug_message("DEBUG: Binding a symbolic pointer with address expression:");
+    //   kid.get()->dump();
+
+    // }else{
+    //   klee_debug_message("DEBUG: FIX ME resolve failed, cannot find the recorded symbolic pointer");
+    //   terminateStateOnError(state, "resolve failed", StateTerminationType::Ptr);
+    // }
   }
   // Check if the address can be resolved after allocation
   if (!success) {
@@ -4684,7 +4685,7 @@ void Executor::executeMemoryOperation(
         //After that, we check if the value can be written with desired value. 
         success = solver->mayBeTrue(
             state.constraints,
-            EqExpr::create(ConstantExpr::create(desired_value, type), value),
+            EqExpr::create(ConstantExpr::create(desired_value, Expr::Bool), ZExtExpr::create(value,Expr::Bool)),
             value_test_result, state.queryMetaData);
         assert(success && "FIXME: Unhandled solver failure");
         if (value_test_result && address_test_result ) {
@@ -5488,6 +5489,39 @@ bool Executor::isControllableAddress(ExecutionState &state, ref<Expr> addr){
   return false;
 }
 
+
+  //  ref<Expr> kid;
+  //   switch(address.get()->getKind()) {
+  //     case Expr::Add:
+  //       kid = address.get()->getKid(1);
+  //       break;
+  //     default:
+  //       kid = address;
+  //       break;
+  //   }
+
+std::vector<ref<Expr>> Executor::getAddKids(ref<Expr> addExpr){
+  std::vector<ref<Expr>> result;
+  
+  std::queue<ref<Expr>> q;
+  q.push(addExpr);
+  while(!q.empty()){
+    ref<Expr> e = q.front();
+    q.pop();
+    if(e.get()->getKind() == Expr::Add) {
+      ref<Expr> kid0=e.get()->getKid(0);
+      ref<Expr> kid1=e.get()->getKid(1);
+      result.push_back(kid0);
+      result.push_back(kid1);
+      q.push(kid0);
+      q.push(kid1);
+    }else{
+      result.push_back(e);
+      continue;
+    }
+  }
+  return result;
+}
 
 
 

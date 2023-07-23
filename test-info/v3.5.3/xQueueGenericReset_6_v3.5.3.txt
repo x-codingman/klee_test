@@ -1,0 +1,7 @@
+KLEE: Error: write vulnerabilityon file Source/queue.c: line 311. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/queue.c: line 312. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/queue.c: line 313. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/queue.c: line 314. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/list.c: line 77. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/tasks.c: line 3189. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/tasks.c: line 3193. desired value: 0, desired address 4026478592-4026478592

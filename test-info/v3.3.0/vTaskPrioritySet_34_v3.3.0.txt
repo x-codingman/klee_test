@@ -1,0 +1,7 @@
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/tasks.c: line 1604
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/list.c: line 223
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/list.c: line 224
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/tasks.c: line 1644
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/tasks.c: line 1596
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/tasks.c: line 3039
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/portable/ThirdParty/GCC/Posix/utils/wait_for_event.c: line 68

@@ -1,0 +1,6 @@
+KLEE: Error: write vulnerabilityon file Source/tasks.c: line 1604. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/list.c: line 207. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/list.c: line 223. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/list.c: line 224. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/tasks.c: line 1644. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/tasks.c: line 1596. desired value: 0, desired address 4026478592-4026478592

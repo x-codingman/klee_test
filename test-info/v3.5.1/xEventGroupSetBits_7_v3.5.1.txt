@@ -1,0 +1,4 @@
+KLEE: Error: write vulnerabilityon file Source/event_groups.c: line 558. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/event_groups.c: line 621. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/tasks.c: line 3253. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file Source/tasks.c: line 3272. desired value: 0, desired address 4026478592-4026478592

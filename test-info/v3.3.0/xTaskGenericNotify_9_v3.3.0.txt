@@ -1,0 +1,6 @@
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/tasks.c: line 4867
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/tasks.c: line 4924
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/tasks.c: line 4892
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/tasks.c: line 4885
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/tasks.c: line 4881
+KLEE: Error: symbolic pointer to write a desired value 0 on file Source/tasks.c: line 4877

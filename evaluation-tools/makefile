@@ -92,4 +92,4 @@ $(BUILD_DIR)/%.bc : %.c
 
 
 clean:
-	rm -rf $(BUILD_DIR) $(TEST_BC_FILES)
+	rm -rf $(BUILD_DIR) $(TEST_BC_FILES) %.bc

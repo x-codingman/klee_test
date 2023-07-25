@@ -20,7 +20,7 @@ funcs = [
         "arg_nums": 2,
         "arguments": "pxPreviousWakeTime, xTimeIncrement",
         "type": "TickType_t *, TickType_t",
-        "control_flags" : "restricted, true"
+        "control_flags" : " restricted, true"
     },
     {
         "name": "xTaskAbortDelay",
@@ -48,7 +48,7 @@ funcs = [
         "arg_nums": 4,
         "arguments": "xTask, pxTaskStatus, xGetFreeStackSpace, eState",
         "type": "TaskHandle_t, TaskStatus_t *, BaseType_t, eTaskState",
-        "control_flags" : "false, true, true, true"
+        "control_flags" : "false, restricted, true, true"
     },
     {
         "name": "vTaskSuspend",
@@ -195,8 +195,8 @@ for func in funcs:
     conditions = []
     for arg_name, arg_type, control_flag in zip(arg_names, arg_types, control_flags):
         declarations.append(f'{arg_type.strip()} {arg_name.strip()};\n')
-        if control_flag == "restricted":
-            conditions.append( f'if ({arg_name.strip()} < MPU_ENABLE_ADDRESS_START || {arg_name.strip()} > MPU_ENABLE_ADDRESS_END) {{ return; }}\n')
+        if control_flag.strip() == "restricted":
+            conditions.append( f'if ({arg_name.strip()} < MPU_ENABLE_ADDRESS_START || {arg_name.strip()} > MPU_ENABLE_ADDRESS_END) {{ return 0; }}\n')
         klee_calls.append(f'klee_make_symbolic_controllable(&{arg_name.strip()}, sizeof({arg_name.strip()}), "{arg_name.strip()}", "{control_flag.strip()}");\n')
     declaration_code = ''.join(declarations)
     klee_call_code = ''.join(klee_calls)
@@ -227,6 +227,7 @@ for func in funcs:
         file.write(klee_call_code)
         file.write(condition_code)
         file.write(function_call)
+        file.write('return 0;\n')
         file.write('}\n')
         file.write('void vTaskFunction1( void *pvParameters )\n')
         file.write('{\n')

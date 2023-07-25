@@ -1,36 +1,191 @@
 import shlex
 import subprocess
-
+import concurrent.futures
 
 
 funcs = [
-    "vTaskGetInfo",
-    "vTaskSuspend",
-    "vTaskResume",
-    "pcTaskGetName",
-    "uxTaskGetStackHighWaterMark",
-    "uxTaskGetStackHighWaterMark2",
-    "vTaskSetApplicationTaskTag",
-    "xTaskGetApplicationTaskTag",
-    "vTaskSetThreadLocalStoragePointer",
-    "pvTaskGetThreadLocalStoragePointer",
-    "uxTaskGetSystemState",
-    "ulTaskGetRunTimeCounter",
-    "ulTaskGetRunTimePercent",
-    "xTaskGenericNotify",
-    "xTaskGenericNotifyWait",
-    "ulTaskGenericNotifyTake",
-    "xTaskGenericNotifyStateClear",
-    "ulTaskGenericNotifyValueClear",
-    "vTaskSetTimeOutState",
-    "xTaskCheckForTimeOut"
-
-
+    {
+        "name": "vTaskDelay",
+        "arg_nums": 1,
+        "arguments": "xTicksToDelay",
+        "type": "TickType_t ",
+        "control_flags" : "true"
+    },
+    {
+        "name": "xTaskDelayUntil",
+        "arg_nums": 2,
+        "arguments": "pxPreviousWakeTime, xTimeIncrement",
+        "type": "TickType_t *, TickType_t",
+        "control_flags" : " restricted, true"
+    },
+    {
+        "name": "xTaskAbortDelay",
+        "arg_nums": 1,
+        "arguments": "xTask",
+        "type": "TaskHandle_t",
+        "control_flags" : "false"
+    },
+    {
+        "name": "uxTaskPriorityGet",
+        "arg_nums": 1,
+        "arguments": "xTask",
+        "type": "TaskHandle_t",
+        "control_flags" : "false"
+    },
+    {
+        "name": "eTaskGetState",
+        "arg_nums": 1,
+        "arguments": "xTask",
+        "type": "TaskHandle_t",
+        "control_flags" : "false"
+    },
+    {
+        "name": "vTaskGetInfo",
+        "arg_nums": 4,
+        "arguments": "xTask, pxTaskStatus, xGetFreeStackSpace, eState",
+        "type": "TaskHandle_t, TaskStatus_t *, BaseType_t, eTaskState",
+        "control_flags" : "false, restricted, true, true"
+    },
+    {
+        "name": "vTaskSuspend",
+        "arg_nums": 1,
+        "arguments": "xTaskToResume",
+        "type": "TaskHandle_t",
+        "control_flags" : "false"
+    },
+    {
+        "name": "vTaskResume",
+        "arg_nums": 1,
+        "arguments": "xTaskToResume",
+        "type": "TaskHandle_t",
+        "control_flags" : "false"
+    },
+    {
+        "name": "pcTaskGetName",
+        "arg_nums": 1,
+        "arguments": "xTaskToQuery",
+        "type": "TaskHandle_t",
+        "control_flags" : "false"
+    },
+    {
+        "name": "uxTaskGetStackHighWaterMark",
+        "arg_nums": 1,
+        "arguments": "xTask",
+        "type": "TaskHandle_t",
+        "control_flags" : "false"
+    },
+    {
+        "name": "uxTaskGetStackHighWaterMark2",
+        "arg_nums": 1,
+        "arguments": "xTask",
+        "type": "TaskHandle_t",
+        "control_flags" : "false"
+    },
+    {
+        "name": "vTaskSetApplicationTaskTag",
+        "arg_nums": 2,
+        "arguments": "xTask, pxHookFunction",
+        "type": "TaskHandle_t, TaskHookFunction_t",
+        "control_flags" : "false, true"
+    },
+    {
+        "name": "xTaskGetApplicationTaskTag",
+        "arg_nums": 1,
+        "arguments": "xTask",
+        "type": "TaskHandle_t",
+        "control_flags" : "false"
+    },
+    {
+        "name": "vTaskSetThreadLocalStoragePointer",
+        "arg_nums": 3,
+        "arguments": "xTaskToQuery, xIndex, pvValue",
+        "type": "TaskHandle_t, BaseType_t, void *",
+        "control_flags" : "false, true, true"
+    },
+    {
+        "name": "pvTaskGetThreadLocalStoragePointer",
+        "arg_nums": 2,
+        "arguments": "xTaskToQuery, xIndex",
+        "type": "TaskHandle_t, BaseType_t",
+        "control_flags" : "false,true"
+    },
+    {
+        "name": "uxTaskGetSystemState",
+        "arg_nums": 2,
+        "arguments": "pxTaskStatusArray,uxArraySize,pulTotalRunTime",
+        "type": "TaskStatus_t *,UBaseType_t,configRUN_TIME_COUNTER_TYPE *",
+        "control_flags" : "true,false,false"
+    },
+    {
+        "name": "ulTaskGetRunTimeCounter",
+        "arg_nums": 1,
+        "arguments": "xTask",
+        "type": "TaskHandle_t",
+        "control_flags" : "false"
+    },
+    {
+        "name": "ulTaskGetRunTimePercent",
+        "arg_nums": 1,
+        "arguments": "xTask",
+        "type": "TaskHandle_t",
+        "control_flags" : "false"
+    },
+    {
+        "name": "xTaskGenericNotify",
+        "arg_nums": 5,
+        "arguments": "xTaskToNotify,uxIndexToNotify,ulValue,eAction,pulPreviousNotificationValue",
+        "type": "TaskHandle_t,UBaseType_t,uint32_t,eNotifyAction,uint32_t *",
+        "control_flags" : "false, true, true, true, true"
+    },
+    {
+        "name": "xTaskGenericNotifyWait",
+        "arg_nums": 5,
+        "arguments": "uxIndexToWaitOn, ulBitsToClearOnEntry, ulBitsToClearOnExit, pulNotificationValue, xTicksToWait",
+        "type": "UBaseType_t, uint32_t, uint32_t,uint32_t *,TickType_t",
+        "control_flags" : "true, true, true, true, true"
+    },
+    {
+        "name": "ulTaskGenericNotifyTake",
+        "arg_nums": 3,
+        "arguments": "uxIndexToWaitOn, xClearCountOnExit, xTicksToWait",
+        "type": "UBaseType_t, BaseType_t, TickType_t",
+        "control_flags" : "true, true, true"
+    },
+    {
+        "name": "xTaskGenericNotifyStateClear",
+        "arg_nums": 2,
+        "arguments": "xTask, uxIndexToClear",
+        "type": "TaskHandle_t, UBaseType_t",
+        "control_flags" : "true, true"
+    },
+    {
+        "name": "ulTaskGenericNotifyValueClear",
+        "arg_nums": 3,
+        "arguments": "xTask, uxIndexToClear, ulBitsToClear",
+        "type": "TaskHandle_t, UBaseType_t, uint32_t",
+        "control_flags" : "true, true, true"
+    },
+    {
+        "name": "vTaskSetTimeOutState",
+        "arg_nums": 1,
+        "arguments": "pxTimeOut",
+        "type": "TimeOut_t *",
+        "control_flags" : "true"
+    },
+    {
+        "name": "xTaskCheckForTimeOut",
+        "arg_nums": 2,
+        "arguments": "pxTimeOut, pxTicksToWait",
+        "type": "TimeOut_t *, TickType_t *",
+        "control_flags" : "true, true"
+    }
+    # you can add more function definitions here
 ]
 
 
+
 funcs_delete = [
-        "uxTaskGetSystemState",
+    "uxTaskGetSystemState",
     "ulTaskGetRunTimeCounter",
     "ulTaskGetRunTimePercent",
     "xTaskGenericNotify",
@@ -50,12 +205,12 @@ funcs_delete = [
 #     ]
 #     print("Executing command: " + " ".join(command_clean))
 #     subprocess.run(command_clean, check=True)
-
-for func in funcs:
+def run_command(func):
+    func_name = func["name"]
     command_clean_dir = [
         "rm", 
         "-rf", 
-        "/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/"+shlex.quote(func)
+        "/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/"+shlex.quote(func_name)
     ]
     print("Executing command: " + " ".join(command_clean_dir))
     subprocess.run(command_clean_dir, check=True)
@@ -63,8 +218,12 @@ for func in funcs:
         "/home/klee/klee_test/build/bin/klee", 
         "--search=dfs", 
         "-debug-print-instructions=all:stderr", 
-        "--output-dir=/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/"+shlex.quote(func), 
-        "/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/"+shlex.quote(func)+".test.bc"
+        "--output-dir=/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/"+shlex.quote(func_name), 
+        "/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/"+shlex.quote(func_name)+".test.bc"
     ]
     print("Executing command: " + " ".join(command))
     subprocess.run(command, check=True)
+
+
+with concurrent.futures.ProcessPoolExecutor() as executor:
+    executor.map(run_command, funcs)

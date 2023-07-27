@@ -1,6 +1,7 @@
 import shlex
 import subprocess
 import concurrent.futures
+import os
 
 
 funcs = [
@@ -214,16 +215,31 @@ def run_command(func):
     ]
     print("Executing command: " + " ".join(command_clean_dir))
     subprocess.run(command_clean_dir, check=True)
-    command = [
-        "/home/klee/klee_test/build/bin/klee", 
-        "--search=dfs", 
-        "-debug-print-instructions=all:stderr", 
-        "--output-dir=/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/"+shlex.quote(func_name), 
-        "/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/"+shlex.quote(func_name)+".test.bc"
-    ]
-    print("Executing command: " + " ".join(command))
-    subprocess.run(command, check=True)
+    output_dir = "/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/output/"
+    temp_output_path = output_dir+shlex.quote(func_name)+"_temp_output.txt"
+    os.makedirs(output_dir, exist_ok=True)
+    with open(temp_output_path, "w") as temp_file:
+        command = [
+            "/home/klee/klee_test/build/bin/klee", 
+            "--search=dfs", 
+            "-debug-print-instructions=all:stderr", 
+            "--output-dir=/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/"+shlex.quote(func_name), 
+            "/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/"+shlex.quote(func_name)+".test.bc"
+        ]
+        print("Executing command: " + " ".join(command))
+        subprocess.run(command, stdout=temp_file, stderr=temp_file)
 
+    output_path = output_dir+shlex.quote(func_name)+"_output.txt"
+    with open(output_path, "w") as output_file:
+        # run the tail command and redirect the output to your target file
+        subprocess.run(["tail", "-n", "40", temp_output_path], stdout=output_file)
+    
+    # Delete the temp file
+    os.remove(temp_output_path)
+
+
+# func = funcs[0]
+# run_command(func)
 
 with concurrent.futures.ProcessPoolExecutor() as executor:
     executor.map(run_command, funcs)

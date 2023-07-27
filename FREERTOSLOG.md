@@ -16,3 +16,5 @@
 
 - 注释 tasks.c 997行, 避免调用external function pthread_once等。6/22
 - 注释 tasks.c 3062行, 避免对pxCurrentTCB重复赋值。6/22
+
+- 注释 tasks.c 2238-2239行, 2250行的循环

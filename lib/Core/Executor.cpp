@@ -853,9 +853,17 @@ void Executor::initializeGlobalObjects(ExecutionState &state) {
       Type *elementType =
           v.getType()->getElementType()->getPointerElementType();
 
+      unsigned elementSize;
       // Pay attention here, the type may be an array
       // However, we don't consider dealing with it
-      unsigned elementSize = kmodule->targetData->getTypeStoreSize(elementType);
+      if (elementType->isFunctionTy()){
+          // just allocate 8 bytes for a virtual function
+         klee_debug_message("DEBUG: found a function pointer here!!");
+          elementSize = 8;
+      }else{
+          elementSize = kmodule->targetData->getTypeStoreSize(elementType);
+      }
+      
       size_t alignment = 8;
       MemoryObject *newMo = NULL;
       if (isDesiredType(elementType)) {
@@ -1251,6 +1259,8 @@ Executor::StatePair Executor::fork(ExecutionState &current, ref<Expr> condition,
     current.addressSpace.address_mo_info.count(right_value)==0){
       addConstraint(*trueState, condition);
       addConstraint(*falseState, Expr::createIsZero(condition));
+      trueState->addAddressConstraintsForTargetApp(condition);
+      falseState->addAddressConstraintsForTargetApp(Expr::createIsZero(condition));
     }else{
       klee_debug_message("DEBUG: add constraints in addressConstraintsForTargetApp");
       trueState->addAddressConstraintsForTargetApp(condition);

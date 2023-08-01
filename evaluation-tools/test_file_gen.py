@@ -1,4 +1,5 @@
 import os
+import json
 
 
 
@@ -7,184 +8,8 @@ import os
 
 
 
-funcs = [
-    {
-        "name": "vTaskDelay",
-        "arg_nums": 1,
-        "arguments": "xTicksToDelay",
-        "type": "TickType_t ",
-        "control_flags" : "true"
-    },
-    {
-        "name": "xTaskDelayUntil",
-        "arg_nums": 2,
-        "arguments": "pxPreviousWakeTime, xTimeIncrement",
-        "type": "TickType_t *, TickType_t",
-        "control_flags" : " restricted, true"
-    },
-    {
-        "name": "xTaskAbortDelay",
-        "arg_nums": 1,
-        "arguments": "xTask",
-        "type": "TaskHandle_t",
-        "control_flags" : "false"
-    },
-    {
-        "name": "uxTaskPriorityGet",
-        "arg_nums": 1,
-        "arguments": "xTask",
-        "type": "TaskHandle_t",
-        "control_flags" : "false"
-    },
-    {
-        "name": "eTaskGetState",
-        "arg_nums": 1,
-        "arguments": "xTask",
-        "type": "TaskHandle_t",
-        "control_flags" : "false"
-    },
-    {
-        "name": "vTaskGetInfo",
-        "arg_nums": 4,
-        "arguments": "xTask, pxTaskStatus, xGetFreeStackSpace, eState",
-        "type": "TaskHandle_t, TaskStatus_t *, BaseType_t, eTaskState",
-        "control_flags" : "false, restricted, true, true"
-    },
-    {
-        "name": "vTaskSuspend",
-        "arg_nums": 1,
-        "arguments": "xTaskToResume",
-        "type": "TaskHandle_t",
-        "control_flags" : "false"
-    },
-    {
-        "name": "vTaskResume",
-        "arg_nums": 1,
-        "arguments": "xTaskToResume",
-        "type": "TaskHandle_t",
-        "control_flags" : "false"
-    },
-    {
-        "name": "pcTaskGetName",
-        "arg_nums": 1,
-        "arguments": "xTaskToQuery",
-        "type": "TaskHandle_t",
-        "control_flags" : "false"
-    },
-    {
-        "name": "uxTaskGetStackHighWaterMark",
-        "arg_nums": 1,
-        "arguments": "xTask",
-        "type": "TaskHandle_t",
-        "control_flags" : "false"
-    },
-    {
-        "name": "uxTaskGetStackHighWaterMark2",
-        "arg_nums": 1,
-        "arguments": "xTask",
-        "type": "TaskHandle_t",
-        "control_flags" : "false"
-    },
-    {
-        "name": "vTaskSetApplicationTaskTag",
-        "arg_nums": 2,
-        "arguments": "xTask, pxHookFunction",
-        "type": "TaskHandle_t, TaskHookFunction_t",
-        "control_flags" : "false, true"
-    },
-    {
-        "name": "xTaskGetApplicationTaskTag",
-        "arg_nums": 1,
-        "arguments": "xTask",
-        "type": "TaskHandle_t",
-        "control_flags" : "false"
-    },
-    {
-        "name": "vTaskSetThreadLocalStoragePointer",
-        "arg_nums": 3,
-        "arguments": "xTaskToQuery, xIndex, pvValue",
-        "type": "TaskHandle_t, BaseType_t, void *",
-        "control_flags" : "false, true, true"
-    },
-    {
-        "name": "pvTaskGetThreadLocalStoragePointer",
-        "arg_nums": 2,
-        "arguments": "xTaskToQuery, xIndex",
-        "type": "TaskHandle_t, BaseType_t",
-        "control_flags" : "false,true"
-    },
-    {
-        "name": "uxTaskGetSystemState",
-        "arg_nums": 2,
-        "arguments": "pxTaskStatusArray,uxArraySize,pulTotalRunTime",
-        "type": "TaskStatus_t *,UBaseType_t,configRUN_TIME_COUNTER_TYPE *",
-        "control_flags" : "true,false,false"
-    },
-    {
-        "name": "ulTaskGetRunTimeCounter",
-        "arg_nums": 1,
-        "arguments": "xTask",
-        "type": "TaskHandle_t",
-        "control_flags" : "false"
-    },
-    {
-        "name": "ulTaskGetRunTimePercent",
-        "arg_nums": 1,
-        "arguments": "xTask",
-        "type": "TaskHandle_t",
-        "control_flags" : "false"
-    },
-    {
-        "name": "xTaskGenericNotify",
-        "arg_nums": 5,
-        "arguments": "xTaskToNotify,uxIndexToNotify,ulValue,eAction,pulPreviousNotificationValue",
-        "type": "TaskHandle_t,UBaseType_t,uint32_t,eNotifyAction,uint32_t *",
-        "control_flags" : "false, true, true, true, true"
-    },
-    {
-        "name": "xTaskGenericNotifyWait",
-        "arg_nums": 5,
-        "arguments": "uxIndexToWaitOn, ulBitsToClearOnEntry, ulBitsToClearOnExit, pulNotificationValue, xTicksToWait",
-        "type": "UBaseType_t, uint32_t, uint32_t,uint32_t *,TickType_t",
-        "control_flags" : "true, true, true, true, true"
-    },
-    {
-        "name": "ulTaskGenericNotifyTake",
-        "arg_nums": 3,
-        "arguments": "uxIndexToWaitOn, xClearCountOnExit, xTicksToWait",
-        "type": "UBaseType_t, BaseType_t, TickType_t",
-        "control_flags" : "true, true, true"
-    },
-    {
-        "name": "xTaskGenericNotifyStateClear",
-        "arg_nums": 2,
-        "arguments": "xTask, uxIndexToClear",
-        "type": "TaskHandle_t, UBaseType_t",
-        "control_flags" : "true, true"
-    },
-    {
-        "name": "ulTaskGenericNotifyValueClear",
-        "arg_nums": 3,
-        "arguments": "xTask, uxIndexToClear, ulBitsToClear",
-        "type": "TaskHandle_t, UBaseType_t, uint32_t",
-        "control_flags" : "true, true, true"
-    },
-    {
-        "name": "vTaskSetTimeOutState",
-        "arg_nums": 1,
-        "arguments": "pxTimeOut",
-        "type": "TimeOut_t *",
-        "control_flags" : "restricted"
-    },
-    {
-        "name": "xTaskCheckForTimeOut",
-        "arg_nums": 2,
-        "arguments": "pxTimeOut, pxTicksToWait",
-        "type": "TimeOut_t *, TickType_t *",
-        "control_flags" : "restricted, restricted"
-    }
-    # you can add more function definitions here
-]
+with open('funcs_info.json', 'r') as f:
+    funcs = json.load(f)
 
 for func in funcs:
     arg_names = func["arguments"].split(',')
@@ -197,7 +22,9 @@ for func in funcs:
         declarations.append(f'{arg_type.strip()} {arg_name.strip()};\n')
         if control_flag.strip() == "restricted":
             conditions.append( f'if ({arg_name.strip()} < ATTACK_CAPABILITY_REGION_START || {arg_name.strip()} > ATTACK_CAPABILITY_REGION_END) {{ return 0; }}\n')
-        klee_calls.append(f'klee_make_symbolic_controllable(&{arg_name.strip()}, sizeof({arg_name.strip()}), "{arg_name.strip()}", "{control_flag.strip()}");\n')
+            klee_calls.append(f'klee_make_symbolic_controllable(&{arg_name.strip()}, sizeof({arg_name.strip()}), "{arg_name.strip()}", true);\n')
+        else:    
+            klee_calls.append(f'klee_make_symbolic_controllable(&{arg_name.strip()}, sizeof({arg_name.strip()}), "{arg_name.strip()}", {control_flag.strip()});\n')
     declaration_code = ''.join(declarations)
     klee_call_code = ''.join(klee_calls)
     condition_code = ''.join(conditions)

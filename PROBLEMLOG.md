@@ -13,3 +13,7 @@
 - 表达式解析问题。针对形如symbolic pointer + symbolic index的地址表达式存在不能resolve的问题。
 - 内存分配问题。针对如void类型、uint8_t类型、char类型指针存在确定内存分配大小的问题。
 - 漏洞检测机制不完善，存在不能完整利用的漏洞误报。当前漏洞检测机制没有考虑保证函数正常退出，对一些报告的漏洞位置的利用会引起程序后续运行的崩溃。
+
+## [3.5.3]
+- 非整型的数组index导致的误报问题，如FreeRTOS-10.6中的tack.c (解决，因为index的约束未加进addressConstraintsForTargetApp中)
+- list中处理双向链表的误报，在FreeRTOS-10.6，如ulistRemove()函数中的list.c 206,207行（解决，之前生成的c文件有点问题）

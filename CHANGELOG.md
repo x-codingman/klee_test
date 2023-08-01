@@ -33,3 +33,10 @@
 - 修改main.c中的MPU范围，之前范围不够准确，导致一些漏洞未发现。
 - 优化解引用机制，增加getAddKids函数用于得到原ADD类型表达式的所有子表达式，并用所有子表达式去匹配之前load阶段分配的内存的表达式。
 - 优化检测机制，将检测粒度优化至bit位。
+
+
+## [3.5.3] - 2023-7-29 - 2023-8-1
+- 解决全局函数指针初始化问题，会导致KLEE程序崩溃，解决办法是在对全局变量进行lazy initialization时对函数指针进行特殊情况处理。
+- 在fork时将constraints信息一并加入addressConstraintsForTargetApp中，保证在vulnerability detection的时候对考虑到所有的限制。
+- 修复evalution tool，之前其中的”true“和”false“为字符串类型，修改为bool类型，并且将“restricted”类型的变量设置为“true”，即controllable。
+- 更新evaluation tool，可以将函数的信息统一放在funcs.json中，然后生成每个函数的测试c文件。

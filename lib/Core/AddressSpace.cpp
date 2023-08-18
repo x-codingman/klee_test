@@ -216,7 +216,7 @@ bool AddressSpace::lazyResolve(ExecutionState &state,
         }
         if (!mustBeTrue){
           needBound = true;
-          printf("Error: out of bound pointer\n");
+          klee_debug_message("Error: out of bound pointer\n");
         }
         result.first = op.first;
         result.second = op.second;

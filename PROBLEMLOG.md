@@ -16,4 +16,7 @@
 
 ## [3.5.3]
 - 非整型的数组index导致的误报问题，如FreeRTOS-10.6中的tack.c (解决，因为index的约束未加进addressConstraintsForTargetApp中)
-- list中处理双向链表的误报，在FreeRTOS-10.6，如ulistRemove()函数中的list.c 206,207行（解决，之前生成的c文件有点问题）
+- list中处理双向链表的误报，在FreeRTOS-10.6，如ulistRemove()函数中的list.c 206,207行（解决，之前生成的c文件有点问题
+
+## 3.5.4
+-存在out of bound的误报问题

@@ -40,3 +40,6 @@
 - 在fork时将constraints信息一并加入addressConstraintsForTargetApp中，保证在vulnerability detection的时候对考虑到所有的限制。
 - 修复evalution tool，之前其中的”true“和”false“为字符串类型，修改为bool类型，并且将“restricted”类型的变量设置为“true”，即controllable。
 - 更新evaluation tool，可以将函数的信息统一放在funcs.json中，然后生成每个函数的测试c文件。
+
+## [3.5.4] - 2023-8-11
+- 更新evaluate tool

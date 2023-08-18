@@ -214,7 +214,7 @@ def run_command(func):
     command_clean_dir = [
         "rm", 
         "-rf", 
-        "/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/"+shlex.quote(func_name)
+        "/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution/output/"+shlex.quote(func_name)
     ]
     print("Executing command: " + " ".join(command_clean_dir))
     subprocess.run(command_clean_dir, check=True)
@@ -238,7 +238,7 @@ def run_command(func):
         subprocess.run(["tail", "-n", "40", temp_output_path], stdout=output_file)
     
     # Delete the temp file
-    os.remove(temp_output_path)
+    # os.remove(temp_output_path)
 
 
 # func = funcs[0]

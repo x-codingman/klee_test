@@ -846,51 +846,51 @@ void Executor::initializeGlobalObjects(ExecutionState &state) {
 
     // add to allocate memory for global pointer
     // version 2
-    Type *ty = v.getType()->getElementType();
+    // Type *ty = v.getType()->getElementType();
 
-    if (ty->isPointerTy() && v.getName().str() != "pxCurrentTCB") {
+    // if (ty->isPointerTy() && v.getName().str() != "pxCurrentTCB") {
 
-      Type *elementType =
-          v.getType()->getElementType()->getPointerElementType();
+    //   Type *elementType =
+    //       v.getType()->getElementType()->getPointerElementType();
 
-      unsigned elementSize;
-      // Pay attention here, the type may be an array
-      // However, we don't consider dealing with it
-      if (elementType->isFunctionTy()){
-          // just allocate 8 bytes for a virtual function
-         klee_debug_message("DEBUG: found a function pointer here!!");
-          elementSize = 8;
-      }else{
-          elementSize = kmodule->targetData->getTypeStoreSize(elementType);
-      }
+    //   unsigned elementSize;
+    //   // Pay attention here, the type may be an array
+    //   // However, we don't consider dealing with it
+    //   if (elementType->isFunctionTy()){
+    //       // just allocate 8 bytes for a virtual function
+    //      klee_debug_message("DEBUG: found a function pointer here!!");
+    //       elementSize = 8;
+    //   }else{
+    //       elementSize = kmodule->targetData->getTypeStoreSize(elementType);
+    //   }
       
-      size_t alignment = 8;
-      MemoryObject *newMo = NULL;
-      if (isDesiredType(elementType)) {
+    //   size_t alignment = 8;
+    //   MemoryObject *newMo = NULL;
+    //   if (isDesiredType(elementType)) {
 
-        klee_debug_message("Debug: find struct.tskTaskControlBlock in global "
-                           "initilization, its name is: %s",
-                           v.getName().str().c_str());
-        size_t stackSize = 0x200;
-        newMo = lazyAllocTCBSymbolic(state, elementSize, stackSize, false,
-                                     alignment);
-      }
-      if (newMo == NULL) {
-        newMo = memory->allocate(elementSize, /*isLocal=*/false,
-                                 /*isGlobal=*/true, /*allocSite=*/&v,
-                                 /*alignment=*/alignment);
+    //     klee_debug_message("Debug: find struct.tskTaskControlBlock in global "
+    //                        "initilization, its name is: %s",
+    //                        v.getName().str().c_str());
+    //     size_t stackSize = 0x200;
+    //     newMo = lazyAllocTCBSymbolic(state, elementSize, stackSize, false,
+    //                                  alignment);
+    //   }
+    //   if (newMo == NULL) {
+    //     newMo = memory->allocate(elementSize, /*isLocal=*/false,
+    //                              /*isGlobal=*/true, /*allocSite=*/&v,
+    //                              /*alignment=*/alignment);
 
-        std::string name = ""; // address->toString();
-        executeMakeSymbolic(state, newMo, name);
+    //     std::string name = ""; // address->toString();
+    //     executeMakeSymbolic(state, newMo, name);
 
-        // record the new relation
-        state.addressSpace.record.push_back(newMo);
-      }
+    //     // record the new relation
+    //     state.addressSpace.record.push_back(newMo);
+    //   }
 
-      os->write(0, newMo->getBaseExpr());
-      state.addressSpace.mo_controllable_info[newMo]=false;
-    }
-    state.addressSpace.mo_controllable_info[mo]=false;
+    //   os->write(0, newMo->getBaseExpr());
+    //   state.addressSpace.mo_controllable_info[newMo]=false;
+    // }
+    // state.addressSpace.mo_controllable_info[mo]=false;
   }
 
   // initialise constant memory that is potentially used with external calls

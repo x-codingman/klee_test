@@ -2,12 +2,16 @@ CC                    := clang
 
 BUILD_DIR             := ./build
 BUILD_EXTRA_DIR       := ./build_extra
+BUILD_COMMON_MODULES_LIB_DIR := $(BUILD_DIR)/common_modules_lib
 
 
 KERNEL_DIR            := /home/klee/threadx/threadx/
 
+TEST_FILES_DIR            := /home/klee/klee_test/threadx_test/evaluation/test_files
 
-
+COMMON_DIR                     := /home/klee/threadx/threadx/common
+COMMON_MODULES_LIB_DIR         := /home/klee/threadx/threadx/common_modules/module_lib
+COMMON_MODULES_MANAGER_DIR     := /home/klee/threadx/threadx/common_modules/module_manager
 
 #TARGET_DIR            := /home/klee/FreeRTOS-kernel-revision/portable/GCC/ARM_CM33_NTZ/non_secure
 
@@ -19,76 +23,112 @@ INCLUDE_DIRS          := -I.
 # INCLUDE_DIRS          += -I/usr/lib/gcc/arm-none-eabi/6.3.1/include
 # INCLUDE_DIRS          += -I/usr/lib/gcc/arm-none-eabi/6.3.1/include-fixed
 #INCLUDE_DIRS          += -I/home/klee/threadx/threadx/ports_module/cortex_m33/gnu/inc
-INCLUDE_DIRS          += -I/home/klee/threadx/threadx/ports/cortex_m33/gnu/inc
+#INCLUDE_DIRS          += -I/home/klee/threadx/threadx/ports/cortex_m33/gnu/inc
 INCLUDE_DIRS          += -I${KLEE_INCLUDE_DIR}
-INCLUDE_DIRS          += -I/home/klee/threadx/threadx/common/inc
+INCLUDE_COMMON_DIRS          += -I/home/klee/threadx/threadx/common/inc
+INCLUDE_DIRS  += -I/home/klee/klee_test/threadx_test/evaluation/klee_help.h
+INCLUDE_COMMON_MODULES_LIB_DIRS  += -I/home/klee/threadx/threadx/common_modules/inc
+
+INCLUDE_DIRS  += -I/home/klee/threadx/threadx/ports_module/cortex_m33/gnu/inc
+INCLUDE_COMMON_MODULES_MANAGER_DIRS  += -I/home/klee/threadx/threadx/common_modules/module_manager/inc
 #INCLUDE_DIRS          += -I/home/klee/threadx/threadx/common_modules/inc
 
 #INCLUDE_DIRS          += -I/home/klee/threadx/threadx/ports_module/cortex_m33/gnu/module_manager/inc
 
 #SOURCE_FILES          := $(wildcard *.c)
-#SOURCE_FILES          := $(wildcard /home/klee/threadx/threadx/common_modules/module_lib/src/*.c)
-SOURCE_FILES          += $(wildcard /home/klee/threadx/threadx/common/src/*.c)
+SOURCE_COMMON_MODULES_LIB_FILES   := $(wildcard /home/klee/threadx/threadx/common_modules/module_lib/src/*.c)
+SOURCE_COMMON_MODULES_MANAGER_FILES   := $(wildcard /home/klee/threadx/threadx/common_modules/module_manager/src/*.c)
+SOURCE_COMMON_FILES           := $(wildcard /home/klee/threadx/threadx/common/src/*.c)
+#SOURCE_FILES           := $(wildcard /home/klee/threadx/threadx/common/src/*.c)
 #SOURCE_FILES          += $(wildcard /home/klee/threadx/threadx/common/src/tx_thread_initialize.c)
 #SOURCE_FILES          += $(wildcard /home/klee/threadx/threadx/ports_module/cortex_m33/gnu/module_lib/src/*.c)
 
-# Memory manager (use malloc() / free() )
+
+SOURCE_TEST_FILES      := $(wildcard /home/klee/klee_test/threadx_test/evaluation/test_files/*.c)
 
 
 
 
 BC_FILES              := $(SOURCE_FILES:%.c=$(BUILD_DIR)/%.bc)
-TEST_SOURCE_FILES     := $(wildcard *.c)
-TEST_BC_FILES         := $(TEST_SOURCE_FILES:.c=.test.bc)
+COMMON_BC_FILES       := $(SOURCE_COMMON_FILES:%.c=$(BUILD_DIR)/common/%.bc)
+COMMON_MODULES_LIB_BC_FILES   := $(SOURCE_COMMON_MODULES_LIB_FILES:%.c=$(BUILD_DIR)/common_modules_lib/%.bc)
+COMMON_MODULES_LIB_BC_LINKED_FILES := $(SOURCE_COMMON_MODULES_LIB_FILES:%.c=$(BUILD_DIR)/common_modules_lib/%.linked.bc)
+COMMON_MODULES_MANAGER_BC_FILES := $(SOURCE_COMMON_MODULES_MANAGER_FILES:%.c=$(BUILD_DIR)/common_modules_manage/%.bc)
+COMMON_MODULES_MANAGER_BC_LINKED_FILES := $(SOURCE_COMMON_MODULES_MANAGER_FILES:%.c=$(BUILD_DIR)/common_modules_manage/%.linked.bc)
+
+TEST_BC_FILES         := $(SOURCE_TEST_FILES:%.c=$(BUILD_DIR)/test_files/%.bc)
+TEST_BC_LINKED_FILES  := $(SOURCE_TEST_FILES:%.c=$(BUILD_DIR)/test_files/%.linked.bc)
 # BC_FILES              += $(wildcard /home/klee/klee_build/runtime/POSIX/fd64_Release+Debug+Asserts.bc)
 # BC_FILES              += $(wildcard /home/klee/klee_build/runtime/POSIX/fd_init64_Release+Debug+Asserts.bc)
 # BC_FILES              += $(wildcard /home/klee/klee_build/runtime/POSIX/illegal64_Release+Debug+Asserts.bc)
 # BC_FILES              += $(wildcard /home/klee/klee_build/runtime/POSIX/klee_init_env64_Release+Debug+Asserts.bc)
 # BC_FILES              += $(wildcard /home/klee/klee_build/runtime/POSIX/stubs64_Release+Debug+Asserts.bc)
 
+#SOURCE_COMMON_FILES          := $(filter-out /home/klee/threadx/threadx/common/src/tx_event_flags_performance_system_info_get.c, $(SOURCE_COMMON_FILES))
+
+
+
 CFLAGS                :=  -emit-llvm -c -g -fno-asm
 # CFLAGS                += --sysroot=/usr/lib/gcc/arm-none-eabi/6.3.1
 
 
-all: $(TEST_BC_FILES) 
+all: $(TEST_BC_LINKED_FILES)  $(BUILD_DIR)/common_modules_lib/common_modules_lib.linked.bc $(COMMON_MODULES_LIB_BC_LINKED_FILES) $(COMMON_MODULES_MANAGER_BC_LINKED_FILES) $(COMMON_MODULES_LIB_BC_FILES) $(COMMON_BC_FILES)
+
+$(TEST_BC_LINKED_FILES): $(TEST_BC_FILES) $(BUILD_DIR)/common_modules_lib/common_modules_lib.linked.bc $(COMMON_MODULES_LIB_BC_LINKED_FILES) $(COMMON_MODULES_MANAGER_BC_LINKED_FILES) $(COMMON_MODULES_LIB_BC_FILES) $(COMMON_BC_FILES)
 
 
-
-$(BUILD_DIR)/%.bc : %.c 
+$(BUILD_DIR)/common_modules_manage/%.bc : %.c
 	-mkdir -p $(@D)
-	$(CC) $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+	$(CC) $(INCLUDE_COMMON_MODULES_MANAGER_DIRS) $(INCLUDE_COMMON_MODULES_DIRS) $(INCLUDE_DIRS) $(INCLUDE_COMMON_DIRS) $(CFLAGS) $< -o $@
 
-# result.bc : $(BC_FILES)
-# 	-mkdir -p ${@D}
-# 	llvm-link $^ -o $@
-
-# vTaskDelay.bc : $(BC_FILES)
-# 	-mkdir -p ${@D}
-# 	llvm-link $^ -o $@
-
-# vTaskDelayUntil.bc : $(BC_FILES)
-# 	-mkdir -p ${@D}
-# 	llvm-link $^ -o $@
-
-# xTaskAbortDelay.bc : $(BC_FILES)
-# 	-mkdir -p ${@D}
-# 	llvm-link $^ -o $@
-
-# uxTaskPriorityGet.bc : $(BC_FILES)
-# 	-mkdir -p ${@D}
-# 	llvm-link $^ -o $@
-
-# eTaskGetState.bc : $(BC_FILES)
-# 	-mkdir -p ${@D}
-# 	llvm-link $^ -o $@
-%.bc : %.c 
+$(BUILD_DIR)/common/%.bc : %.c
 	-mkdir -p $(@D)
-	$(CC) $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+	$(CC) $(INCLUDE_COMMON_DIRS) $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
-%.test.bc : $(BC_FILES) %.bc
+$(BUILD_DIR)/common/common_lib.bc : $(COMMON_BC_FILES)
+	-mkdir -p ${@D}
+	llvm-link $^ -o $@
+
+$(BUILD_DIR)/common_modules_manage/%.linked.bc : $(BUILD_DIR)/common/common_lib.bc
+	-mkdir -p ${@D}
+	llvm-link $^ -o $@
+
+$(BUILD_DIR)/common_modules_lib/%.bc : %.c
+	-mkdir -p $(@D)
+	$(CC) $(INCLUDE_COMMON_MODULES_LIB_DIRS) $(INCLUDE_COMMON_DIRS) $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/common_modules_lib/%.linked.bc : $(BUILD_DIR)/common_modules_manage/txm_module_manager_kernel_dispatch.linked.bc
 	-mkdir -p ${@D}
 	llvm-link $^ -o $@
 
 
+$(BUILD_DIR)/test_files/%.bc :  %.c
+	-mkdir -p $(@D)
+	$(CC) $(INCLUDE_COMMON_MODULES_LIB_DIRS) $(INCLUDE_DIRS) $(INCLUDE_COMMON_DIRS) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/test_files/%.linked.bc : $(TEST_BC_FILES) /home/klee/threadx/symbolic_execution/build/common_modules_lib/home/klee/threadx/threadx/common_modules/module_lib/src/txm_block_allocate.linked.bc
+	-mkdir -p ${@D}
+	llvm-link $^ -o $@
+
+# $(BUILD_DIR) : %.c 
+# 	-mkdir -p $(@D)
+# 	$(CC) $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+
+# $(COMMON_MODULE_LIB_BC_FILES) : $(COMMON_MODULES_FILES)
+# 	-mkdir -p $(@D)
+# 	$(CC) $(INCLUDE_MODULES_DIRS)  $(CFLAGS) $< -o $@
+
+# $(COMMON_MODULE_LIB_BC_LINKED_FILES) : $(COMMON_MODULE_LIB_BC_FILES)
+# 	llvm-link $^ -o $@
+
+# %.bc : %.c 
+# 	-mkdir -p $(@D)
+# 	$(CC) $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+
+# %.test.bc : $(BC_FILES) %.bc
+# 	-mkdir -p ${@D}
+# 	llvm-link $^ -o $@
+
+
 clean:
-	rm -rf $(BUILD_DIR) $(TEST_BC_FILES) *.bc
+	rm -rf $(BUILD_DIR)   *.bc

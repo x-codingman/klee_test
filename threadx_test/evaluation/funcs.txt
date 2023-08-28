@@ -40,15 +40,7 @@ UINT        _txe_mutex_info_get(TX_MUTEX *mutex_ptr, CHAR **name, ULONG *count, 
                     TX_MUTEX **next_mutex);
 UINT        _txe_mutex_prioritize(TX_MUTEX *mutex_ptr);
 UINT        _txe_mutex_put(TX_MUTEX *mutex_ptr);
-#ifdef TX_ENABLE_MULTI_ERROR_CHECKING
-UINT        _txr_mutex_create(TX_MUTEX *mutex_ptr, CHAR *name_ptr, UINT inherit, UINT mutex_control_block_size);
-UINT        _txr_mutex_delete(TX_MUTEX *mutex_ptr);
-UINT        _txr_mutex_get(TX_MUTEX *mutex_ptr, ULONG wait_option);
-UINT        _txr_mutex_info_get(TX_MUTEX *mutex_ptr, CHAR **name, ULONG *count, TX_THREAD **owner,
-                    TX_THREAD **first_suspended, ULONG *suspended_count,
-                    TX_MUTEX **next_mutex);
-UINT        _txr_mutex_prioritize(TX_MUTEX *mutex_ptr);
-UINT        _txr_mutex_put(TX_MUTEX *mutex_ptr);
+
 
 
 UINT        _txe_queue_create(TX_QUEUE *queue_ptr, CHAR *name_ptr, UINT message_size,

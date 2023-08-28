@@ -245,6 +245,6 @@ def run_command(func):
 # run_command(func)
 
 with concurrent.futures.ProcessPoolExecutor() as executor:
-    with open('funcs_info_v2.json', 'r') as f:
+    with open('/home/klee/klee_test/freertos_10_6_0_test/evaluation/funcs_info_v2.json', 'r') as f:
         funcs = json.load(f)
         executor.map(run_command, funcs)

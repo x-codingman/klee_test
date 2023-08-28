@@ -97,7 +97,8 @@ for func in funcs:
         file.write('void vTaskFunction1( void *pvParameters );\n')
         file.write('int main()\n')
         file.write('{\n')
-        #file.write('xTaskCreate(vTaskFunction1, "Task1", STACK_SIZE, NULL, 1, NULL);\n')
+        file.write('xTaskCreate(vTaskFunction1, "Task1", STACK_SIZE, NULL, 1, NULL);\n')
+        
         file.write(declaration_code)
         file.write(klee_call_code)
         file.write(condition_code)

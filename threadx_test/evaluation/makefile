@@ -39,6 +39,7 @@ INCLUDE_COMMON_MODULES_MANAGER_DIRS  += -I/home/klee/threadx/threadx/common_modu
 SOURCE_COMMON_MODULES_LIB_FILES   := $(wildcard /home/klee/threadx/threadx/common_modules/module_lib/src/*.c)
 SOURCE_COMMON_MODULES_MANAGER_FILES   := $(wildcard /home/klee/threadx/threadx/common_modules/module_manager/src/*.c)
 SOURCE_COMMON_FILES           := $(wildcard /home/klee/threadx/threadx/common/src/*.c)
+#NEW_SOURCE_COMMON_FILES := $(foreach file,$(SOURCE_COMMON_FILES),$(shell echo $(notdir $(file)) | sed 's/^[^_]*_//'))
 #SOURCE_FILES           := $(wildcard /home/klee/threadx/threadx/common/src/*.c)
 #SOURCE_FILES          += $(wildcard /home/klee/threadx/threadx/common/src/tx_thread_initialize.c)
 #SOURCE_FILES          += $(wildcard /home/klee/threadx/threadx/ports_module/cortex_m33/gnu/module_lib/src/*.c)
@@ -55,31 +56,27 @@ COMMON_MODULES_LIB_BC_FILES   := $(SOURCE_COMMON_MODULES_LIB_FILES:%.c=$(BUILD_D
 COMMON_MODULES_LIB_BC_LINKED_FILES := $(SOURCE_COMMON_MODULES_LIB_FILES:%.c=$(BUILD_DIR)/common_modules_lib/%.linked.bc)
 COMMON_MODULES_MANAGER_BC_FILES := $(SOURCE_COMMON_MODULES_MANAGER_FILES:%.c=$(BUILD_DIR)/common_modules_manage/%.bc)
 COMMON_MODULES_MANAGER_BC_LINKED_FILES := $(SOURCE_COMMON_MODULES_MANAGER_FILES:%.c=$(BUILD_DIR)/common_modules_manage/%.linked.bc)
-
+TEST_BC_LINKED_FILES_DIR := $(BUILD_DIR)/test_files/
 TEST_BC_FILES         := $(SOURCE_TEST_FILES:%.c=$(BUILD_DIR)/test_files/%.bc)
 TEST_BC_LINKED_FILES  := $(SOURCE_TEST_FILES:%.c=$(BUILD_DIR)/test_files/%.linked.bc)
-# BC_FILES              += $(wildcard /home/klee/klee_build/runtime/POSIX/fd64_Release+Debug+Asserts.bc)
-# BC_FILES              += $(wildcard /home/klee/klee_build/runtime/POSIX/fd_init64_Release+Debug+Asserts.bc)
-# BC_FILES              += $(wildcard /home/klee/klee_build/runtime/POSIX/illegal64_Release+Debug+Asserts.bc)
-# BC_FILES              += $(wildcard /home/klee/klee_build/runtime/POSIX/klee_init_env64_Release+Debug+Asserts.bc)
-# BC_FILES              += $(wildcard /home/klee/klee_build/runtime/POSIX/stubs64_Release+Debug+Asserts.bc)
 
-#SOURCE_COMMON_FILES          := $(filter-out /home/klee/threadx/threadx/common/src/tx_event_flags_performance_system_info_get.c, $(SOURCE_COMMON_FILES))
 
 
 
 CFLAGS                :=  -emit-llvm -c -g -fno-asm
-# CFLAGS                += --sysroot=/usr/lib/gcc/arm-none-eabi/6.3.1
 
 
-all: $(TEST_BC_LINKED_FILES)  $(BUILD_DIR)/common_modules_lib/common_modules_lib.linked.bc $(COMMON_MODULES_LIB_BC_LINKED_FILES) $(COMMON_MODULES_MANAGER_BC_LINKED_FILES) $(COMMON_MODULES_LIB_BC_FILES) $(COMMON_BC_FILES)
 
-$(TEST_BC_LINKED_FILES): $(TEST_BC_FILES) $(BUILD_DIR)/common_modules_lib/common_modules_lib.linked.bc $(COMMON_MODULES_LIB_BC_LINKED_FILES) $(COMMON_MODULES_MANAGER_BC_LINKED_FILES) $(COMMON_MODULES_LIB_BC_FILES) $(COMMON_BC_FILES)
+all: $(TEST_BC_LINKED_FILES) rename_files $(COMMON_MODULES_LIB_BC_LINKED_FILES) $(COMMON_MODULES_MANAGER_BC_FILES) $(COMMON_MODULES_MANAGER_BC_LINKED_FILES)   $(COMMON_MODULES_LIB_BC_FILES) 
 
+$(COMMON_MODULES_LIB_BC_LINKED_FILES): $(COMMON_MODULES_MANAGER_BC_LINKED_FILES) $(COMMON_MODULES_LIB_BC_FILES) 
+$(COMMON_MODULES_MANAGER_BC_LINKED_FILES): $(COMMON_MODULES_MANAGER_BC_FILES)
+$(TEST_BC_LINKED_FILES): rename_files $(TEST_BC_FILES)
+rename_files : $(COMMON_MODULES_LIB_BC_LINKED_FILES)
 
 $(BUILD_DIR)/common_modules_manage/%.bc : %.c
 	-mkdir -p $(@D)
-	$(CC) $(INCLUDE_COMMON_MODULES_MANAGER_DIRS) $(INCLUDE_COMMON_MODULES_DIRS) $(INCLUDE_DIRS) $(INCLUDE_COMMON_DIRS) $(CFLAGS) $< -o $@
+	$(CC) $(INCLUDE_COMMON_MODULES_MANAGER_DIRS) $(INCLUDE_COMMON_MODULES_LIB_DIRS) $(INCLUDE_COMMON_MODULES_DIRS) $(INCLUDE_DIRS) $(INCLUDE_COMMON_DIRS) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/common/%.bc : %.c
 	-mkdir -p $(@D)
@@ -89,26 +86,40 @@ $(BUILD_DIR)/common/common_lib.bc : $(COMMON_BC_FILES)
 	-mkdir -p ${@D}
 	llvm-link $^ -o $@
 
-$(BUILD_DIR)/common_modules_manage/%.linked.bc : $(BUILD_DIR)/common/common_lib.bc
+$(BUILD_DIR)/common_modules_manage/%.linked.bc : $(BUILD_DIR)/common_modules_manage/%.bc $(BUILD_DIR)/common/common_lib.bc
 	-mkdir -p ${@D}
-	llvm-link $^ -o $@
+	llvm-link $< $(BUILD_DIR)/common/common_lib.bc -o $@
 
 $(BUILD_DIR)/common_modules_lib/%.bc : %.c
 	-mkdir -p $(@D)
 	$(CC) $(INCLUDE_COMMON_MODULES_LIB_DIRS) $(INCLUDE_COMMON_DIRS) $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/common_modules_lib/%.linked.bc : $(BUILD_DIR)/common_modules_manage/txm_module_manager_kernel_dispatch.linked.bc
+
+$(BUILD_DIR)/common_modules_lib/%.linked.bc: $(BUILD_DIR)/common_modules_lib/%.bc $(COMMON_MODULES_MANAGER_BC_LINKED_FILES)
 	-mkdir -p ${@D}
-	llvm-link $^ -o $@
+	llvm-link $< $(BUILD_DIR)/common_modules_manage/home/klee/threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.linked.bc -o $@
 
-
-$(BUILD_DIR)/test_files/%.bc :  %.c
+$(BUILD_DIR)/test_files/%.bc : %.c
 	-mkdir -p $(@D)
 	$(CC) $(INCLUDE_COMMON_MODULES_LIB_DIRS) $(INCLUDE_DIRS) $(INCLUDE_COMMON_DIRS) $(CFLAGS) $< -o $@
 
-$(BUILD_DIR)/test_files/%.linked.bc : $(TEST_BC_FILES) /home/klee/threadx/symbolic_execution/build/common_modules_lib/home/klee/threadx/threadx/common_modules/module_lib/src/txm_block_allocate.linked.bc
+# $(BUILD_DIR)/test_files/%.linked.bc : %.bc /home/klee/threadx/symbolic_execution/build/common_modules_lib/home/klee/threadx/threadx/common_modules/module_lib/src/txm_block_allocate.linked.bc
+# 	-mkdir -p ${@D}
+# 	llvm-link $^ -o $@
+
+rename_files: $(COMMON_MODULES_LIB_BC_LINKED_FILES)
+	@for file in $(COMMON_MODULES_LIB_BC_LINKED_FILES); do \
+        dir_name=$$(dirname $$file); \
+        base_name=$$(basename $$file); \
+        new_name=$$(echo $$base_name | sed 's/^[^_]*_//'); \
+        mv $$file $$dir_name/$$new_name; \
+    done
+
+
+$(BUILD_DIR)/test_files//home/klee/klee_test/threadx_test/evaluation/test_files/%.linked.bc :  $(BUILD_DIR)/test_files//home/klee/klee_test/threadx_test/evaluation/test_files/%.bc $(BUILD_DIR)/common_modules_lib//home/klee/threadx/threadx/common_modules/module_lib/src/%.linked.bc rename_files #文件路径不一致
 	-mkdir -p ${@D}
-	llvm-link $^ -o $@
+	llvm-link $(word 1,$^) $(word 2,$^) -o $@
+
 
 # $(BUILD_DIR) : %.c 
 # 	-mkdir -p $(@D)
@@ -131,4 +142,4 @@ $(BUILD_DIR)/test_files/%.linked.bc : $(TEST_BC_FILES) /home/klee/threadx/symbol
 
 
 clean:
-	rm -rf $(BUILD_DIR)   *.bc
+	rm -rf $(BUILD_DIR)   

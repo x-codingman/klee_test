@@ -86,11 +86,15 @@ namespace klee {
     bool recursive;
 
     ref<Expr> visitActual(const ref<Expr> &e);
+    // add
+    ref<Expr> visitActual2(const ref<Expr> &e);
     
   public:
     // apply the visitor to the expression and return a possibly
     // modified new expression.
     ref<Expr> visit(const ref<Expr> &e);
+    // add
+    ref<Expr> visit2(const ref<Expr> &e);
   };
 
 }

@@ -2157,7 +2157,7 @@ Function *Executor::getTargetFunction(Value *calledVal, ExecutionState &state) {
 void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   Instruction *i = ki->inst;
   // add to locate instruction
-  klee_message("Execute: %s:%d", ki->info->file.c_str(), ki->info->line);
+  klee_debug_message("Execute: %s:%d", ki->info->file.c_str(), ki->info->line);
   switch (i->getOpcode()) {
     // Control flow
   case Instruction::Ret: {
@@ -3851,9 +3851,9 @@ void Executor::run(ExecutionState &initialState) {
       dumpStates();
     if (::dumpPTree)
       dumpPTree();
-    klee_debug_message("DEBUG: states size %d", (int)states.size());
+    // klee_debug_message("DEBUG: states size %d", (int)states.size());
     updateStates(&state);
-    klee_debug_message("DEBUG: states size %d", (int)states.size());
+    // klee_debug_message("DEBUG: states size %d", (int)states.size());
     if (!checkMemoryUsage()) {
       // update searchers when states were terminated early due to memory
       // pressure
@@ -5205,6 +5205,25 @@ void Executor::getConstraintLog(const ExecutionState &state, std::string &res,
     Query query(state.constraints, ConstantExpr::alloc(0, Expr::Bool));
     printer.setQuery(query);
     printer.generateOutput();
+    res = info.str();
+  } break;
+
+  // add
+  case KQUERYFORTARGETAPP: {
+    std::string Str;
+    llvm::raw_string_ostream info(Str);
+
+    ConstraintSet modifiedconstraints;
+    ConstraintManager cm(modifiedconstraints);
+    ref<Expr> modifiedconstraint;
+    for(auto &e: state.addressConstraintsForTargetApp){
+      e.get()->dump();
+      modifiedconstraint = ConstraintManager::restoreExpr(state.addressSpace.address_mo_info, e);
+      // addConstraint() will simplify constraints, but addressConstraintsForTargetApp contains no eq expression for pointers
+      // so it maybe ok
+      cm.addConstraint(modifiedconstraint);
+    }
+    ExprPPrinter::printConstraints(info, modifiedconstraints);
     res = info.str();
   } break;
 

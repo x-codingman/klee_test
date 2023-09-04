@@ -581,6 +581,13 @@ void KleeHandler::processTestCase(const ExecutionState &state,
       auto f = openTestFile("kquery", id);
       if (f)
         *f << constraints;
+
+      // add
+      std::string constraintsfortargetapp;
+      m_interpreter->getConstraintLog(state, constraintsfortargetapp,Interpreter::KQUERYFORTARGETAPP);
+      f = openTestFile("kqueryfortargetapp", id);
+      if (f)
+        *f << constraintsfortargetapp;
     }
 
     if (WriteCVCs) {

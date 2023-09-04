@@ -14,6 +14,8 @@
 
 namespace klee {
 
+class MemoryObject;
+
 /// Resembles a set of constraints that can be passed around
 ///
 class ConstraintSet {
@@ -71,6 +73,10 @@ public:
   /// \return simplified expression
   static ref<Expr> simplifyExpr(const ConstraintSet &constraints,
                                 const ref<Expr> &expr);
+
+  // add
+  static ref<Expr> restoreExpr(const std::map<ref<Expr>, const MemoryObject*> &replacements,
+                              const ref<Expr> &expr);
 
   // add
   /// Replace eq constraint

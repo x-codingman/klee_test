@@ -16,6 +16,8 @@
 #include "llvm/IR/Function.h"
 #include "llvm/Support/CommandLine.h"
 
+#include "/home/klee/klee_test/lib/Core/Memory.h"
+
 #include <map>
 
 using namespace klee;
@@ -70,6 +72,37 @@ public:
   }
 };
 
+// add
+class ExprReplaceVisitor3 : public ExprVisitor {
+private:
+  const std::map<ref<Expr>, const MemoryObject*> &replacements;
+
+public:
+  explicit ExprReplaceVisitor3(
+      const std::map<ref<Expr>, const MemoryObject*> &_replacements)
+      : ExprVisitor(true), replacements(_replacements) {}
+
+  Action visitExprPost(const Expr &e) override {
+    std::map<ref<Expr>, const MemoryObject*>::const_iterator begin = replacements.begin();
+    std::map<ref<Expr>, const MemoryObject*>::const_iterator end = replacements.end();
+    std::map<ref<Expr>, const MemoryObject*>::const_iterator oi = end;
+
+    uint64_t value = dyn_cast<ConstantExpr>(ref<Expr>(const_cast<Expr *>(&e)))->getZExtValue();
+    ref<Expr> offset;
+    ref<Expr> original;
+    while(oi != begin){
+      oi--;
+      const MemoryObject* mo = oi->second;
+      if(mo->address <= value && value < (mo->address + mo->size)){
+        offset = ConstantExpr::create(value-mo->address,64);
+        original = AddExpr::create(oi->first, offset);
+        return Action::changeTo(original);
+      }
+    }
+    return Action::doChildren();
+  }
+};
+
 bool ConstraintManager::rewriteConstraints(ExprVisitor &visitor) {
   ConstraintSet old;
   bool changed = false;
@@ -113,6 +146,12 @@ ref<Expr> ConstraintManager::simplifyExpr(const ConstraintSet &constraints,
   }
 
   return ExprReplaceVisitor2(equalities).visit(e);
+}
+
+// add
+ref<Expr> ConstraintManager::restoreExpr(const std::map<ref<Expr>, const MemoryObject*> &replacements,
+                                         const ref<Expr> &e) {
+  return ExprReplaceVisitor3(replacements).visit2(e);
 }
 
 // add

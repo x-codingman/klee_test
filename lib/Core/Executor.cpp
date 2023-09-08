@@ -428,6 +428,12 @@ cl::opt<bool> DebugCheckForImpliedValues(
 // add to debug
 extern unsigned long uxTopaddress;
 unsigned allocname = 1;
+// add 
+std::string dereference_location_file; 
+unsigned dereference_location_id = 0;
+bool isFirstAPI = false;
+std::vector<std::string> dereference_locations_files;
+std::vector<json> dereference_locations_jsons;
 
 // XXX hack
 extern "C" unsigned dumpStates, dumpPTree;
@@ -3767,6 +3773,22 @@ void Executor::run(ExecutionState &initialState) {
 
   states.insert(&initialState);
 
+  // add
+  if(!isFirstAPI){
+    for (auto &filename: dereference_locations_files){
+      json j;
+      std::ifstream file(filename);
+      klee_debug_message(filename.c_str());
+      if (file.is_open()){
+        file >> j;
+        dereference_locations_jsons.push_back(j);
+      }else{
+        klee_error("Cannot open the file: %s", filename.c_str());
+      }
+      file.close();
+    }
+  }
+
   if (usingSeeds) {
     std::vector<SeedInfo> &v = seedMap[&initialState];
 
@@ -4654,7 +4676,7 @@ void Executor::executeMemoryOperation(
     if (isWrite) {
 
       // add memory address constraint
-      //  Test if the attacker can write a desired value on the memory.
+      // Test if the attacker can write a desired value on the memory.
       uint64_t desired_value = 0;
       uint64_t desired_address_start=MPU_ENABLE_ADDRESS;
       uint64_t desired_address_end=MPU_ENABLE_ADDRESS;
@@ -4665,18 +4687,23 @@ void Executor::executeMemoryOperation(
       
       //Check if the MO of the address is controllable
       bool address_controllable = state.addressSpace.pointer_of_mo_controllable_info[mo];
-      if(address_controllable){
-
-        
+      if (address_controllable && state.addressSpace.mo_controllable_info[mo].second){
+        address_controllable = isControllableAddress(state, state.addressSpace.mo_controllable_info[mo].second);
+        if (!address_controllable)
+          state.addressSpace.pointer_of_mo_controllable_info[mo] = address_controllable;
+          state.addressSpace.mo_controllable_info[mo].first = address_controllable;
+      }
+      // if(address_controllable){
+      if (isFirstAPI){
         ref<Expr> address_test = address;
         if(ConstantExpr *CE = dyn_cast<ConstantExpr>(address)){
           std::pair<MemoryObject*, uint64_t> moPair = state.addressSpace.findMemoryObject(CE);
           address_test = state.addressSpace.getOriginalExprFromMo(moPair.first);
           assert(address && "FIX ME: find mo with no existing record");
         }
-          //Check the address to see whether it can reach dangrous region.
-        //First we check if address > desired_address_start has a solution
 
+        //Check the address to see whether it can reach dangrous region.
+        //First we check if address > desired_address_start has a solution
         success = solver->mayBeTrue(
         state.addressConstraintsForTargetApp,
         UgeExpr::create(address_test, ConstantExpr::create(desired_address_start, address_test->getWidth())),
@@ -4698,7 +4725,8 @@ void Executor::executeMemoryOperation(
             EqExpr::create(ConstantExpr::create(desired_value, Expr::Bool), ZExtExpr::create(value,Expr::Bool)),
             value_test_result, state.queryMetaData);
         assert(success && "FIXME: Unhandled solver failure");
-        if (value_test_result && address_test_result ) {
+
+        if (address_controllable && value_test_result && address_test_result ) {
           std::string currentVulnerabilityInfo =
               target->info->file + ":" + std::to_string(target->info->line);
           auto it = testInfoRecordSet.find(currentVulnerabilityInfo);
@@ -4711,8 +4739,91 @@ void Executor::executeMemoryOperation(
                           desired_address_start,desired_address_end);
           }
         }
-      }
+        if (!address_controllable && value_test_result && address_test_result) {
+          std::string moName;
+          uint64_t offset;
+          unsigned width; 
+          switch(address_test.get()->getKind()){
+            case Expr::Concat:{
+              ConcatExpr* address_test_concat = dyn_cast<ConcatExpr>(address_test);
+              ReadExpr* left = dyn_cast<ReadExpr>(address_test_concat->getLeft());
+              moName = left->updates.root->name;
+              width = address_test_concat->getWidth();
+              offset = dyn_cast<ConstantExpr>(left->index)->getZExtValue() + 1 - width/8;
+              break;
+            }
+            case Expr::Read:{
+              ReadExpr* address_test_read = dyn_cast<ReadExpr>(address_test);
+              moName = address_test_read->updates.root->name;
+              offset = dyn_cast<ConstantExpr>(address_test_read->index)->getZExtValue();
+              width = 8;
+              break;
+            }
+            default:
+              assert("FIXME in executeMemoryOperation(): Unprocessed expression types");
+              break;
+          }
+          json j;
+          std::vector<json> constraintsJson;
+          j["dereference location"] = {{"name", moName}, {"offset", offset}, {"width", width}}; 
+          ConstraintSet cs;
+          ConstraintManager cm(cs);
+          for (auto &constraint:state.addressConstraintsForTargetApp){
+            if (cm.containMo(constraint, moName)){
+              json constraintJson;
+              exprToJson(constraint, constraintJson);
+              constraintsJson.push_back(constraintJson);
+            }
+          }
+          j["constraints"] = constraintsJson;
+          std::string filename = dereference_location_file+std::to_string(dereference_location_id)+".json";
+          std::ofstream file(filename);
+          klee_debug_message(filename.c_str());
+          if (file.is_open()){
+            file << std::setw(4) << j;
+          }else{
+            assert("Cannot open the file");
+          }
+          file.close();
+          dereference_location_id ++;
+        }
+      }else{
+        // Check the value to see whether it can reach the range of dangrous region.
+        // First we check if value > desired_address_start has a solution
+        success = solver->mayBeTrue(
+        state.addressConstraintsForTargetApp,
+        UgeExpr::create(value, ConstantExpr::create(desired_address_start, type)),
+        value_test_result, state.queryMetaData);
+        assert(success && "FIXME: Unhandled solver failure");
 
+        // If so, then we check if value < desired_address_end has a solution
+        if(value_test_result){
+          success = solver->mayBeTrue(
+          state.addressConstraintsForTargetApp,
+          UleExpr::create(value,ConstantExpr::create(desired_address_end, type)),
+          value_test_result, state.queryMetaData);
+        }
+        assert(success && "FIXME: Unhandled solver failure");
+
+        // FIX ME HERE. We need to to consider whether the controllable flag needs to be added. 
+        if(value_test_result){
+          ref<Expr> offset = mo->getOffsetExpr(address);
+          if(ConstantExpr* ce = dyn_cast<ConstantExpr>(offset)){
+            bool overlap;
+            for (auto &j: dereference_locations_jsons){
+              overlap = determineMoOverlap(state, mo, ce->getZExtValue(), j);
+              if (!overlap)
+                break;
+            }
+            if (overlap)
+              klee_second_test_info("The mo can be overlapped with desired value in range of MPU region at file %s: line %d.",
+                            target->info->file.c_str(),
+                            target->info->line);
+          }else{
+            assert("FIXME in executeMemoryOperation(): symbolic index is not considered");
+          }
+        }
+      }
     }
   }
 
@@ -4786,19 +4897,21 @@ void Executor::executeMemoryOperation(
         state.addressSpace.address_mo_info[result]=newMo;
         //Initialize the mo if there is no record for whether it is controllable.
         if(state.addressSpace.mo_controllable_info.count(mo)==0){
-          state.addressSpace.mo_controllable_info[mo]=false;
+          state.addressSpace.mo_controllable_info[mo].first=false;
+          state.addressSpace.mo_controllable_info[mo].second=NULL;
         }
         // Assign the controllable flag as same as its pointer.
-        bool controllable = state.addressSpace.mo_controllable_info[mo];
-        state.addressSpace.mo_controllable_info[newMo]=controllable;
+        bool controllable = state.addressSpace.mo_controllable_info[mo].first;
+        state.addressSpace.mo_controllable_info[newMo].first=controllable;
+        state.addressSpace.mo_controllable_info[newMo].second=state.addressSpace.getOriginalExprFromMo(const_cast<MemoryObject*>(mo));
         // Record the controllable info of the pointer.
         state.addressSpace.pointer_of_mo_controllable_info[newMo] = controllable;
-        if(state.addressSpace.mo_controllable_info[newMo]==true)
-          state.addressSpace.mo_controllable_info[newMo]= isControllableAddress(state,result);
+        if(state.addressSpace.mo_controllable_info[newMo].first==true)
+          state.addressSpace.mo_controllable_info[newMo].first = isControllableAddress(state,result);
 
         klee_debug_message("mo address: %lu",mo->address);
         klee_debug_message("newMo address: %lu",newMo->address);
-        if(state.addressSpace.mo_controllable_info[newMo]){
+        if(state.addressSpace.mo_controllable_info[newMo].first){
           klee_debug_message("alloc controllable mo!!!");
         }else{
           klee_debug_message("alloc uncontrollable mo!!!");
@@ -5059,7 +5172,8 @@ void Executor::executeMakeSymbolic(ExecutionState &state,
                                    const MemoryObject *mo,
                                    const std::string &name,
                                    bool isControllable) {
-  state.addressSpace.mo_controllable_info[mo] = isControllable;
+  state.addressSpace.mo_controllable_info[mo].first = isControllable;
+  state.addressSpace.mo_controllable_info[mo].second = NULL;
   executeMakeSymbolic(state,mo,name);
 }
 
@@ -5533,5 +5647,245 @@ std::vector<ref<Expr>> Executor::getAddKids(ref<Expr> addExpr){
   return result;
 }
 
+// add
+bool Executor::determineMoOverlap(ExecutionState &state, const MemoryObject* mo, uint64_t offset, json &j){
+  std::string name = j["dereference location"]["name"];
+  uint64_t relativeOffset = j["dereference location"]["offset"];
+  relativeOffset = offset - relativeOffset;
+  bool isUnderflow = (relativeOffset > offset)? true : false;
 
+  std::vector<ref<Expr>> constraints;
+  for (auto &constraintJson: j["constraints"]){
+    ref<Expr> constraint = jsontoExpr(state, mo, name, relativeOffset, constraintJson, isUnderflow);
+    if (!constraint){
+      klee_second_test_info("The constaint exceeds the mo range %s: . The second test teminates",
+                            constraintJson.dump(4).c_str());
+      return false;
+    }
+    constraints.push_back(constraint);
+  }
 
+  bool mayBeTrue = false;
+  for (auto &constraint: constraints){
+    bool success =
+        solver->mayBeTrue(state.constraints, constraint,
+                           mayBeTrue, state.queryMetaData);
+    assert(success && "FIXME: Unhandled solver failure");
+
+    std::string Str;
+    llvm::raw_string_ostream info(Str);
+    ExprPPrinter::printSingleExpr(info, constraint);
+    if (mayBeTrue){
+      klee_second_test_info("The constaint can be satisfied %s: ",
+                            info.str().c_str());
+    }else{
+      klee_second_test_info("The constarin cannot be satisfied %s: . The second test terminates.",
+                            info.str().c_str());
+      return false;
+    }
+  }
+  return true;
+}
+
+void Executor::exprToJson(const ref<Expr> &expression, json &j){
+  switch (expression->getKind()){
+  case Expr::Constant:{
+    uint64_t value = dyn_cast<ConstantExpr>(expression)->getZExtValue();
+    j["type"] = Expr::Constant;
+    j["value"] = value;
+    break;
+  }
+  case Expr::Read:{
+    ReadExpr* re = dyn_cast<ReadExpr>(expression);
+    std::string name = re->updates.root->name;
+    if(ConstantExpr* ce = dyn_cast<ConstantExpr>(re->index)){
+      j["type"] = Expr::Read;
+      j["name"] = name;
+      j["index"] = ce->getZExtValue();
+    }else{
+      assert("FIXME in exprToJson(): symbolic index in ReadExpr is not considered");
+    }
+    break;
+  }
+  case Expr::Concat:{
+    // we assume that all Concat expressions concatenate Read expressions,
+    // so we don't split deep into them
+    ConcatExpr* ce = dyn_cast<ConcatExpr>(expression);
+    if(ReadExpr* re = dyn_cast<ReadExpr>(ce->getLeft())){
+      if(ConstantExpr* index = dyn_cast<ConstantExpr>(re->index)){
+        unsigned width = ce->getWidth();
+        j["type"] = Expr::Concat;
+        j["name"] = re->updates.root->name;
+        j["index"] = index->getZExtValue() + 1 - width/8;
+        j["width"] = width;
+      }else{
+        assert("FIXME in exprToJson(): symbolic index in ConcatExpr is not considered");
+      }
+    }else{
+      assert("FIXME in exprToJson(): non-ReadExpr in ConcatExpr");
+    }
+    break;
+  }
+  case Expr::Eq:{
+    EqExpr* ee = dyn_cast<EqExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Eq;
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Ult:{
+    UltExpr* ee = dyn_cast<UltExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Ult;
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Ule:{
+    UleExpr* ee = dyn_cast<UleExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Ule;
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Ugt:{
+    UgtExpr* ee = dyn_cast<UgtExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Ugt;
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Uge:{
+    UgeExpr* ee = dyn_cast<UgeExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Uge;
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  default:
+    assert("FIXME in exprToJson(): Unprocessed expression types");
+    break;
+    // Many expression types have not been processed 
+  }
+}
+
+ref<Expr> Executor::jsontoExpr(ExecutionState &state, const MemoryObject* mo, std::string name, 
+                               uint64_t relativeOffset, json &j, bool isUnderflow){
+  Expr::Kind type = j["type"];
+  ref<Expr> expression = NULL;
+  switch (type){
+  case Expr::Constant:{
+    uint64_t value = j["value"];
+    expression = ConstantExpr::create(value, 64);
+    break;
+  }
+  case Expr::Read:{
+    std::string readName = j["name"];
+    if (name != readName){
+      assert("FIXME in jsonToExpr(): additional mo appears in the constraint");
+    }else{
+      uint64_t offset = j["index"];
+      offset += relativeOffset;
+      if (!isUnderflow || (offset < relativeOffset)){
+        const auto os = state.addressSpace.objects.lookup(mo);
+        // now we assume only concrete offset will appear
+        expression = os->second.get()->read(offset, 8);
+      }
+    }
+    break;
+  }
+  case Expr::Concat:{
+    std::string readName = j["name"];
+    if (name != readName){
+      assert("FIXME in jsonToExpr(): additional mo appears in the constraint");
+    }else{
+      uint64_t offset = j["index"];
+      offset += relativeOffset;
+      if (!isUnderflow || (offset < relativeOffset)){
+        unsigned width = j["width"];
+        const auto os = state.addressSpace.objects.lookup(mo);
+        expression = os->second.get()->read(offset, width);
+      }
+    }
+    break;
+  }
+  case Expr::Eq:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsontoExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsontoExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    if (leftExpr && rightExpr)
+      expression = EqExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Ult:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsontoExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsontoExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    if (leftExpr && rightExpr)
+      expression = UltExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Ule:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsontoExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsontoExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    if (leftExpr && rightExpr)
+      expression = UleExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Ugt:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsontoExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsontoExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    if (leftExpr && rightExpr)
+      expression = UgtExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Uge:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsontoExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsontoExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    if (leftExpr && rightExpr)
+      expression = UgeExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  default:
+    assert("FIXME in exprToJson(): Unprocessed expression types");
+    break;
+  }
+  return expression;
+}

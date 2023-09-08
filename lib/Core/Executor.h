@@ -39,6 +39,10 @@
 #include <unordered_map>
 #include <vector>
 
+// add
+#include <nlohmann/json.hpp>
+using json = nlohmann::ordered_json;
+
 struct KTest;
 
 namespace llvm {
@@ -283,6 +287,12 @@ private:
   // Get all kid expression of the expression.
   // We now only handle ADD expressions.
   std::vector<ref<Expr>> getAddKids(ref<Expr> addExpr);
+
+  /// add
+  bool determineMoOverlap(ExecutionState &state, const MemoryObject* mo, uint64_t offset, json &j);
+  void exprToJson(const ref<Expr> &expression, json &j);
+  ref<Expr> jsontoExpr(ExecutionState &state, const MemoryObject* mo, std::string name, 
+                               uint64_t relativeOffset, json &j, bool isUnderflow);
 
   /// Allocate and bind a new object in a particular state. NOTE: This
   /// function may fork.

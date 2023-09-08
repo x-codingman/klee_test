@@ -26,6 +26,7 @@ using namespace llvm;
 FILE *klee::klee_warning_file = NULL;
 FILE *klee::klee_message_file = NULL;
 FILE *klee::klee_test_info_file = NULL;
+FILE *klee::klee_second_test_info_file = NULL;
 
 static const char *warningPrefix = "WARNING";
 static const char *warningOncePrefix = "WARNING ONCE";
@@ -164,6 +165,14 @@ void klee::klee_test_info(const char *msg, ...) {
   va_list ap;
   va_start(ap, msg);
   klee_vfmessage(klee_test_info_file, NULL, msg, ap);
+  va_end(ap);
+}
+
+// add for second test
+void klee::klee_second_test_info(const char *msg, ...) {
+  va_list ap;
+  va_start(ap, msg);
+  klee_vfmessage(klee_second_test_info_file, NULL, msg, ap);
   va_end(ap);
 }
 

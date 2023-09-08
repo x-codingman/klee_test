@@ -70,6 +70,37 @@ public:
   }
 };
 
+bool ConstraintManager::containMo(const ref<Expr> &e, std::string name){
+  if (isa<ConstantExpr>(e)) {    
+    return false;
+  } else if(isa<ConcatExpr>(e)){
+    ref<Expr> left = dyn_cast<ConcatExpr>(e)->getLeft();
+    std::string nameLeft = dyn_cast<ReadExpr>(left)->updates.root->name;
+    if (name == nameLeft)
+      return true;
+    return false;
+  }
+  else if(isa<ReadExpr>(e)){
+    std::string nameE = dyn_cast<ReadExpr>(e)->updates.root->name;
+    if (name == nameE)
+      return true;
+    return false;
+  }
+  else{
+    bool kids[8] = {false};
+    unsigned count = e.get()->getNumKids();
+    for (unsigned i=0; i<count; i++) {
+      ref<Expr> kid = e.get()->getKid(i);
+      kids[i] = containMo(kid, name);
+    }
+    for (unsigned i=0; i<count; i++){
+      if (kids[i])
+        return true;
+    }
+    return false;
+  } 
+}
+
 bool ConstraintManager::rewriteConstraints(ExprVisitor &visitor) {
   ConstraintSet old;
   bool changed = false;

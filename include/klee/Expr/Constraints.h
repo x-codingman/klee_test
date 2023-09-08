@@ -78,6 +78,9 @@ public:
   /// Add constraint to the referenced constraint set
   /// \param constraint
   void addConstraint(const ref<Expr> &constraint);
+  // add
+  /// Determine whether an expression contains a specific MemoryObject based on its name
+  bool containMo(const ref<Expr> &e, std::string name);
 
 private:
   /// Rewrite set of constraints using the visitor

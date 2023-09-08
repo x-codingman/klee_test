@@ -1,0 +1,56 @@
+version: 1
+creator: klee
+pid: 3595914
+cmd: ../threadx_test/evaluation/test_files/test_api_1.bc
+
+
+positions: instr line
+event: Icov : CoveredInstructions
+event: Forks : Forks
+event: Ireal : InstructionRealTimes
+event: Itime : InstructionTimes
+event: I : Instructions
+event: UCdist : MinDistToUncovered
+event: Rtime : ResolveTime
+event: States : States
+event: Iuncov : UncoveredInstructions
+event: Q : Queries
+event: Qiv : QueriesInvalid
+event: Qv : QueriesValid
+event: Qtime : QueryTime
+events: Icov Forks Ireal Itime I UCdist Rtime States Iuncov Q Qiv Qv Qtime 
+ob=assembly.ll
+fl=test_api_1.c
+fn=main
+13 9 1 0 0 0 1 0 0 0 0 0 0 0 0 
+14 10 1 0 0 0 1 0 0 0 0 0 0 0 0 
+15 11 1 0 0 0 1 0 0 0 0 0 0 0 0 
+16 11 1 0 0 0 1 0 0 0 0 0 0 0 0 
+17 12 1 0 0 0 1 0 0 0 0 2 2 0 6538 
+18 12 1 0 0 0 1 0 0 0 0 0 0 0 0 
+cfn=test_api_1
+calls=1 27 15
+18 12 21 4 0 0 38 0 0 0 0 5 5 0 16927 
+19 13 1 0 0 0 5 0 0 0 0 3 3 0 9338 
+fn=test_api_1
+30 15 1 0 0 0 1 0 0 0 0 0 0 0 0 
+31 15 1 0 0 0 1 0 0 0 0 0 0 0 0 
+32 15 1 0 0 0 1 0 0 0 0 0 0 0 0 
+33 16 1 0 0 0 1 0 0 0 0 0 0 0 0 
+34 16 1 0 0 0 1 0 0 0 0 0 0 0 0 
+35 16 1 1 0 0 1 0 0 0 0 1 1 0 3199 
+38 16 1 0 0 0 1 0 0 0 0 0 0 0 0 
+39 16 1 0 0 0 1 0 0 0 0 0 0 0 0 
+40 16 1 1 0 0 1 0 0 0 0 1 1 0 3155 
+43 17 1 0 0 0 2 0 0 0 0 0 0 0 0 
+44 17 1 0 0 0 2 0 0 0 0 0 0 0 0 
+45 17 1 0 0 0 2 0 0 0 0 0 0 0 0 
+46 17 1 0 0 0 2 0 0 0 0 0 0 0 0 
+47 17 1 2 0 0 2 0 0 0 0 1 1 0 3324 
+50 18 1 0 0 0 2 0 0 0 0 0 0 0 0 
+51 18 1 0 0 0 2 0 0 0 0 0 0 0 0 
+52 18 1 0 0 0 2 0 0 0 0 1 1 0 3679 
+53 18 1 0 0 0 2 0 0 0 0 1 1 0 3570 
+54 19 1 0 0 0 2 0 0 0 0 0 0 0 0 
+57 20 1 0 0 0 4 0 0 0 0 0 0 0 0 
+60 21 1 0 0 0 5 0 0 0 0 0 0 0 0 

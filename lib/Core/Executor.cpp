@@ -4318,7 +4318,7 @@ MemoryObject *Executor::lazyAlloc(ExecutionState &state, ref<Expr> size,
         StateTerminationType::Ptr);
   }
   std::string name =
-      "alloc" + llvm::utostr(++allocname); // address->toString();
+      "lazy_alloc" + llvm::utostr(++allocname); // address->toString();
   klee_debug_message("DEBUG: Lazy alloc name: %s",name.c_str());
   executeMakeSymbolic(state, mo, name);
   state.addressSpace.record.push_back(mo);

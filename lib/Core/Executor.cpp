@@ -431,7 +431,7 @@ unsigned allocname = 1;
 // add 
 std::string dereference_location_file; 
 unsigned dereference_location_id = 0;
-bool isFirstAPI = false;
+bool isFirstAPI = true;
 std::vector<std::string> dereference_locations_files;
 std::vector<json> dereference_locations_jsons;
 

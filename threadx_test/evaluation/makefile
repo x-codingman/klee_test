@@ -7,7 +7,7 @@ BUILD_COMMON_MODULES_LIB_DIR := $(BUILD_DIR)/common_modules_lib
 
 KERNEL_DIR            := /home/klee/threadx/threadx/
 
-TEST_FILES_DIR            := /home/klee/klee_test/threadx_test/evaluation/test_files
+evaluation_files_DIR            := /home/klee/klee_test/threadx_test/evaluation/evaluation_files
 
 COMMON_DIR                     := /home/klee/threadx/threadx/common
 COMMON_MODULES_LIB_DIR         := /home/klee/threadx/threadx/common_modules/module_lib
@@ -45,7 +45,7 @@ SOURCE_COMMON_FILES           := $(wildcard /home/klee/threadx/threadx/common/sr
 #SOURCE_FILES          += $(wildcard /home/klee/threadx/threadx/ports_module/cortex_m33/gnu/module_lib/src/*.c)
 
 
-SOURCE_TEST_FILES      := $(wildcard /home/klee/klee_test/threadx_test/evaluation/test_files/*.c)
+SOURCE_evaluation_files      := $(wildcard /home/klee/klee_test/threadx_test/evaluation/evaluation_files/*.c)
 
 
 
@@ -56,24 +56,25 @@ COMMON_MODULES_LIB_BC_FILES   := $(SOURCE_COMMON_MODULES_LIB_FILES:%.c=$(BUILD_D
 COMMON_MODULES_LIB_BC_LINKED_FILES := $(SOURCE_COMMON_MODULES_LIB_FILES:%.c=$(BUILD_DIR)/common_modules_lib/%.linked.bc)
 COMMON_MODULES_MANAGER_BC_FILES := $(SOURCE_COMMON_MODULES_MANAGER_FILES:%.c=$(BUILD_DIR)/common_modules_manage/%.bc)
 COMMON_MODULES_MANAGER_BC_LINKED_FILES := $(SOURCE_COMMON_MODULES_MANAGER_FILES:%.c=$(BUILD_DIR)/common_modules_manage/%.linked.bc)
-TEST_BC_LINKED_FILES_DIR := $(BUILD_DIR)/test_files/
-TEST_BC_FILES         := $(SOURCE_TEST_FILES:%.c=$(BUILD_DIR)/test_files/%.bc)
-TEST_BC_LINKED_FILES  := $(SOURCE_TEST_FILES:%.c=$(BUILD_DIR)/test_files/%.linked.bc)
+TEST_BC_LINKED_FILES_DIR := $(BUILD_DIR)/evaluation_files/
+TEST_BC_FILES         := $(SOURCE_evaluation_files:%.c=$(BUILD_DIR)/evaluation_files/%.bc)
+TEST_BC_LINKED_FILES  := $(SOURCE_evaluation_files:%.c=$(BUILD_DIR)/evaluation_files/%.linked.bc)
 
 
 
 
-CFLAGS                :=  -emit-llvm -c -g -fno-asm
+CFLAGS                := -fno-asm -emit-llvm -c -g 
 
 
 
-all: $(TEST_BC_LINKED_FILES) rename_files $(COMMON_MODULES_LIB_BC_LINKED_FILES) $(COMMON_MODULES_MANAGER_BC_FILES) $(COMMON_MODULES_MANAGER_BC_LINKED_FILES)   $(COMMON_MODULES_LIB_BC_FILES) 
+all: $(TEST_BC_FILES) rename_files $(COMMON_MODULES_LIB_BC_LINKED_FILES) $(COMMON_MODULES_MANAGER_BC_FILES) $(COMMON_MODULES_MANAGER_BC_LINKED_FILES)   $(COMMON_MODULES_LIB_BC_FILES) 
 
 $(COMMON_MODULES_LIB_BC_LINKED_FILES): $(COMMON_MODULES_MANAGER_BC_LINKED_FILES) $(COMMON_MODULES_LIB_BC_FILES) 
 $(COMMON_MODULES_MANAGER_BC_LINKED_FILES): $(COMMON_MODULES_MANAGER_BC_FILES)
-$(TEST_BC_LINKED_FILES): rename_files $(TEST_BC_FILES)
+
 rename_files : $(COMMON_MODULES_LIB_BC_LINKED_FILES)
 
+target: $(TEST_BC_LINKED_FILES)
 $(BUILD_DIR)/common_modules_manage/%.bc : %.c
 	-mkdir -p $(@D)
 	$(CC) $(INCLUDE_COMMON_MODULES_MANAGER_DIRS) $(INCLUDE_COMMON_MODULES_LIB_DIRS) $(INCLUDE_COMMON_MODULES_DIRS) $(INCLUDE_DIRS) $(INCLUDE_COMMON_DIRS) $(CFLAGS) $< -o $@
@@ -86,24 +87,24 @@ $(BUILD_DIR)/common/common_lib.bc : $(COMMON_BC_FILES)
 	-mkdir -p ${@D}
 	llvm-link $^ -o $@
 
-$(BUILD_DIR)/common_modules_manage/%.linked.bc : $(BUILD_DIR)/common_modules_manage/%.bc $(BUILD_DIR)/common/common_lib.bc
+$(BUILD_DIR)/common_modules_manage/common_modules_manage_lib.linked.bc : $(COMMON_MODULES_MANAGER_BC_FILES) $(BUILD_DIR)/common/common_lib.bc
 	-mkdir -p ${@D}
-	llvm-link $< $(BUILD_DIR)/common/common_lib.bc -o $@
+	llvm-link $^  -o $@
 
 $(BUILD_DIR)/common_modules_lib/%.bc : %.c
 	-mkdir -p $(@D)
 	$(CC) $(INCLUDE_COMMON_MODULES_LIB_DIRS) $(INCLUDE_COMMON_DIRS) $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 
-$(BUILD_DIR)/common_modules_lib/%.linked.bc: $(BUILD_DIR)/common_modules_lib/%.bc $(COMMON_MODULES_MANAGER_BC_LINKED_FILES)
+$(BUILD_DIR)/common_modules_lib/%.linked.bc: $(BUILD_DIR)/common_modules_lib/%.bc $(BUILD_DIR)/common_modules_manage/common_modules_manage_lib.linked.bc 
 	-mkdir -p ${@D}
-	llvm-link $< $(BUILD_DIR)/common_modules_manage/home/klee/threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.linked.bc -o $@
+	llvm-link $< $(BUILD_DIR)/common_modules_manage/common_modules_manage_lib.linked.bc -o $@
 
-$(BUILD_DIR)/test_files/%.bc : %.c
+$(BUILD_DIR)/evaluation_files/%.bc : %.c
 	-mkdir -p $(@D)
 	$(CC) $(INCLUDE_COMMON_MODULES_LIB_DIRS) $(INCLUDE_DIRS) $(INCLUDE_COMMON_DIRS) $(CFLAGS) $< -o $@
 
-# $(BUILD_DIR)/test_files/%.linked.bc : %.bc /home/klee/threadx/symbolic_execution/build/common_modules_lib/home/klee/threadx/threadx/common_modules/module_lib/src/txm_block_allocate.linked.bc
+# $(BUILD_DIR)/evaluation_files/%.linked.bc : %.bc /home/klee/threadx/symbolic_execution/build/common_modules_lib/home/klee/threadx/threadx/common_modules/module_lib/src/txm_block_allocate.linked.bc
 # 	-mkdir -p ${@D}
 # 	llvm-link $^ -o $@
 
@@ -116,9 +117,9 @@ rename_files: $(COMMON_MODULES_LIB_BC_LINKED_FILES)
     done
 
 
-$(BUILD_DIR)/test_files//home/klee/klee_test/threadx_test/evaluation/test_files/%.linked.bc :  $(BUILD_DIR)/test_files//home/klee/klee_test/threadx_test/evaluation/test_files/%.bc $(BUILD_DIR)/common_modules_lib//home/klee/threadx/threadx/common_modules/module_lib/src/%.linked.bc rename_files #文件路径不一致
+$(BUILD_DIR)/evaluation_files//home/klee/klee_test/threadx_test/evaluation/evaluation_files/%.linked.bc : $(BUILD_DIR)/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/%.bc $(BUILD_DIR)/common_modules_lib//home/klee/threadx/threadx/common_modules/module_lib/src/%.linked.bc  #文件路径不一致
 	-mkdir -p ${@D}
-	llvm-link $(word 1,$^) $(word 2,$^) -o $@
+	llvm-link $^ -o $@
 
 
 # $(BUILD_DIR) : %.c 

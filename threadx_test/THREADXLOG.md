@@ -3,7 +3,8 @@
 - 注释 /home/klee/threadx/threadx/common/src/tx_thread_create.c 225行，忽略thread的stack初始化，
 - 注释 /home/klee/threadx/threadx/ports/cortex_m33/gnu/inc/tx_port.h 628，629行，忽略架构底层汇编指令
 - 在klee_help.h中增加_tx_thread_secure_stack_allocate、_tx_thread_schedule的弱定义。
-
+- 在module-lib中的函数定义上，增加一个前缀m，避免编译带来的符号重定义问题。
+- 编译thread_reset时，在 _txm_module_manager_kernel_dispatch 中注视module_instance的获取，避免得到constant符号指针。
 
 
 
@@ -15,4 +16,3 @@
 
 - 在编译过程中 _txe_event_flags_create': symbol multiply defined
 
-- 在module-lib中的函数定义上，增加一个前缀m，避免编译带来的符号重定义问题。

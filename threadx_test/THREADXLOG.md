@@ -4,7 +4,11 @@
 - 注释 /home/klee/threadx/threadx/ports/cortex_m33/gnu/inc/tx_port.h 628，629行，忽略架构底层汇编指令
 - 在klee_help.h中增加_tx_thread_secure_stack_allocate、_tx_thread_schedule的弱定义。
 - 在module-lib中的函数定义上，增加一个前缀m，避免编译带来的符号重定义问题。
-- 编译thread_reset时，在 _txm_module_manager_kernel_dispatch 中注视module_instance的获取，避免得到constant符号指针。
+
+
+- 注释txm_module_manager_thread_reset.c里面的TX_DISABLE和TX_RESOTRE
+- 注释txm_module_manager_thread_reset.c里面的_txm_module_manager_thread_stack_build
+
 
 
 

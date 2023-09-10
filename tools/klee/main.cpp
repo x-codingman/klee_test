@@ -62,6 +62,11 @@
 using namespace llvm;
 using namespace klee;
 
+// add
+extern std::string dereference_location_file;
+extern bool isFirstAPI;
+extern std::vector<std::string> dereference_locations_files;
+
 namespace {
   cl::opt<std::string>
   InputFile(cl::desc("<input bytecode>"), cl::Positional, cl::init("-"));
@@ -144,7 +149,14 @@ namespace {
   //Config the test_info.txt output directory
   cl::opt<std::string>
   TestInfoOutputDir("test-info-output-dir",
-                    cl::desc("Directory in which to write the test info result (default=path of the  input file)"),
+                    cl::desc("Directory in which to write the test info result (default=path of the input file)"),
+                    cl::init(""),
+                    cl::cat(StartCat));
+
+  // add
+  cl::opt<std::string>
+  DereferenceLOCInputDir("dereference-locations-input-dir",
+                    cl::desc("Directory in which to read the dereference locations (default=path of the input file)"),
                     cl::init(""),
                     cl::cat(StartCat));
 
@@ -350,6 +362,10 @@ public:
   static void getKTestFilesInDir(std::string directoryPath,
                                  std::vector<std::string> &results);
 
+  // add
+  static std::vector<std::string> getFilesWithSuffix(const SmallString<128> directory, 
+                                                     const std::string suffix);
+
   static std::string getRunTimeLibraryPath(const char *argv0);
 };
 
@@ -429,8 +445,21 @@ KleeHandler::KleeHandler(int argc, char **argv)
       klee_error("cannot create \"%s\": %s", test_info_directory.c_str(), strerror(errno));
   }
 
-
-
+  if (isFirstAPI){
+    // add
+    // get dereference location file directory
+    dereference_location_file = getOutputFilename("dereference_location");
+  }else{
+    // add
+    // get dereference locations files
+    bool dereference_locations_dir_given = DereferenceLOCInputDir!="";
+    SmallString<128> dereference_locations_directory(dereference_locations_dir_given ? DereferenceLOCInputDir: InputFile);
+    const std::string suffix = ".json";
+    dereference_locations_files = getFilesWithSuffix(dereference_locations_directory, suffix);
+    if(dereference_locations_files.size()==0){
+        klee_error("no dereference locations files exit in the directory: %s", dereference_locations_directory.c_str());
+    }
+  }
   // open warnings.txt
   std::string file_path = getOutputFilename("warnings.txt");
   if ((klee_warning_file = fopen(file_path.c_str(), "w")) == NULL)
@@ -453,6 +482,13 @@ KleeHandler::KleeHandler(int argc, char **argv)
  
   if ((klee_test_info_file = fopen(file_path.c_str(), "w")) == NULL)
     klee_error("cannot open file \"%s\": %s", file_path.c_str(), strerror(errno));
+
+  // add
+  file_path = getOutputFilename("second_test_info.txt");
+  if ((klee_second_test_info_file = fopen(file_path.c_str(), "w")) == NULL)
+    klee_error("cannot open file \"%s\": %s", file_path.c_str(), strerror(errno));
+  
+  
   // open info
   m_infoFile = openOutputFile("info");
 }
@@ -675,6 +711,25 @@ void KleeHandler::getKTestFilesInDir(std::string directoryPath,
                  << ": " << ec.message() << "\n";
     exit(1);
   }
+}
+
+// add
+std::vector<std::string> KleeHandler::getFilesWithSuffix(const SmallString<128> directory, const std::string suffix){
+  std::vector<std::string> filenames;
+  
+  // Iterate over the directory contents using LLVM's directory iterator
+  std::error_code ec;
+  llvm::sys::fs::directory_iterator dirIt(directory, ec), dirEnd;
+  for (; dirIt != dirEnd && !ec; dirIt.increment(ec)) {
+    std::string path = dirIt->path();
+
+    // Check if the file has the desired suffix
+    if (llvm::sys::path::extension(path) == suffix) {
+      filenames.push_back(path);
+    }
+  }
+
+  return filenames;
 }
 
 std::string KleeHandler::getRunTimeLibraryPath(const char *argv0) {

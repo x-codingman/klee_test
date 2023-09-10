@@ -56,12 +56,17 @@
 
 
 // /* Define main entry point.  */
-
+extern TX_THREAD *    _tx_thread_current_ptr;
 int main()
 {
 
     /* Enter the ThreadX kernel.  */
     //tx_kernel_enter();
+    TX_THREAD *thread_ptr;
+ 
+    klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);
+    klee_make_symbolic_controllable(&thread_ptr, sizeof(thread_ptr), "thread_ptr", true);
+m_txe_thread_reset(thread_ptr);
 }
 
 
@@ -70,7 +75,6 @@ int main()
 void    tx_application_define(void *first_unused_memory)
 {
 
-TX_THREAD *thread_ptr;
-_txe_thread_reset(thread_ptr);
+
 
 }

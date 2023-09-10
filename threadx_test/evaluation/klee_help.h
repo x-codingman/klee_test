@@ -10,8 +10,13 @@
     #define ATTACK_CAPABILITY_REGION_START 0x80000000
     #define ATTACK_CAPABILITY_REGION_END 0x8fffffff
 
+    extern ALIGN_TYPE _txm_module_manager_kernel_dispatch(ULONG kernel_request, ALIGN_TYPE param_0, ALIGN_TYPE param_1, ALIGN_TYPE param_2);
+    ULONG (*_txm_module_kernel_call_dispatcher)(ULONG kernel_request, ULONG param_1, ULONG param_2, ULONG param3)=\
+    _txm_module_manager_kernel_dispatch;
 
-    #define _txm_module_kernel_call_dispatcher _txm_module_manager_kernel_dispatch
+// _txm_module_manager_object_pool_created = true;
+// _txm_module_manager_object_pool = 0;
+// _txm_module_manager_callback_error_count = 0;
 
     UINT  __attribute__((weak))  _tx_thread_secure_stack_allocate(struct TX_THREAD_STRUCT *tx_thread, ULONG stack_size){}
     VOID  __attribute__((weak))      _tx_thread_schedule(VOID){}

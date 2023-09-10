@@ -23,6 +23,7 @@ namespace klee {
 extern FILE *klee_warning_file;
 extern FILE *klee_message_file;
 extern FILE *klee_test_info_file;
+extern FILE *klee_second_test_info_file;
 /// Print "KLEE: ERROR: " followed by the msg in printf format and a
 /// newline on stderr and to warnings.txt, then exit with an error.
 void klee_error(const char *msg, ...)
@@ -43,6 +44,9 @@ void klee_warning(const char *msg, ...) __attribute__((format(printf, 1, 2)));
 
 //add SXH
 void klee_test_info(const char *msg, ...)__attribute__((format(printf, 1, 2)));
+
+// add
+void klee_second_test_info(const char *msg, ...)__attribute__((format(printf, 1, 2)));
 
 // ADD DEBUG OUTPUT BY SXH
 void klee_debug_message(const char *msg, ...) __attribute__((format(printf, 1, 2)));

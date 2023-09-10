@@ -47,3 +47,4 @@ target_link_libraries(kleeCore PRIVATE
   kleaverExpr
   kleeSupport
 )
+target_link_libraries(kleeCore PRIVATE nlohmann_json::nlohmann_json)

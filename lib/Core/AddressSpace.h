@@ -74,7 +74,7 @@ namespace klee {
     MemoryMap objects;
 
     // Add a map to record whether the memory object can be constructed by the attacker.
-    std::map<const MemoryObject*, bool> mo_controllable_info;
+    std::map<const MemoryObject*, std::pair<bool, ref<Expr>>> mo_controllable_info;
     // Add a map to record the relationship between symbolic pointer expression and lazily allocated memory object
     std::map<ref<Expr>, const MemoryObject*> address_mo_info;
     /// add a list to record the MemoryObject allocated to symbolic pointers

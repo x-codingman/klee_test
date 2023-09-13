@@ -1,0 +1,9 @@
+{
+    "writable location": {
+        "address_offset": 0,
+        "name": "test_c",
+        "offset_in_mo": 0,
+        "width": 64
+    },
+    "constraints": []
+}

@@ -1,0 +1,26 @@
+{
+    "writable location": {
+        "address_offset": 8,
+        "name": "test_ptr_2",
+        "offset_in_mo": 0,
+        "width": 64
+    },
+    "constraints": [
+        {
+            "type": 26,
+            "type_name": "Ule",
+            "left": {
+                "type": 0,
+                "type_name": "Constant",
+                "value": 2415919103
+            },
+            "right": {
+                "type": 5,
+                "type_name": "Concat",
+                "name": "test_ptr_2",
+                "index": 0,
+                "width": 64
+            }
+        }
+    ]
+}

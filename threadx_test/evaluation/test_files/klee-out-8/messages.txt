@@ -1,0 +1,136 @@
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94697016828464
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: dump address and result
+KLEE: DEBUG: Lazy alloc name: alloc2
+KLEE: DEBUG: detect controllable address
+KLEE: mo address: 94697016828464
+KLEE: newMo address: 94697017645088
+KLEE: alloc controllable mo!!!
+KLEE: DEBUG: The symbolic pointer has been allocated, alloc size: 24,        alloc address: 94697017645088
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94697016828160
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: add constraints in addressConstraintsForTargetApp
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: add constraints in addressConstraintsForTargetApp
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: lazyResolve failed, found a symbolic pointer
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: /home/klee/klee_test/threadx_test/evaluation/test_files/klee-out-8/writable_location0.json
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: /home/klee/klee_test/threadx_test/evaluation/test_files/klee-out-8/writable_location1.json
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: lazyResolve failed, found a symbolic pointer
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: /home/klee/klee_test/threadx_test/evaluation/test_files/klee-out-8/writable_location2.json
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: /home/klee/klee_test/threadx_test/evaluation/test_files/klee-out-8/writable_location3.json
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 0

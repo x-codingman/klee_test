@@ -1,0 +1,22 @@
+{
+    "writable location": {
+        "name": "test_ptr_2",
+        "offset": 0,
+        "width": 64
+    },
+    "constraints": [
+        {
+            "type": 26,
+            "left": {
+                "type": 0,
+                "value": 2415919103
+            },
+            "right": {
+                "type": 5,
+                "name": "test_ptr_2",
+                "index": 0,
+                "width": 64
+            }
+        }
+    ]
+}

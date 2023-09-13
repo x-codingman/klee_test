@@ -1,0 +1,2 @@
+KLEE: Error: information leak vulnerabilityon file test_api_3.c: line 18. 
+KLEE: Error: information leak vulnerabilityon file test_api_3.c: line 19. 

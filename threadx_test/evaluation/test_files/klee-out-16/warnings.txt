@@ -1,0 +1,2 @@
+KLEE: WARNING: undefined reference to function: klee_make_symbolic_controllable
+KLEE: WARNING: undefined reference to function: test_api_2

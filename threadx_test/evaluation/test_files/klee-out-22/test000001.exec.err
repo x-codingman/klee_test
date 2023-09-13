@@ -1,0 +1,7 @@
+Error: external call with symbolic argument: test_api_2
+File: test_api_3.c
+Line: 13
+assembly.ll line: 30
+State: 1
+Stack: 
+	#000000030 in main() at test_api_3.c:13

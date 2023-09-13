@@ -1,0 +1,59 @@
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94688291226112
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94688291226136
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94688291226128
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: dump address and result
+KLEE: DEBUG: Lazy alloc name: alloc2
+KLEE: DEBUG: detect controllable address
+KLEE: mo address: 94688291226112
+KLEE: newMo address: 94688292042912
+KLEE: alloc controllable mo!!!
+KLEE: DEBUG: The symbolic pointer has been allocated, alloc size: 24,        alloc address: 94688292042912
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: dump address and result
+KLEE: DEBUG: Lazy alloc name: alloc3
+KLEE: DEBUG: detect controllable address
+KLEE: mo address: 94688291226136
+KLEE: newMo address: 94688291226248
+KLEE: alloc controllable mo!!!
+KLEE: DEBUG: The symbolic pointer has been allocated, alloc size: 4,        alloc address: 94688291226248
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: dump address and result
+KLEE: DEBUG: Lazy alloc name: alloc4
+KLEE: DEBUG: detect controllable address
+KLEE: mo address: 94688291226128
+KLEE: newMo address: 94688291226256
+KLEE: alloc controllable mo!!!
+KLEE: DEBUG: The symbolic pointer has been allocated, alloc size: 4,        alloc address: 94688291226256
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 0

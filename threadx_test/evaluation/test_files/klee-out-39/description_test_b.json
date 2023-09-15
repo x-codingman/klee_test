@@ -1,0 +1,26 @@
+{
+    "writable location 0": {
+        "name": "test_b",
+        "offset_in_mo": 0,
+        "width": 64,
+        "constraints": []
+    },
+    "writable location 2": {
+        "name": "test_b",
+        "offset_in_mo": 0,
+        "width": 64,
+        "constraints": []
+    },
+    "writable location 3": {
+        "name": "test_b",
+        "offset_in_mo": 0,
+        "width": 64,
+        "constraints": []
+    },
+    "writable location 5": {
+        "name": "test_b",
+        "offset_in_mo": 0,
+        "width": 64,
+        "constraints": []
+    }
+}

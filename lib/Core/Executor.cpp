@@ -430,9 +430,11 @@ extern unsigned long uxTopaddress;
 unsigned allocname = 1;
 // add 
 std::string dereference_location_file;
-std::string writable_location_file; 
+std::string writable_location_file;
+std::string  description_file; 
 unsigned dereference_location_id = 0;
 unsigned writable_location_id = 0;
+unsigned readable_location_id = 0;
 bool isFirstAPI = true;
 std::vector<std::string> dereference_locations_files;
 std::vector<json> dereference_locations_jsons;
@@ -4624,6 +4626,8 @@ void Executor::executeMemoryOperation(
       klee_debug_message("DEBUG: lazyResolve failed, found a constant address, "
                          "its value is: %lu",
                          CE->getZExtValue());
+      
+      unitializedPointerDereferenceReport(target);
     } else {
       klee_debug_message("DEBUG: lazyResolve failed, found a symbolic pointer");
     }
@@ -4790,7 +4794,7 @@ void Executor::executeMemoryOperation(
           file.close();
           dereference_location_id ++;
         }
-      // }else{
+      }else{
         // Check the value to see whether it can reach the range of dangrous region.
         // First we check if value > desired_address_start has a solution
 
@@ -4811,23 +4815,22 @@ void Executor::executeMemoryOperation(
 
         // FIX ME HERE. We need to to consider whether the controllable flag needs to be added. 
         if(value_test_result){
-          // ref<Expr> offset = mo->getOffsetExpr(address);
-          // if(ConstantExpr* ce = dyn_cast<ConstantExpr>(offset)){
-          //   bool overlap;
-          //   for (auto &j: dereference_locations_jsons){
-          //     overlap = determineMoOverlap(state, mo, ce->getZExtValue(), j);
-          //     if (!overlap)
-          //       break;
-          //   }
-          //   if (overlap)
-          //     klee_second_test_info("The mo can be overlapped with desired value in range of MPU region at file %s: line %d.",
-          //                   target->info->file.c_str(),
-          //                   target->info->line);
-          // }else{
-          //   assert("FIXME in executeMemoryOperation(): symbolic index is not considered");
-          // }
-          address_test.get()->dump();
-          value.get()->dump();
+          ref<Expr> offset = mo->getOffsetExpr(address);
+          if(ConstantExpr* ce = dyn_cast<ConstantExpr>(offset)){
+            bool overlap;
+            for (auto &j: dereference_locations_jsons){
+              overlap = determineMoOverlap(state, mo, ce->getZExtValue(), j);
+              if (!overlap)
+                break;
+            }
+            if (overlap)
+              klee_second_test_info("The mo can be overlapped with desired value in range of MPU region at file %s: line %d.",
+                            target->info->file.c_str(),
+                            target->info->line);
+          }else{
+            assert("FIXME in executeMemoryOperation(): symbolic index is not considered");
+          }
+
           recordWritableLocationsToJson(state,address_test, address_offset);
         }
       }
@@ -5938,9 +5941,18 @@ bool Executor::recordWritableLocationsToJson(ExecutionState &state,const ref<Exp
           uint64_t offset;
           unsigned width; 
           json j;
-          std::vector<json> constraintsJson;
           getExprInfo(address,moName,offset,width);
-          j["writable location"] = {{"address_offset", address_offset},{"name", moName}, {"offset_in_mo", offset}, {"width", width}}; 
+          std::string filename = description_file+"_"+moName+".json";
+          std::ifstream inFile(filename);
+          if (inFile.is_open()) {
+              inFile >> j;
+              inFile.close();
+          } else {
+              assert("Cannot open the file");
+          }
+          std::vector<json> constraintsJson;
+          
+          
           ConstraintSet cs;
           ConstraintManager cm(cs);
           for (auto &constraint:state.addressConstraintsForTargetApp){
@@ -5950,8 +5962,9 @@ bool Executor::recordWritableLocationsToJson(ExecutionState &state,const ref<Exp
               constraintsJson.push_back(constraintJson);
             }
           }
-          j["constraints"] = constraintsJson;
-          std::string filename = writable_location_file+std::to_string(writable_location_id)+".json";
+         
+          j["writable location "+std::to_string(writable_location_id)] = {{"name", moName}, {"offset_in_mo", offset}, {"width", width}, {"constraints", constraintsJson} }; 
+          
           std::ofstream file(filename);
           klee_debug_message(filename.c_str());
           if (file.is_open()){
@@ -5963,6 +5976,41 @@ bool Executor::recordWritableLocationsToJson(ExecutionState &state,const ref<Exp
           writable_location_id ++;
 }
 
+void Executor::recordReadableLocationToJson(ExecutionState &state,const ref<Expr> &value){
+          std::string moName="";
+          uint64_t offset=0;
+          unsigned width=0;
+          std::vector<json> constraintsJson; 
+          Expr::Kind k = getExprInfo(value, moName, offset, width);
+          std::string filename = description_file+"_"+moName+".json";
+          std::ifstream inFile(filename);
+          json j;
+          if (inFile.is_open()) {
+              inFile >> j;
+              inFile.close();
+          } else {
+              assert("Cannot open the file");
+          }
+          ConstraintSet cs;
+          ConstraintManager cm(cs);
+          for (auto &constraint:state.addressConstraintsForTargetApp){
+            if (cm.containMo(constraint, moName)){
+              json constraintJson;
+              exprToJson(constraint, constraintJson);
+              constraintsJson.push_back(constraintJson);
+            }
+          }
+          j["readable location "+std::to_string(readable_location_id)] = {{"name", moName}, {"offset_in_mo", offset}, {"width", width}, {"constraints", constraintsJson} }; 
+          std::ofstream outFile(filename);
+          klee_debug_message(filename.c_str());
+          if (outFile.is_open()){
+            outFile << std::setw(4) << j;
+          }else{
+            assert("Cannot open the file");
+          }
+          outFile.close();
+          readable_location_id++;
+}
 
 
 
@@ -6006,12 +6054,27 @@ void Executor::detectInfomationLeak(ExecutionState &state, ref<Expr> &address, r
     return;
   }else{
     std::string report_str = "information leak vulnerability";
+    recordReadableLocationToJson(state,value);
     vulnerabilityReport(report_str, target);
   }
 }
 
+// Detect pointers that is unintialized before dereferencing, 
+// e.g., uninitialized gobal pointers, unintialzied pointer parameter
+void Executor::detectUnintializedPointersDereferencing(ExecutionState &state, ref<Expr> &address, KInstruction *target){
+  // Note, the address is pointing to lazy intialized memory objects.
+  ref<Expr> address_test = address;
+  uint64_t address_offset;
+  // Convert the concrete address to it symbolic expression
+  // TODO: only symbolic expression for base address now
+  if(ConstantExpr *CE = dyn_cast<ConstantExpr>(address)){
+      std::pair<MemoryObject*, uint64_t> mo_pair = state.addressSpace.findMemoryObject(CE);
+      address_test = state.addressSpace.getOriginalExprFromMo(mo_pair.first);
+      address_offset = mo_pair.second;
+      assert(address && "FIX ME: find mo with no existing record");
 
-
+  }
+}
 bool Executor::getMoControllableInfo(ExecutionState &state, const MemoryObject* mo){
       bool address_controllable = state.addressSpace.pointer_of_mo_controllable_info[mo];
       // Update the controllable info
@@ -6023,7 +6086,6 @@ bool Executor::getMoControllableInfo(ExecutionState &state, const MemoryObject* 
       }
       return address_controllable;
 }
-
 void Executor::vulnerabilityReport(std::string report_str, KInstruction *target){
   std::string currentVulnerabilityInfo =
               target->info->file + ":" + std::to_string(target->info->line);
@@ -6036,5 +6098,10 @@ void Executor::vulnerabilityReport(std::string report_str, KInstruction *target)
                           target->info->line);
           }
 
+}
+
+void Executor::unitializedPointerDereferenceReport(KInstruction *target){
+  std::string report_str = "Uninitialized pointer dereferencing!! Found a unresolved constant address";
+  vulnerabilityReport(report_str, target);
 }
 

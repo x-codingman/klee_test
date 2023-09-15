@@ -2,6 +2,7 @@
     #define KLEE_HELP_H
  
     #include "stdbool.h"
+    #include "tx_api.h"
     #include <stdint.h>
     #include "tx_port.h"
 

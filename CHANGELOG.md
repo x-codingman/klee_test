@@ -51,3 +51,10 @@
 - 将工具执行分为两个阶段，第一阶段用于检测controllable和uncontrollable的malicious解引用位置，第二阶段用于再检测uncontrollable的malicious解引用位置是否可以与其他MO重合错位，以提高工具检测能力（目前定义全局变量isFirstAPI以控制两阶段的符号执行，为true是第一阶段，为false是第二阶段）
 - 第一阶段若有uncontrollable的解引用位置将生成名为dereference_location*.json的文件，此文件是第二阶段检测的必要输入文件
 - 增加--dereference-locations-input-dir=path/to/dereference_location*.json/directory的命令行选项，用于第二阶段指定输入文件目录
+
+## [3.6.1] - 2023-9-10
+- 修改memset函数中的循环为条件判断。
+- 在Json记录中增加type_name标记，方便阅读。
+- 增加informationleak检查，暂未考虑controllable属性以及threadx那种情况。
+- 增加unitialized pointer dereference的检查。
+- 增加record writable和readable的信息，并将它们以memory object对象单独进行记录。

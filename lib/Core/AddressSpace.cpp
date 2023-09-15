@@ -99,8 +99,33 @@ bool AddressSpace::isSymbolicAddress(const ref<ConstantExpr> &addr){
   return false;
 }
 
+MemoryObject* AddressSpace::getMoFromName(const std::string name){
+  
+  // Initialize result
+  MemoryObject* result= NULL;
+ 
+
+  std::list<const MemoryObject*>::const_iterator begin = record.begin();
+  std::list<const MemoryObject*>::const_iterator end = record.end();
+  std::list<const MemoryObject*>::const_iterator oi = end;
+
+  while(oi != begin){
+    --oi;
+    const MemoryObject *mo = *oi;
+    if(mo->name == name){
+      result = const_cast<MemoryObject *>(mo);
+      
+      break;
+    }
+  }
+  return result;
+}
+
 std::pair< MemoryObject*, uint64_t > AddressSpace::findMemoryObject(const ref<ConstantExpr> &addr){
   std::pair< MemoryObject*, uint64_t >result;
+  // Initialize result
+  result.first = NULL;
+  result.second = -1;
   uint64_t address = addr->getZExtValue();
   std::list<const MemoryObject*>::const_iterator begin = record.begin();
   std::list<const MemoryObject*>::const_iterator end = record.end();
@@ -119,6 +144,8 @@ std::pair< MemoryObject*, uint64_t > AddressSpace::findMemoryObject(const ref<Co
   return result;
 }
 
+
+
 ref<Expr> AddressSpace::getOriginalExprFromMo(MemoryObject * mo){
   assert(mo!=NULL && "Invalid mo in getOriginalExprFromMo");
   std::map<ref<Expr>, const MemoryObject*>::const_iterator begin = address_mo_info.begin();
@@ -132,6 +159,7 @@ ref<Expr> AddressSpace::getOriginalExprFromMo(MemoryObject * mo){
   }
   return NULL;
 }
+
 
 
 

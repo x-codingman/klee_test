@@ -64,6 +64,8 @@ using namespace klee;
 
 // add
 extern std::string dereference_location_file;
+extern std::string writable_location_file;
+extern std::string description_file;
 extern bool isFirstAPI;
 extern std::vector<std::string> dereference_locations_files;
 
@@ -449,6 +451,8 @@ KleeHandler::KleeHandler(int argc, char **argv)
     // add
     // get dereference location file directory
     dereference_location_file = getOutputFilename("dereference_location");
+    writable_location_file = getOutputFilename("writable_location");
+    description_file = getOutputFilename("description");
   }else{
     // add
     // get dereference locations files

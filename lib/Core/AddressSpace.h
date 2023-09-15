@@ -99,6 +99,8 @@ namespace klee {
     // add
     // Find the mo according to the constant address.
     std::pair< MemoryObject*, uint64_t > findMemoryObject(const ref<ConstantExpr> &addr);
+    // Find the lazy intialzied mo from its name.
+    MemoryObject* getMoFromName(const std::string name);
 
     ref<Expr> getOriginalExprFromMo(MemoryObject * mo);
     /// Resolve address to an ObjectPair in result.

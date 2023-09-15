@@ -429,8 +429,12 @@ cl::opt<bool> DebugCheckForImpliedValues(
 extern unsigned long uxTopaddress;
 unsigned allocname = 1;
 // add 
-std::string dereference_location_file; 
+std::string dereference_location_file;
+std::string writable_location_file;
+std::string  description_file; 
 unsigned dereference_location_id = 0;
+unsigned writable_location_id = 0;
+unsigned readable_location_id = 0;
 bool isFirstAPI = true;
 std::vector<std::string> dereference_locations_files;
 std::vector<json> dereference_locations_jsons;
@@ -4622,6 +4626,8 @@ void Executor::executeMemoryOperation(
       klee_debug_message("DEBUG: lazyResolve failed, found a constant address, "
                          "its value is: %lu",
                          CE->getZExtValue());
+      
+      unitializedPointerDereferenceReport(target);
     } else {
       klee_debug_message("DEBUG: lazyResolve failed, found a symbolic pointer");
     }
@@ -4671,10 +4677,14 @@ void Executor::executeMemoryOperation(
     addConstraint(state, mo->getBoundsCheckPointer(address));
   }
 
+
+
   // Detect the arbitrary writing operation
   if (state.addressSpace.isSymbolicBaseAddress(mo->getBaseExpr())) {
     if (isWrite) {
-
+        // Detect the infomation leak vulnerability.
+  
+      detectInfomationLeak(state, address, value, target);
       // add memory address constraint
       // Test if the attacker can write a desired value on the memory.
       uint64_t desired_value = 0;
@@ -4686,21 +4696,18 @@ void Executor::executeMemoryOperation(
       bool success;
       
       //Check if the MO of the address is controllable
-      bool address_controllable = state.addressSpace.pointer_of_mo_controllable_info[mo];
-      if (address_controllable && state.addressSpace.mo_controllable_info[mo].second){
-        address_controllable = isControllableAddress(state, state.addressSpace.mo_controllable_info[mo].second);
-        if (!address_controllable)
-          state.addressSpace.pointer_of_mo_controllable_info[mo] = address_controllable;
-          state.addressSpace.mo_controllable_info[mo].first = address_controllable;
-      }
+      bool address_controllable = getMoControllableInfo(state, mo);
       // if(address_controllable){
-      if (isFirstAPI){
-        ref<Expr> address_test = address;
-        if(ConstantExpr *CE = dyn_cast<ConstantExpr>(address)){
-          std::pair<MemoryObject*, uint64_t> moPair = state.addressSpace.findMemoryObject(CE);
-          address_test = state.addressSpace.getOriginalExprFromMo(moPair.first);
+      ref<Expr> address_test = address;
+      uint64_t address_offset = 0;
+      if(ConstantExpr *CE = dyn_cast<ConstantExpr>(address)){
+          std::pair<MemoryObject*, uint64_t> mo_pair = state.addressSpace.findMemoryObject(CE);
+          address_test = state.addressSpace.getOriginalExprFromMo(mo_pair.first);
+          address_offset = mo_pair.second;
           assert(address && "FIX ME: find mo with no existing record");
-        }
+      }
+      if (isFirstAPI){
+
 
         //Check the address to see whether it can reach dangrous region.
         //First we check if address > desired_address_start has a solution
@@ -4790,6 +4797,7 @@ void Executor::executeMemoryOperation(
       }else{
         // Check the value to see whether it can reach the range of dangrous region.
         // First we check if value > desired_address_start has a solution
+
         success = solver->mayBeTrue(
         state.addressConstraintsForTargetApp,
         UgeExpr::create(value, ConstantExpr::create(desired_address_start, type)),
@@ -4822,6 +4830,8 @@ void Executor::executeMemoryOperation(
           }else{
             assert("FIXME in executeMemoryOperation(): symbolic index is not considered");
           }
+
+          recordWritableLocationsToJson(state,address_test, address_offset);
         }
       }
     }
@@ -5102,6 +5112,8 @@ void Executor::executeMakeSymbolic(ExecutionState &state,
     while (!state.arrayNames.insert(uniqueName).second) {
       uniqueName = name + "_" + llvm::utostr(++id);
     }
+    // Assign the name to mo.
+    mo->name = uniqueName;
     const Array *array = arrayCache.CreateArray(uniqueName, mo->size);
     bindObjectInState(state, mo, false, array);
     state.addSymbolic(mo, array);
@@ -5692,6 +5704,7 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
   case Expr::Constant:{
     uint64_t value = dyn_cast<ConstantExpr>(expression)->getZExtValue();
     j["type"] = Expr::Constant;
+    j["type_name"] = "Constant";
     j["value"] = value;
     break;
   }
@@ -5700,6 +5713,7 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
     std::string name = re->updates.root->name;
     if(ConstantExpr* ce = dyn_cast<ConstantExpr>(re->index)){
       j["type"] = Expr::Read;
+      j["type_name"] = "Read";
       j["name"] = name;
       j["index"] = ce->getZExtValue();
     }else{
@@ -5715,6 +5729,7 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
       if(ConstantExpr* index = dyn_cast<ConstantExpr>(re->index)){
         unsigned width = ce->getWidth();
         j["type"] = Expr::Concat;
+        j["type_name"] = "Concat";
         j["name"] = re->updates.root->name;
         j["index"] = index->getZExtValue() + 1 - width/8;
         j["width"] = width;
@@ -5735,6 +5750,7 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
     json rightJson;
     exprToJson(right, rightJson);
     j["type"] = Expr::Eq;
+    j["type_name"] = "Eq";
     j["left"] = leftJson;
     j["right"] = rightJson;
     break;
@@ -5748,6 +5764,7 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
     json rightJson;
     exprToJson(right, rightJson);
     j["type"] = Expr::Ult;
+    j["type_name"] = "Ult";
     j["left"] = leftJson;
     j["right"] = rightJson;
     break;
@@ -5761,6 +5778,7 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
     json rightJson;
     exprToJson(right, rightJson);
     j["type"] = Expr::Ule;
+    j["type_name"] = "Ule";
     j["left"] = leftJson;
     j["right"] = rightJson;
     break;
@@ -5774,6 +5792,7 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
     json rightJson;
     exprToJson(right, rightJson);
     j["type"] = Expr::Ugt;
+    j["type_name"] = "Ugt";
     j["left"] = leftJson;
     j["right"] = rightJson;
     break;
@@ -5787,6 +5806,7 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
     json rightJson;
     exprToJson(right, rightJson);
     j["type"] = Expr::Uge;
+    j["type_name"] = "Uge";
     j["left"] = leftJson;
     j["right"] = rightJson;
     break;
@@ -5889,3 +5909,199 @@ ref<Expr> Executor::jsontoExpr(ExecutionState &state, const MemoryObject* mo, st
   }
   return expression;
 }
+
+
+
+Expr::Kind Executor::getExprInfo(const ref<Expr>  &e, std::string &moName, uint64_t &offset, unsigned &width ){
+          Expr::Kind k = e.get()->getKind();
+          switch(k){
+            case Expr::Concat:{
+              ConcatExpr* e_concat = dyn_cast<ConcatExpr>(e);
+              ReadExpr* left = dyn_cast<ReadExpr>(e_concat->getLeft());
+              moName = left->updates.root->name;
+              width = e_concat->getWidth();
+              offset = dyn_cast<ConstantExpr>(left->index)->getZExtValue() + 1 - width/8;
+              break;
+            }
+            case Expr::Read:{
+              ReadExpr* e_read = dyn_cast<ReadExpr>(e);
+              moName = e_read->updates.root->name;
+              offset = dyn_cast<ConstantExpr>(e_read->index)->getZExtValue();
+              width = 8;
+              break;
+            }
+            default:
+              assert("FIXME in executeMemoryOperation(): Unprocessed expression types");
+              break;
+          }
+          return k;
+}
+bool Executor::recordWritableLocationsToJson(ExecutionState &state,const ref<Expr>  &address, uint64_t address_offset){
+          std::string moName;
+          uint64_t offset;
+          unsigned width; 
+          json j;
+          getExprInfo(address,moName,offset,width);
+          std::string filename = description_file+"_"+moName+".json";
+          std::ifstream inFile(filename);
+          if (inFile.is_open()) {
+              inFile >> j;
+              inFile.close();
+          } else {
+              assert("Cannot open the file");
+          }
+          std::vector<json> constraintsJson;
+          
+          
+          ConstraintSet cs;
+          ConstraintManager cm(cs);
+          for (auto &constraint:state.addressConstraintsForTargetApp){
+            if (cm.containMo(constraint, moName)){
+              json constraintJson;
+              exprToJson(constraint, constraintJson);
+              constraintsJson.push_back(constraintJson);
+            }
+          }
+         
+          j["writable location "+std::to_string(writable_location_id)] = {{"name", moName}, {"offset_in_mo", offset}, {"width", width}, {"constraints", constraintsJson} }; 
+          
+          std::ofstream file(filename);
+          klee_debug_message(filename.c_str());
+          if (file.is_open()){
+            file << std::setw(4) << j;
+          }else{
+            assert("Cannot open the file");
+          }
+          file.close();
+          writable_location_id ++;
+}
+
+void Executor::recordReadableLocationToJson(ExecutionState &state,const ref<Expr> &value){
+          std::string moName="";
+          uint64_t offset=0;
+          unsigned width=0;
+          std::vector<json> constraintsJson; 
+          Expr::Kind k = getExprInfo(value, moName, offset, width);
+          std::string filename = description_file+"_"+moName+".json";
+          std::ifstream inFile(filename);
+          json j;
+          if (inFile.is_open()) {
+              inFile >> j;
+              inFile.close();
+          } else {
+              assert("Cannot open the file");
+          }
+          ConstraintSet cs;
+          ConstraintManager cm(cs);
+          for (auto &constraint:state.addressConstraintsForTargetApp){
+            if (cm.containMo(constraint, moName)){
+              json constraintJson;
+              exprToJson(constraint, constraintJson);
+              constraintsJson.push_back(constraintJson);
+            }
+          }
+          j["readable location "+std::to_string(readable_location_id)] = {{"name", moName}, {"offset_in_mo", offset}, {"width", width}, {"constraints", constraintsJson} }; 
+          std::ofstream outFile(filename);
+          klee_debug_message(filename.c_str());
+          if (outFile.is_open()){
+            outFile << std::setw(4) << j;
+          }else{
+            assert("Cannot open the file");
+          }
+          outFile.close();
+          readable_location_id++;
+}
+
+
+
+void Executor::detectInfomationLeak(ExecutionState &state, ref<Expr> &address, ref<Expr> &value, KInstruction *target){
+  ref<Expr> address_test = address;
+  uint64_t address_offset;
+  // Convert the concrete address to it symbolic expression
+  // TODO: only symbolic expression for base address now
+  if(ConstantExpr *CE = dyn_cast<ConstantExpr>(address)){
+          std::pair<MemoryObject*, uint64_t> mo_pair = state.addressSpace.findMemoryObject(CE);
+          address_test = state.addressSpace.getOriginalExprFromMo(mo_pair.first);
+          address_offset = mo_pair.second;
+          assert(address && "FIX ME: find mo with no existing record");
+  }
+
+  // We assume there is an Infomationleak vulnerability if the value is extracted from 
+  // a lazy initialized memory object.
+
+  // First check if the value is a concrete value.
+  value.get()->dump();
+  if(isa<ConstantExpr>(value)){
+    // If it is a concrete value, then check if it is an pointer of an initialized memory object
+    ConstantExpr *CE = dyn_cast<ConstantExpr>(value);
+    std::pair<MemoryObject*, uint64_t> mo_pair = state.addressSpace.findMemoryObject(CE);
+    if(mo_pair.first == NULL){
+      return;
+    }else{
+      // Check if the pointer is belong to an lazy initialized memory object
+      // TODO
+    }
+  }
+
+  // The value is a symbol, then we check if the symbol is belong to a initialized memory object
+  // TODO, Is it complete?
+  std::string moName="";
+  uint64_t offset=0;
+  unsigned width=0; 
+  Expr::Kind k = getExprInfo(value, moName, offset, width);
+  const MemoryObject* mo = state.addressSpace.getMoFromName(moName);
+  if(mo == NULL){
+    return;
+  }else{
+    std::string report_str = "information leak vulnerability";
+    recordReadableLocationToJson(state,value);
+    vulnerabilityReport(report_str, target);
+  }
+}
+
+// Detect pointers that is unintialized before dereferencing, 
+// e.g., uninitialized gobal pointers, unintialzied pointer parameter
+void Executor::detectUnintializedPointersDereferencing(ExecutionState &state, ref<Expr> &address, KInstruction *target){
+  // Note, the address is pointing to lazy intialized memory objects.
+  ref<Expr> address_test = address;
+  uint64_t address_offset;
+  // Convert the concrete address to it symbolic expression
+  // TODO: only symbolic expression for base address now
+  if(ConstantExpr *CE = dyn_cast<ConstantExpr>(address)){
+      std::pair<MemoryObject*, uint64_t> mo_pair = state.addressSpace.findMemoryObject(CE);
+      address_test = state.addressSpace.getOriginalExprFromMo(mo_pair.first);
+      address_offset = mo_pair.second;
+      assert(address && "FIX ME: find mo with no existing record");
+
+  }
+}
+bool Executor::getMoControllableInfo(ExecutionState &state, const MemoryObject* mo){
+      bool address_controllable = state.addressSpace.pointer_of_mo_controllable_info[mo];
+      // Update the controllable info
+      if (address_controllable && state.addressSpace.mo_controllable_info[mo].second){
+        address_controllable = isControllableAddress(state, state.addressSpace.mo_controllable_info[mo].second);
+        if (!address_controllable)
+          state.addressSpace.pointer_of_mo_controllable_info[mo] = address_controllable;
+          state.addressSpace.mo_controllable_info[mo].first = address_controllable;
+      }
+      return address_controllable;
+}
+void Executor::vulnerabilityReport(std::string report_str, KInstruction *target){
+  std::string currentVulnerabilityInfo =
+              target->info->file + ":" + std::to_string(target->info->line);
+          auto it = testInfoRecordSet.find(currentVulnerabilityInfo);
+          if (it == testInfoRecordSet.end()) {
+            testInfoRecordSet.insert(currentVulnerabilityInfo);
+            klee_test_info("Error: %s"
+                          "on file %s: line %d. ",report_str.c_str(),
+                            target->info->file.c_str(),
+                          target->info->line);
+          }
+
+}
+
+void Executor::unitializedPointerDereferenceReport(KInstruction *target){
+  std::string report_str = "Uninitialized pointer dereferencing!! Found a unresolved constant address";
+  vulnerabilityReport(report_str, target);
+}
+

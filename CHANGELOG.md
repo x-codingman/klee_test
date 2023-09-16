@@ -52,7 +52,7 @@
 - 第一阶段若有uncontrollable的解引用位置将生成名为dereference_location*.json的文件，此文件是第二阶段检测的必要输入文件
 - 增加--dereference-locations-input-dir=path/to/dereference_location*.json/directory的命令行选项，用于第二阶段指定输入文件目录
 
-## [3.6.1] - 2023-9-10
+## [3.6.1] - 2023-9-15
 - 修改memset函数中的循环为条件判断。
 - 在Json记录中增加type_name标记，方便阅读。
 - 增加informationleak检查，暂未考虑controllable属性以及threadx那种情况。

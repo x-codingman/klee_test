@@ -40,6 +40,7 @@
 #include <vector>
 
 // add
+#include "klee/Core/InterAnalysis.h"
 #include <nlohmann/json.hpp>
 using json = nlohmann::ordered_json;
 
@@ -302,6 +303,10 @@ private:
  void vulnerabilityReport(std::string report_str,KInstruction *target);
  void detectUnintializedPointersDereferencing(ExecutionState &state, ref<Expr> &address, KInstruction *target);
  void unitializedPointerDereferenceReport(KInstruction *target);
+ bool canPointToOtherMemoryObject(ExecutionState &state,  KInstruction *target, MemoryObjectV2 &mo1, MemoryObjectV2 &mo2);
+ MemoryObject* memoryObjectConstruct(ExecutionState &state,  KInstruction *target, MemoryObjectV2 &v2Mo);
+ void runInterAnalysis(llvm::Function *f, int argc, char **argv,
+                         char **envp) override;
   /// Allocate and bind a new object in a particular state. NOTE: This
   /// function may fork.
   ///

@@ -96,6 +96,7 @@ typedef unsigned TypeSize;
 #include "TestInfoRecord.h"
 #include "ArchAddressSpaceInfo.h"
 
+
 using namespace llvm;
 using namespace klee;
 
@@ -436,6 +437,8 @@ unsigned dereference_location_id = 0;
 unsigned writable_location_id = 0;
 unsigned readable_location_id = 0;
 bool isFirstAPI = true;
+uint64_t V2allocNameCount = 0;
+uint64_t allocLocationCount = 0;
 std::vector<std::string> dereference_locations_files;
 std::vector<json> dereference_locations_jsons;
 
@@ -6104,4 +6107,244 @@ void Executor::unitializedPointerDereferenceReport(KInstruction *target){
   std::string report_str = "Uninitialized pointer dereferencing!! Found a unresolved constant address";
   vulnerabilityReport(report_str, target);
 }
+
+
+// We test if the pointer pointing to mo1 can pointing to mo2 or partial of mo2.
+
+bool Executor::canPointToOtherMemoryObject(ExecutionState &state,  KInstruction *target, MemoryObjectV2 &mo1, MemoryObjectV2 &mo2){
+    memoryObjectConstruct(state, target, mo1);
+    for(int ptrOffset=0; ptrOffset<mo2.size; ptrOffset++){
+        for(locationInMemoryObject lmo : mo1.locations){
+            bool isSatisfied;
+            //bool isSatisfied = constraintSolve(lmo.cs, mo1, mo2, ptrOffset);
+            if(isSatisfied){
+                return true;
+                break;
+            }else{
+                continue;
+            }
+        }
+    }
+    
+    return false;
+}
+
+// Test if the constraint in srcMo can be satified in dstMo in the case they overlap with a certain offset.
+// bool Executor::constraintSolve(ExecutionState &state, KInstruction *target, ConstrainsSet &cs, MemoryObjectV2 &srcMo, MemoryObjectV2 &dstMo, usize_t offset){
+    
+//     // Convert the constraints
+//     constrainsConvert();
+
+//     //Solve the constraints
+
+
+
+//   std::string name = j["dereference location"]["name"];
+//   uint64_t relativeOffset = j["dereference location"]["offset"];
+//   relativeOffset = offset - relativeOffset;
+//   bool isUnderflow = (relativeOffset > offset)? true : false;
+
+//   std::vector<ref<Expr>> constraints;
+//   for (auto &constraintJson: j["constraints"]){
+//     ref<Expr> constraint = jsontoExpr(state, mo, name, relativeOffset, constraintJson, isUnderflow);
+//     if (!constraint){
+//       klee_second_test_info("The constaint exceeds the mo range %s: . The second test terminates",
+//                             constraintJson.dump(4).c_str());
+//       return false;
+//     }
+//     constraints.push_back(constraint);
+//   }
+
+//   bool mayBeTrue = false;
+//   for (auto &constraint: constraints){
+//     bool success =
+//         solver->mayBeTrue(state.constraints, constraint,
+//                            mayBeTrue, state.queryMetaData);
+//     assert(success && "FIXME: Unhandled solver failure");
+
+
+//   }
+//   return true;
+    
+// }
+
+// One json file corresponds to a MOv2
+MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, KInstruction *target, json j1, json j2){
+  MemoryObjectV2* moV2 = new MemoryObjectV2();
+  //read json
+  moV2->name = j["moName"];
+  moV2->size = j["size"];
+  // Initialize the locations
+  // We assume the location is 
+  // "offset": a,
+  // "constraints":[
+  //   "constraint1": "Eq (Read alloc2 8 32) 0"
+  // ]
+
+  // Allocate a memory object for one json file.
+    MemoryObject *mo = NULL;
+    bool isLocal = false;
+    const llvm::Value *allocSite = state.prevPC->inst;
+    size_t allocationAlignment = 8;
+    mo = memory->allocate(moV2->size, isLocal, 1, allocSite,
+                          allocationAlignment);
+    ObjectState *os = NULL;
+    if (!mo) {
+
+      terminateStateOnError(
+        state, "FIX ME: Allocate MO failed",
+        StateTerminationType::Ptr);
+    } else {
+      os = bindObjectInState(state, mo, isLocal);
+      os->initializeToZero();
+      bindLocal(target, state, mo->getBaseExpr());
+    }
+
+   std::string name =
+      "V2MoAlloc" + llvm::utostr(++V2allocNameCount); // address->toString();
+   klee_debug_message("DEBUG: Memory object V2 alloc name: %s",name.c_str());
+   state.addressSpace.record.push_back(mo);
+   
+   // Traverse the writable locations
+   int locationCount = 0;
+   while(json[locationKey].count>0){
+    uint64_t size = json[locationKey]["size"];
+    MemoryObject *newMo = memory->allocate(size, isLocal, 1, allocSite, allocationAlignment);
+    ObjectState *nos = bindObjectInState(state, newMo, isLocal);
+    nos->initializeToZero();
+    std::string locationName = "locationAlloc" + llvm::utostr(++allocLocationCount);
+    executeMakeSymbolic(state, newMo, locationName);
+    // TODO width
+    ref<Expr> value = nos->read(newMo->getOffsetExpr(newMo->getBaseExpr()),sizeTODO);
+    ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+    wos->write(location.offset, value);
+    // Traverse the constraints
+    int constraintsCount = 0;
+    constraintKey = "writableLocation" + llvm::utostr(constraintsCount);
+    while(json[locationKey][constraintKey].count>0){
+      // Convert the constraints in json to KLEE
+
+
+
+      constraintKey = "writableLocation" + llvm::utostr(++constraintsCount);
+    }
+
+    locationKey = "writableLocation" + llvm::utostr(++locationCount);
+
+   }
+   
+
+  
+
+
+  return moV2;
+}
+
+void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
+                         char **envp){
+  klee_debug_message("in Inter analysis");
+  std::vector<ref<Expr>> arguments;
+    // force deterministic initialization of memory objects
+  srand(1);
+  srandom(1);
+
+  MemoryObject *argvMO = 0;
+
+  // In order to make uclibc happy and be closer to what the system is
+  // doing we lay out the environments at the end of the argv array
+  // (both are terminated by a null). There is also a final terminating
+  // null that uclibc seems to expect, possibly the ELF header?
+
+  int envc;
+  for (envc = 0; envp[envc]; ++envc)
+    ;
+
+  unsigned NumPtrBytes = Context::get().getPointerWidth() / 8;
+  KFunction *kf = kmodule->functionMap[f];
+  assert(kf);
+  Function::arg_iterator ai = f->arg_begin(), ae = f->arg_end();
+  if (ai != ae) {
+    arguments.push_back(ConstantExpr::alloc(argc, Expr::Int32));
+    if (++ai != ae) {
+      Instruction *first = &*(f->begin()->begin());
+      argvMO = memory->allocate((argc + 1 + envc + 1 + 1) * NumPtrBytes,
+                                /*isLocal=*/false, /*isGlobal=*/true,
+                                /*allocSite=*/first, /*alignment=*/8);
+
+      if (!argvMO)
+        klee_error("Could not allocate memory for function arguments");
+
+      arguments.push_back(argvMO->getBaseExpr());
+
+      if (++ai != ae) {
+        uint64_t envp_start = argvMO->address + (argc + 1) * NumPtrBytes;
+        arguments.push_back(Expr::createPointer(envp_start));
+
+        if (++ai != ae)
+          klee_error("invalid main function (expect 0-3 arguments)");
+      }
+    }
+  }
+
+  ExecutionState *state = new ExecutionState(kmodule->functionMap[f]);
+
+  if (pathWriter)
+    state->pathOS = pathWriter->open();
+  if (symPathWriter)
+    state->symPathOS = symPathWriter->open();
+
+  if (statsTracker)
+    statsTracker->framePushed(*state, 0);
+
+  assert(arguments.size() == f->arg_size() && "wrong number of arguments");
+  for (unsigned i = 0, e = f->arg_size(); i != e; ++i)
+    bindArgument(kf, i, *state, arguments[i]);
+
+  if (argvMO) {
+    ObjectState *argvOS = bindObjectInState(*state, argvMO, false);
+
+    for (int i = 0; i < argc + 1 + envc + 1 + 1; i++) {
+      if (i == argc || i >= argc + 1 + envc) {
+        // Write NULL pointer
+        argvOS->write(i * NumPtrBytes, Expr::createPointer(0));
+      } else {
+        char *s = i < argc ? argv[i] : envp[i - (argc + 1)];
+        int j, len = strlen(s);
+
+        MemoryObject *arg =
+            memory->allocate(len + 1, /*isLocal=*/false, /*isGlobal=*/true,
+                             /*allocSite=*/state->pc->inst, /*alignment=*/8);
+        if (!arg)
+          klee_error("Could not allocate memory for function arguments");
+        ObjectState *os = bindObjectInState(*state, arg, false);
+        for (j = 0; j < len + 1; j++)
+          os->write8(j, s[j]);
+
+        // Write pointer to newly allocated and initialised argv/envp c-string
+        argvOS->write(i * NumPtrBytes, arg->getBaseExpr());
+      }
+    }
+  }
+
+  initializeGlobals(*state);
+
+  processTree = std::make_unique<PTree>(state);
+  run(*state);
+  processTree = nullptr;
+
+  // hack to clear memory objects
+  delete memory;
+  memory = new MemoryManager(NULL);
+
+  globalObjects.clear();
+  globalAddresses.clear();
+
+  if (statsTracker)
+    statsTracker->done();
+}
+
+
+
+
+
 

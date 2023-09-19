@@ -14,3 +14,5 @@ add_subdirectory(klee-replay)
 add_subdirectory(klee-stats)
 add_subdirectory(klee-zesti)
 add_subdirectory(ktest-tool)
+#add 
+add_subdirectory(klee-inter-analysis)

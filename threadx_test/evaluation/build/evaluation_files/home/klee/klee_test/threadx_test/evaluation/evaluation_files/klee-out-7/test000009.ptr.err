@@ -1,0 +1,13 @@
+Error: resolve failed
+File: threadx/threadx/ports_module/cortex_m33/gnu/inc/tx_port.h
+Line: 674
+assembly.ll line: 5666
+State: 26
+Stack: 
+	#000005666 in _tx_thread_system_preempt_check() at threadx/threadx/ports_module/cortex_m33/gnu/inc/tx_port.h:674
+	#100035091 in _tx_event_flags_set(group_ptr=symbolic, flags_to_set=symbolic, set_option=symbolic) at threadx/threadx/common/src/tx_event_flags_set.c:618
+	#200034488 in _txe_event_flags_set(group_ptr=symbolic, flags_to_set=symbolic, set_option=symbolic) at threadx/threadx/common/src/txe_event_flags_set.c:122
+	#300011166 in _txm_module_manager_tx_event_flags_set_dispatch(module_instance=symbolic, param_0=symbolic, param_1=symbolic, param_2=symbolic) at threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:903
+	#400007115 in _txm_module_manager_kernel_dispatch(kernel_request=23, param_0=symbolic, param_1=symbolic, param_2=symbolic) at threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:295
+	#500000259 in m_txe_event_flags_set(group_ptr=symbolic, flags_to_set=symbolic, set_option=symbolic) at threadx/threadx/common_modules/module_lib/src/txm_event_flags_set.c:78
+	#600000220 in main() at evaluation_files/event_flags_set.c:74

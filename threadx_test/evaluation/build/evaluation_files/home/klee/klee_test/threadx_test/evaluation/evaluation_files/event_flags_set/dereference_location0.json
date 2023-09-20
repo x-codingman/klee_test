@@ -1,0 +1,52 @@
+{
+    "dereference location": {
+        "name": "alloc8",
+        "offset": 232,
+        "width": 64
+    },
+    "constraints": [
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 0
+            },
+            "right": {
+                "type": 23,
+                "left": {
+                    "type": 0,
+                    "value": 2
+                },
+                "right": null
+            }
+        },
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 7
+            },
+            "right": {
+                "type": 5,
+                "name": "alloc8",
+                "index": 92,
+                "width": 32
+            }
+        },
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 0
+            },
+            "right": {
+                "type": 23,
+                "left": {
+                    "type": 0,
+                    "value": 0
+                },
+                "right": null
+            }
+        }
+    ]
+}

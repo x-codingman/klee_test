@@ -3,15 +3,11 @@
 
 
 #define KLEE_UNITTEST
+
 #include "klee/Expr/Expr.h"
-#include "klee/ADT/ImmutableMap.h"
-#include "klee/System/Time.h"
+#include "klee/Expr/Constraints.h"
 
 #include <vector>
-
-
-
-
 
 namespace klee {
   class ExecutionState;
@@ -23,7 +19,7 @@ namespace klee {
         Expr::Width width;
         uint64_t size;
         json constraints;
-        constraintset cs;
+        ConstraintSet cs;
         bool isWritable;
   };
 
@@ -32,12 +28,6 @@ namespace klee {
       std::string name;
       uint64_t size;
   };
-
-
-    
-  
-
 }
-
 
 #endif

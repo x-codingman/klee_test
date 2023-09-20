@@ -1,0 +1,151 @@
+array [2312] : w32 -> w8 = symbolic
+array _tx_thread_current_ptr[8] : w32 -> w8 = symbolic
+array alloc10[432] : w32 -> w8 = symbolic
+array alloc11[432] : w32 -> w8 = symbolic
+array alloc12[432] : w32 -> w8 = symbolic
+array alloc13[432] : w32 -> w8 = symbolic
+array alloc14[432] : w32 -> w8 = symbolic
+array alloc15[432] : w32 -> w8 = symbolic
+array alloc16[432] : w32 -> w8 = symbolic
+array alloc17[432] : w32 -> w8 = symbolic
+array alloc2[96] : w32 -> w8 = symbolic
+array alloc3[432] : w32 -> w8 = symbolic
+array alloc8[432] : w32 -> w8 = symbolic
+array alloc9[432] : w32 -> w8 = symbolic
+array flags_to_set[8] : w32 -> w8 = symbolic
+array group_ptr[8] : w32 -> w8 = symbolic
+array set_option[4] : w32 -> w8 = symbolic
+(query [(Eq 93920635890752
+             (ReadLSB w64 0 _tx_thread_current_ptr))
+         (Eq 93920622853632
+             (ReadLSB w64 264 alloc3))
+         (Eq 0
+             (And w64 (ReadLSB w64 24 )
+                      2))
+         (Eq 93920621436096
+             (ReadLSB w64 0 group_ptr))
+         (Eq 1146504270
+             (ReadLSB w64 0 alloc2))
+         (Eq 0
+             (Extract w32 0 (ZExt w64 (ReadLSB w32 0 set_option))))
+         (Eq 0
+             (ReadLSB w64 64 alloc2))
+         (Eq false
+             (Eq 1
+                 N0:(ReadLSB w32 40 alloc2)))
+         (Eq 0
+             (ReadLSB w32 24 alloc2))
+         (Eq 93920635892992
+             (ReadLSB w64 32 alloc2))
+         (Eq false
+             (Eq 2
+                 (And w32 (ReadLSB w32 240 alloc8)
+                          2)))
+         (Eq 7
+             (ReadLSB w32 92 alloc8))
+         (Eq 0
+             (And w64 N1:(Or w64 (ReadLSB w64 16 alloc2)
+                                 (ReadLSB w64 0 flags_to_set))
+                      (ReadLSB w64 224 alloc8)))
+         (Eq 93920635893888
+             (ReadLSB w64 208 alloc8))
+         (Eq false
+             (Eq 2
+                 (And w32 (ReadLSB w32 240 alloc9)
+                          2)))
+         (Eq 7
+             (ReadLSB w32 92 alloc9))
+         (Eq 0
+             (And w64 N1
+                      (ReadLSB w64 224 alloc9)))
+         (Eq false (Eq 2 N0))
+         (Eq 93920635899264
+             (ReadLSB w64 208 alloc9))
+         (Eq false
+             (Eq 2
+                 (And w32 (ReadLSB w32 240 alloc10)
+                          2)))
+         (Eq 7
+             (ReadLSB w32 92 alloc10))
+         (Eq 0
+             (And w64 N1
+                      (ReadLSB w64 224 alloc10)))
+         (Eq false (Eq 3 N0))
+         (Eq 93920636201600
+             (ReadLSB w64 208 alloc10))
+         (Eq false
+             (Eq 2
+                 (And w32 (ReadLSB w32 240 alloc11)
+                          2)))
+         (Eq 7
+             (ReadLSB w32 92 alloc11))
+         (Eq 0
+             (And w64 N1
+                      (ReadLSB w64 224 alloc11)))
+         (Eq false (Eq 4 N0))
+         (Eq 93920636207872
+             (ReadLSB w64 208 alloc11))
+         (Eq false
+             (Eq 2
+                 (And w32 (ReadLSB w32 240 alloc12)
+                          2)))
+         (Eq 7
+             (ReadLSB w32 92 alloc12))
+         (Eq 0
+             (And w64 N1
+                      (ReadLSB w64 224 alloc12)))
+         (Eq false (Eq 5 N0))
+         (Eq 93920636464640
+             (ReadLSB w64 208 alloc12))
+         (Eq false
+             (Eq 2
+                 (And w32 (ReadLSB w32 240 alloc13)
+                          2)))
+         (Eq 7
+             (ReadLSB w32 92 alloc13))
+         (Eq 0
+             (And w64 N1
+                      (ReadLSB w64 224 alloc13)))
+         (Eq false (Eq 6 N0))
+         (Eq 93920636471360
+             (ReadLSB w64 208 alloc13))
+         (Eq false
+             (Eq 2
+                 (And w32 (ReadLSB w32 240 alloc14)
+                          2)))
+         (Eq 7
+             (ReadLSB w32 92 alloc14))
+         (Eq 0
+             (And w64 N1
+                      (ReadLSB w64 224 alloc14)))
+         (Eq false (Eq 7 N0))
+         (Eq 93920636470464
+             (ReadLSB w64 208 alloc14))
+         (Eq false
+             (Eq 2
+                 (And w32 (ReadLSB w32 240 alloc15)
+                          2)))
+         (Eq 7
+             (ReadLSB w32 92 alloc15))
+         (Eq 0
+             (And w64 N1
+                      (ReadLSB w64 224 alloc15)))
+         (Eq false (Eq 8 N0))
+         (Eq 93920636471808
+             (ReadLSB w64 208 alloc15))
+         (Eq false
+             (Eq 2
+                 (And w32 (ReadLSB w32 240 alloc16)
+                          2)))
+         (Eq 7
+             (ReadLSB w32 92 alloc16))
+         (Eq 0
+             (And w64 N1
+                      (ReadLSB w64 224 alloc16)))
+         (Eq false (Eq 9 N0))
+         (Eq 93920636644736
+             (ReadLSB w64 208 alloc16))
+         (Eq 2
+             (And w32 (ReadLSB w32 240 alloc17)
+                      2))]
+        false)

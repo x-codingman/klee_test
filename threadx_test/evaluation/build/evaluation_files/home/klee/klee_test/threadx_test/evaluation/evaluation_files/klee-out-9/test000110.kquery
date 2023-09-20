@@ -1,0 +1,11 @@
+array [2312] : w32 -> w8 = symbolic
+array _tx_thread_current_ptr[8] : w32 -> w8 = symbolic
+array alloc3[432] : w32 -> w8 = symbolic
+(query [(Eq 94805781064768
+             (ReadLSB w64 0 _tx_thread_current_ptr))
+         (Eq 94805768224256
+             (ReadLSB w64 264 alloc3))
+         (Eq 0
+             (And w64 (ReadLSB w64 24 )
+                      2))]
+        false)

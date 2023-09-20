@@ -1,0 +1,89 @@
+{
+    "dereference location": {
+        "name": "alloc8",
+        "offset": 216,
+        "width": 64
+    },
+    "constraints": [
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 0
+            },
+            "right": {
+                "type": 23,
+                "left": {
+                    "type": 0,
+                    "value": 2
+                },
+                "right": null
+            }
+        },
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 7
+            },
+            "right": {
+                "type": 5,
+                "name": "alloc8",
+                "index": 92,
+                "width": 32
+            }
+        },
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 0
+            },
+            "right": {
+                "type": 23,
+                "left": {
+                    "type": 0,
+                    "value": 0
+                },
+                "right": null
+            }
+        },
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 0
+            },
+            "right": {
+                "type": 23,
+                "left": {
+                    "type": 0,
+                    "value": 1
+                },
+                "right": null
+            }
+        },
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 0
+            },
+            "right": {
+                "type": 23,
+                "left": {
+                    "type": 5,
+                    "name": "alloc2",
+                    "index": 32,
+                    "width": 64
+                },
+                "right": {
+                    "type": 5,
+                    "name": "alloc8",
+                    "index": 208,
+                    "width": 64
+                }
+            }
+        }
+    ]
+}

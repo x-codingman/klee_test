@@ -5671,7 +5671,7 @@ bool Executor::determineMoOverlap(ExecutionState &state, const MemoryObject* mo,
 
   std::vector<ref<Expr>> constraints;
   for (auto &constraintJson: j["constraints"]){
-    ref<Expr> constraint = jsontoExpr(state, mo, name, relativeOffset, constraintJson, isUnderflow);
+    ref<Expr> constraint = jsonToExpr(state, mo, name, relativeOffset, constraintJson, isUnderflow);
     if (!constraint){
       klee_second_test_info("The constaint exceeds the mo range %s: . The second test teminates",
                             constraintJson.dump(4).c_str());
@@ -5821,7 +5821,7 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
   }
 }
 
-ref<Expr> Executor::jsontoExpr(ExecutionState &state, const MemoryObject* mo, std::string name, 
+ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, std::string name, 
                                uint64_t relativeOffset, json &j, bool isUnderflow){
   Expr::Kind type = j["type"];
   ref<Expr> expression = NULL;
@@ -5863,45 +5863,45 @@ ref<Expr> Executor::jsontoExpr(ExecutionState &state, const MemoryObject* mo, st
   }
   case Expr::Eq:{
     json leftJson = j["left"];
-    ref<Expr> leftExpr = jsontoExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
     json rightJson = j["right"];
-    ref<Expr> rightExpr = jsontoExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
     if (leftExpr && rightExpr)
       expression = EqExpr::create(leftExpr, rightExpr);
     break;
   }
   case Expr::Ult:{
     json leftJson = j["left"];
-    ref<Expr> leftExpr = jsontoExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
     json rightJson = j["right"];
-    ref<Expr> rightExpr = jsontoExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
     if (leftExpr && rightExpr)
       expression = UltExpr::create(leftExpr, rightExpr);
     break;
   }
   case Expr::Ule:{
     json leftJson = j["left"];
-    ref<Expr> leftExpr = jsontoExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
     json rightJson = j["right"];
-    ref<Expr> rightExpr = jsontoExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
     if (leftExpr && rightExpr)
       expression = UleExpr::create(leftExpr, rightExpr);
     break;
   }
   case Expr::Ugt:{
     json leftJson = j["left"];
-    ref<Expr> leftExpr = jsontoExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
     json rightJson = j["right"];
-    ref<Expr> rightExpr = jsontoExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
     if (leftExpr && rightExpr)
       expression = UgtExpr::create(leftExpr, rightExpr);
     break;
   }
   case Expr::Uge:{
     json leftJson = j["left"];
-    ref<Expr> leftExpr = jsontoExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
     json rightJson = j["right"];
-    ref<Expr> rightExpr = jsontoExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
     if (leftExpr && rightExpr)
       expression = UgeExpr::create(leftExpr, rightExpr);
     break;
@@ -6111,22 +6111,54 @@ void Executor::unitializedPointerDereferenceReport(KInstruction *target){
 
 // We test if the pointer pointing to mo1 can pointing to mo2 or partial of mo2.
 
-bool Executor::canPointToOtherMemoryObject(ExecutionState &state,  KInstruction *target, MemoryObjectV2 &mo1, MemoryObjectV2 &mo2){
-    memoryObjectConstruct(state, target, mo1);
-    for(int ptrOffset=0; ptrOffset<mo2.size; ptrOffset++){
-        for(locationInMemoryObject lmo : mo1.locations){
-            bool isSatisfied;
-            //bool isSatisfied = constraintSolve(lmo.cs, mo1, mo2, ptrOffset);
-            if(isSatisfied){
-                return true;
-                break;
-            }else{
-                continue;
-            }
-        }
+bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2 &moV2, json &j){
+  const MemoryObject* mo = state.addressSpace.getMoFromName(moV2.name);
+  ConstraintSet moV2Cs;
+  // FIX ME HERE. do we need to distinguish locations and constraints from different paths?
+  // get all constraints of writable locations in moV2
+  for (auto location: moV2.locations){
+    ConstraintSet::const_iterator begin = location.begin();
+    ConstraintSet::const_iterator end = location.end();
+    ConstraintSet::const_iterator oi = end;
+
+    while(oi != begin){
+      moV2Cs.push_back(*oi);
+      oi--;
     }
-    
-    return false;
+  }
+
+  for(int ptrOffset=0; ptrOffset<moV2.size; ptrOffset++){
+    int locationCount = 0;
+    std::string locationKey = "writableLocation" + llvm::utostr(++locationCount);
+    while(json[locationKey].count>0){
+      ConstraintSet cs = moV2Cs;
+      for (auto &constraintJson: j[locationKey]["constraints"]){
+        ref<Expr> constraint = jsonToExpr(state, mo, moV2.name, ptrOffset, constraintJson, false);
+        if (!constraint){
+          klee_second_test_info("The constaint exceeds the mo range %s: . The second test teminates",
+                                constraintJson.dump(4).c_str());
+          return false;
+        }  
+        cs.push_back(constraint);
+      }
+
+      // FIX ME HERE. is getInitialValues() suitable to detect the overlapping
+      std::vector<std::vector<unsigned char>> values;
+      std::vector<const Array *> objects;
+      for (unsigned i = 0; i != state.symbolics.size(); ++i)
+        objects.push_back(state.symbolics[i].second);
+      bool isSatisfied = solver->getInitialValues(cs, objects, values,
+                                                  state.queryMetaData);
+      if(isSatisfied){
+        return true;
+        break;
+      }else{
+        continue;
+      }
+    }
+  }
+
+  return false;
 }
 
 // Test if the constraint in srcMo can be satified in dstMo in the case they overlap with a certain offset.
@@ -6146,7 +6178,7 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state,  KInstruction 
 
 //   std::vector<ref<Expr>> constraints;
 //   for (auto &constraintJson: j["constraints"]){
-//     ref<Expr> constraint = jsontoExpr(state, mo, name, relativeOffset, constraintJson, isUnderflow);
+//     ref<Expr> constraint = jsonToExpr(state, mo, name, relativeOffset, constraintJson, isUnderflow);
 //     if (!constraint){
 //       klee_second_test_info("The constaint exceeds the mo range %s: . The second test terminates",
 //                             constraintJson.dump(4).c_str());
@@ -6168,9 +6200,7 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state,  KInstruction 
     
 // }
 
-// One json file corresponds to a MOv2
-MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, KInstruction *target, json j1, json j2){
-  MemoryObjectV2* moV2 = new MemoryObjectV2();
+MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, MemoryObjectV2 *moV2, json &j1, json &j2){
   //read json
   moV2->name = j["moName"];
   moV2->size = j["size"];
@@ -6182,63 +6212,146 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, KInstruction *target
   // ]
 
   // Allocate a memory object for one json file.
-    MemoryObject *mo = NULL;
-    bool isLocal = false;
-    const llvm::Value *allocSite = state.prevPC->inst;
-    size_t allocationAlignment = 8;
-    mo = memory->allocate(moV2->size, isLocal, 1, allocSite,
-                          allocationAlignment);
-    ObjectState *os = NULL;
-    if (!mo) {
-
-      terminateStateOnError(
+  MemoryObject *mo = NULL;
+  bool isLocal = false;
+  const llvm::Value *allocSite = state.prevPC->inst;
+  size_t allocationAlignment = 8;
+  mo = memory->allocate(moV2->size, isLocal, 1, allocSite,
+                        allocationAlignment);
+  ObjectState *os = NULL;
+  if (!mo) {
+    terminateStateOnError(
         state, "FIX ME: Allocate MO failed",
         StateTerminationType::Ptr);
-    } else {
-      os = bindObjectInState(state, mo, isLocal);
-      os->initializeToZero();
-      bindLocal(target, state, mo->getBaseExpr());
-    }
-
-   std::string name =
-      "V2MoAlloc" + llvm::utostr(++V2allocNameCount); // address->toString();
-   klee_debug_message("DEBUG: Memory object V2 alloc name: %s",name.c_str());
-   state.addressSpace.record.push_back(mo);
+  } else {
+    os = bindObjectInState(state, mo, isLocal);
+    os->initializeToZero();
+  }
+  // FIX ME HERE. naming issues
+  std::string name =
+      "V2MoAlloc" + llvm::utostr(++V2allocNameCount); 
+  klee_debug_message("DEBUG: Memory object V2 alloc name: %s",name.c_str());
+  state.addressSpace.record.push_back(mo);
    
-   // Traverse the writable locations
-   int locationCount = 0;
-   while(json[locationKey].count>0){
-    uint64_t size = json[locationKey]["size"];
+  // Traverse the writable locations
+  int locationCount = 0;
+  std:: string locationKey = "writableLocation" + llvm::utostr(++locationCount);
+  while(j[locationKey].count>0){
+    unint64_t offset = j[locationKey]["offset_in_mo"];
+    Expr::Width size = j[locationKey]["width"];
+
+    // make the writable location in mo symbolic
     MemoryObject *newMo = memory->allocate(size, isLocal, 1, allocSite, allocationAlignment);
-    ObjectState *nos = bindObjectInState(state, newMo, isLocal);
-    nos->initializeToZero();
+    ObjectState *nos = NULL;
+    if (!newMo) {
+    terminateStateOnError(
+        state, "FIX ME: Allocate newMO in mo failed",
+        StateTerminationType::Ptr);
+    } else {
+      nos = bindObjectInState(state, newMo, isLocal);
+      nos->initializeToZero();
+    } 
+    // FIX ME HERE. naming issues
     std::string locationName = "locationAlloc" + llvm::utostr(++allocLocationCount);
     executeMakeSymbolic(state, newMo, locationName);
-    // TODO width
-    ref<Expr> value = nos->read(newMo->getOffsetExpr(newMo->getBaseExpr()),sizeTODO);
+    ref<Expr> value = nos->read(newMo->getOffsetExpr(newMo->getBaseExpr()), size);
     ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-    wos->write(location.offset, value);
+    wos->write(offset, value);
+
+    locationInMemoryObject locationInMo;
+    locationInMo.offset = offset;
+    locationInMo.width = size;
+    //FIX ME HERE. do we need size in struct locationInMemoryObject?
+    locationInMo.constraints = j[locationKey]["constraints"];
+    locationInMo.isWritable = true;
+
     // Traverse the constraints
-    int constraintsCount = 0;
-    constraintKey = "writableLocation" + llvm::utostr(constraintsCount);
-    while(json[locationKey][constraintKey].count>0){
-      // Convert the constraints in json to KLEE
-
-
-
-      constraintKey = "writableLocation" + llvm::utostr(++constraintsCount);
+    std::vector<ref<Expr>> constraints;
+    for (auto &constraintJson: j[locationKey]["constraints"]){
+      ref<Expr> constraint = jsonToExpr(state, mo, name, 0, constraintJson, false);
+      if (!constraint){
+        klee_second_test_info("The constaint exceeds the mo range %s: . The second test teminates",
+                              constraintJson.dump(4).c_str());
+        return false;
+      }  
+      constraints.push_back(constraint);
     }
-
+    locationInMo.cs = ConstraintSet(constraints);
     locationKey = "writableLocation" + llvm::utostr(++locationCount);
-
    }
    
-
-  
-
-
   return moV2;
 }
+
+
+
+// One json file corresponds to a MOv2
+// MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, KInstruction *target, json j1, json j2){
+//   MemoryObjectV2* moV2 = new MemoryObjectV2();
+//   //read json
+//   moV2->name = j["moName"];
+//   moV2->size = j["size"];
+//   // Initialize the locations
+//   // We assume the location is 
+//   // "offset": a,
+//   // "constraints":[
+//   //   "constraint1": "Eq (Read alloc2 8 32) 0"
+//   // ]
+
+//   // Allocate a memory object for one json file.
+//     MemoryObject *mo = NULL;
+//     bool isLocal = false;
+//     const llvm::Value *allocSite = state.prevPC->inst;
+//     size_t allocationAlignment = 8;
+//     mo = memory->allocate(moV2->size, isLocal, 1, allocSite,
+//                           allocationAlignment);
+//     ObjectState *os = NULL;
+//     if (!mo) {
+
+//       terminateStateOnError(
+//         state, "FIX ME: Allocate MO failed",
+//         StateTerminationType::Ptr);
+//     } else {
+//       os = bindObjectInState(state, mo, isLocal);
+//       os->initializeToZero();
+//       bindLocal(target, state, mo->getBaseExpr());
+//     }
+
+//    std::string name =
+//       "V2MoAlloc" + llvm::utostr(++V2allocNameCount); // address->toString();
+//    klee_debug_message("DEBUG: Memory object V2 alloc name: %s",name.c_str());
+//    state.addressSpace.record.push_back(mo);
+   
+//    // Traverse the writable locations
+//    int locationCount = 0;
+//    while(json[locationKey].count>0){
+//     uint64_t size = json[locationKey]["size"];
+//     MemoryObject *newMo = memory->allocate(size, isLocal, 1, allocSite, allocationAlignment);
+//     ObjectState *nos = bindObjectInState(state, newMo, isLocal);
+//     nos->initializeToZero();
+//     std::string locationName = "locationAlloc" + llvm::utostr(++allocLocationCount);
+//     executeMakeSymbolic(state, newMo, locationName);
+//     // TODO width
+//     ref<Expr> value = nos->read(newMo->getOffsetExpr(newMo->getBaseExpr()),sizeTODO);
+//     ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+//     wos->write(location.offset, value);
+//     // Traverse the constraints
+//     int constraintsCount = 0;
+//     constraintKey = "writableLocation" + llvm::utostr(constraintsCount);
+//     while(json[locationKey][constraintKey].count>0){
+//       // Convert the constraints in json to KLEE
+
+
+
+//       constraintKey = "writableLocation" + llvm::utostr(++constraintsCount);
+//     }
+
+//     locationKey = "writableLocation" + llvm::utostr(++locationCount);
+
+//    }
+
+//   return moV2;
+// }
 
 void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
                          char **envp){

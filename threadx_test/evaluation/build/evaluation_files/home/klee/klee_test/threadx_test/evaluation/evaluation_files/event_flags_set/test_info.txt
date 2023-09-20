@@ -1,0 +1,6 @@
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_event_flags_set.c: line 435. desired value: 0, desired address 4026478592-4026478592, controllable: 0
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_event_flags_set.c: line 451. desired value: 0, desired address 4026478592-4026478592, controllable: 0
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_event_flags_set.c: line 454. desired value: 0, desired address 4026478592-4026478592, controllable: 0
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_event_flags_set.c: line 477. desired value: 0, desired address 4026478592-4026478592, controllable: 1
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_event_flags_set.c: line 478. desired value: 0, desired address 4026478592-4026478592, controllable: 0
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_event_flags_set.c: line 502. desired value: 0, desired address 4026478592-4026478592, controllable: 0

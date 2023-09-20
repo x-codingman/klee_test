@@ -1,0 +1,8 @@
+{
+    "dereference location": {
+        "name": "alloc7",
+        "offset": 232,
+        "width": 64
+    },
+    "constraints": []
+}

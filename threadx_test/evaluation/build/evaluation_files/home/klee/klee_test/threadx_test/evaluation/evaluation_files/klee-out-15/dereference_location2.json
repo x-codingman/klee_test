@@ -1,0 +1,102 @@
+{
+    "dereference location": {
+        "name": "alloc2",
+        "offset": 64,
+        "width": 64
+    },
+    "constraints": [
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 1364542805
+            },
+            "right": {
+                "type": 5,
+                "name": "alloc2",
+                "index": 0,
+                "width": 64
+            }
+        },
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 0
+            },
+            "right": {
+                "type": 23,
+                "left": {
+                    "type": 0,
+                    "value": 0
+                },
+                "right": {
+                    "type": 5,
+                    "name": "alloc2",
+                    "index": 28,
+                    "width": 32
+                }
+            }
+        },
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 0
+            },
+            "right": {
+                "type": 23,
+                "left": {
+                    "type": 0,
+                    "value": 0
+                },
+                "right": {
+                    "type": 5,
+                    "name": "alloc2",
+                    "index": 72,
+                    "width": 32
+                }
+            }
+        },
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 0
+            },
+            "right": {
+                "type": 23,
+                "left": {
+                    "type": 0,
+                    "value": 1
+                },
+                "right": {
+                    "type": 5,
+                    "name": "alloc2",
+                    "index": 72,
+                    "width": 32
+                }
+            }
+        },
+        {
+            "type": 23,
+            "left": {
+                "type": 0,
+                "value": 0
+            },
+            "right": {
+                "type": 25,
+                "left": {
+                    "type": 0,
+                    "value": 1
+                },
+                "right": {
+                    "type": 5,
+                    "name": "alloc2",
+                    "index": 16,
+                    "width": 32
+                }
+            }
+        }
+    ]
+}

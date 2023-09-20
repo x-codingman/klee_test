@@ -1,0 +1,16 @@
+KLEE: The constaint exceeds the mo range {
+    "type": 23,
+    "type_name": "Eq",
+    "left": {
+        "type": 0,
+        "type_name": "Constant",
+        "value": 0
+    },
+    "right": {
+        "type": 5,
+        "type_name": "Concat",
+        "name": "lazy_alloc2",
+        "index": 0,
+        "width": 32
+    }
+}: . The second test teminates

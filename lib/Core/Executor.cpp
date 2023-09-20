@@ -6146,7 +6146,7 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
 
   for(int ptrOffset=0; ptrOffset<moV2.size; ptrOffset++){
     int locationCount = 0;
-    std::string locationKey = "writableLocation" + llvm::utostr(++locationCount);
+    std::string locationKey = "writable location " + llvm::utostr(++locationCount);
     while(j[locationKey]){
       ConstraintSet cs = moV2Cs;
       for (auto &constraintJson: j[locationKey]["constraints"]){
@@ -6221,10 +6221,8 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
   MemoryObjectV2 *moV2 = new MemoryObjectV2();
   //read json
   klee_debug_message("hello");
-  std::string moName = j["name"];
-  uint64_t moSize = j["size"];
-  moV2->name = moName;
-  moV2->size = moSize;
+  moV2->name = j["name"];
+  moV2->size = j["size"];
   // Initialize the locations
   // We assume the location is 
   // "offset": a,
@@ -6237,7 +6235,7 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
   bool isLocal = false;
   const llvm::Value *allocSite = state.prevPC->inst;
   size_t allocationAlignment = 8;
-  mo = memory->allocate(moSize, isLocal, 1, allocSite,
+  mo = memory->allocate(moV2->size, isLocal, 1, allocSite,
                         allocationAlignment);
   ObjectState *os = NULL;
   if (!mo) {
@@ -6256,8 +6254,8 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
    
   // Traverse the writable locations
   int locationCount = 0;
-  std:: string locationKey = "writableLocation" + llvm::utostr(++locationCount);
-  while(j[locationKey]){
+  std:: string locationKey = "writable location " + llvm::utostr(++locationCount);
+  while(j.count(locationKey)>0){
     uint64_t offset = j[locationKey]["offset_in_mo"];
     Expr::Width size = 8;
 
@@ -6288,17 +6286,17 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
 
     // Traverse the constraints
     std::vector<ref<Expr>> constraints;
-    json constraintJson = j[locationKey]["constraints"];
-    ref<Expr> constraint = jsonToExpr(state, mo, name, 0, constraintJson, false);
+    for (auto &constraintJson: j[locationKey]["constraints"]){
+      ref<Expr> constraint = jsonToExpr(state, mo, name, 0, constraintJson, false);
       if (!constraint){
         klee_second_test_info("The constaint exceeds the mo range %s: . The second test teminates",
                               constraintJson.dump(4).c_str());
         return NULL;
       }  
       constraints.push_back(constraint);
-    
+    }
     locationInMo.cs = ConstraintSet(constraints);
-    locationKey = "writableLocation" + llvm::utostr(++locationCount);
+    locationKey = "writable location " + llvm::utostr(++locationCount);
    }
    
   return moV2;

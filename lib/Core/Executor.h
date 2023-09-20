@@ -292,21 +292,23 @@ private:
   /// add
   bool determineMoOverlap(ExecutionState &state, const MemoryObject* mo, uint64_t offset, json &j);
   void exprToJson(const ref<Expr> &expression, json &j);
-  ref<Expr> jsontoExpr(ExecutionState &state, const MemoryObject* mo, std::string name, 
+  ref<Expr> jsonToExpr(ExecutionState &state, const MemoryObject* mo, std::string name, 
                                uint64_t relativeOffset, json &j, bool isUnderflow);
 
  Expr::Kind getExprInfo(const ref<Expr> &e, std::string &moName, uint64_t &offset, unsigned &width );
- bool recordWritableLocationsToJson(ExecutionState &state,const ref<Expr> &address, uint64_t address_offset);
+ bool recordWritableLocationsToJson(ExecutionState &state,const MemoryObject *mo, uint64_t address_offset);
  void recordReadableLocationToJson(ExecutionState &state,const ref<Expr> &value);
  bool getMoControllableInfo(ExecutionState &state, const MemoryObject* mo);
  void detectInfomationLeak(ExecutionState &state, ref<Expr> &address, ref<Expr> &value, KInstruction *target);
  void vulnerabilityReport(std::string report_str,KInstruction *target);
  void detectUnintializedPointersDereferencing(ExecutionState &state, ref<Expr> &address, KInstruction *target);
  void unitializedPointerDereferenceReport(KInstruction *target);
- bool canPointToOtherMemoryObject(ExecutionState &state,  KInstruction *target, MemoryObjectV2 &mo1, MemoryObjectV2 &mo2);
+ bool canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2 &moV2, json &j);
  MemoryObject* memoryObjectConstruct(ExecutionState &state,  KInstruction *target, MemoryObjectV2 &v2Mo);
  void runInterAnalysis(llvm::Function *f, int argc, char **argv,
                          char **envp) override;
+ bool interAnalysis(ExecutionState &state, std::string jsonFlieName1, std::string jsonFlieName2);
+ MemoryObjectV2* jsonToMoV2(ExecutionState &state, json j);
   /// Allocate and bind a new object in a particular state. NOTE: This
   /// function may fork.
   ///

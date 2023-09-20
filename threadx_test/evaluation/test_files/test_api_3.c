@@ -15,8 +15,11 @@ int main(){
 
 void test_api_3(test_structure_2_t * test_ptr_2, int *b, int *c){
     if(test_ptr_2 > ATTACK_CAPABILITY_REGION_END || test_ptr_2 < ATTACK_CAPABILITY_REGION_START){
-        *b = test_ptr_2->b;
-        *c = test_ptr_2->c;
-        *b = *c;
+        if(test_ptr_2->a == 0){
+            *b = test_ptr_2->b;
+            *c = test_ptr_2->c;
+            *b = *c;
+        }
+       
     }
 }

@@ -91,6 +91,9 @@ typedef unsigned TypeSize;
 #include <string>
 #include <sys/mman.h>
 #include <vector>
+#include <set>
+#include <iostream>
+
 
 // add sxh
 #include "TestInfoRecord.h"
@@ -441,7 +444,9 @@ uint64_t V2allocNameCount = 0;
 uint64_t allocLocationCount = 0;
 std::vector<std::string> dereference_locations_files;
 std::vector<json> dereference_locations_jsons;
-
+std::map<std::string, uint64_t> writable_record;
+std::set< std::pair<std::string,uint64_t> > readableLocationRecord;
+std::set< std::pair<std::string,uint64_t> > writableLocationRecord;
 // XXX hack
 extern "C" unsigned dumpStates, dumpPTree;
 unsigned dumpStates = 0, dumpPTree = 0;
@@ -4797,7 +4802,7 @@ void Executor::executeMemoryOperation(
           file.close();
           dereference_location_id ++;
         }
-      }else{
+      //}else{
         // Check the value to see whether it can reach the range of dangrous region.
         // First we check if value > desired_address_start has a solution
 
@@ -4833,8 +4838,9 @@ void Executor::executeMemoryOperation(
           }else{
             assert("FIXME in executeMemoryOperation(): symbolic index is not considered");
           }
-
-          recordWritableLocationsToJson(state,address_test, address_offset);
+          klee_debug_message("DEBUG: record writable location");
+          address_test.get()->dump();
+          recordWritableLocationsToJson(state, mo, address_offset);
         }
       }
     }
@@ -5939,12 +5945,12 @@ Expr::Kind Executor::getExprInfo(const ref<Expr>  &e, std::string &moName, uint6
           }
           return k;
 }
-bool Executor::recordWritableLocationsToJson(ExecutionState &state,const ref<Expr>  &address, uint64_t address_offset){
-          std::string moName;
-          uint64_t offset;
-          unsigned width; 
-          json j;
-          getExprInfo(address,moName,offset,width);
+bool Executor::recordWritableLocationsToJson(ExecutionState &state,const MemoryObject *mo, uint64_t address_offset){
+          std::string moName = mo->name;
+          // uint64_t offset;
+          // unsigned width; 
+           json j;
+          // getExprInfo(address,moName,offset,width);
           std::string filename = description_file+"_"+moName+".json";
           std::ifstream inFile(filename);
           if (inFile.is_open()) {
@@ -5965,8 +5971,15 @@ bool Executor::recordWritableLocationsToJson(ExecutionState &state,const ref<Exp
               constraintsJson.push_back(constraintJson);
             }
           }
-         
-          j["writable location "+std::to_string(writable_location_id)] = {{"name", moName}, {"offset_in_mo", offset}, {"width", width}, {"constraints", constraintsJson} }; 
+          if(writable_record.count(moName)==0){
+            writable_record[moName] = 0;
+            j["name"] = moName;
+            j["size"] = mo->size;
+          }
+          uint64_t id = writable_record[moName];
+            
+          
+          j["writable location "+std::to_string(id)] = {{"offset_in_mo", address_offset}, {"width",8}, {"constraints", constraintsJson} }; 
           
           std::ofstream file(filename);
           klee_debug_message(filename.c_str());
@@ -5976,7 +5989,7 @@ bool Executor::recordWritableLocationsToJson(ExecutionState &state,const ref<Exp
             assert("Cannot open the file");
           }
           file.close();
-          writable_location_id ++;
+          writable_record[moName] ++;
 }
 
 void Executor::recordReadableLocationToJson(ExecutionState &state,const ref<Expr> &value){
@@ -5993,6 +6006,10 @@ void Executor::recordReadableLocationToJson(ExecutionState &state,const ref<Expr
               inFile.close();
           } else {
               assert("Cannot open the file");
+          }
+          // Check if the location has been record before
+          if(readableLocationRecord.find(make_pair(moName,offset))!=readableLocationRecord.end()){
+            return;
           }
           ConstraintSet cs;
           ConstraintManager cm(cs);
@@ -6117,8 +6134,8 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
   // FIX ME HERE. do we need to distinguish locations and constraints from different paths?
   // get all constraints of writable locations in moV2
   for (auto location: moV2.locations){
-    ConstraintSet::const_iterator begin = location.begin();
-    ConstraintSet::const_iterator end = location.end();
+    ConstraintSet::const_iterator begin = location.cs.begin();
+    ConstraintSet::const_iterator end = location.cs.end();
     ConstraintSet::const_iterator oi = end;
 
     while(oi != begin){
@@ -6130,7 +6147,7 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
   for(int ptrOffset=0; ptrOffset<moV2.size; ptrOffset++){
     int locationCount = 0;
     std::string locationKey = "writableLocation" + llvm::utostr(++locationCount);
-    while(json[locationKey].count>0){
+    while(j[locationKey]){
       ConstraintSet cs = moV2Cs;
       for (auto &constraintJson: j[locationKey]["constraints"]){
         ref<Expr> constraint = jsonToExpr(state, mo, moV2.name, ptrOffset, constraintJson, false);
@@ -6200,10 +6217,14 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
     
 // }
 
-MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, MemoryObjectV2 *moV2, json &j1, json &j2){
+MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
+  MemoryObjectV2 *moV2 = new MemoryObjectV2();
   //read json
-  moV2->name = j["moName"];
-  moV2->size = j["size"];
+  klee_debug_message("hello");
+  std::string moName = j["name"];
+  uint64_t moSize = j["size"];
+  moV2->name = moName;
+  moV2->size = moSize;
   // Initialize the locations
   // We assume the location is 
   // "offset": a,
@@ -6216,7 +6237,7 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, MemoryObjectV2 *moV2
   bool isLocal = false;
   const llvm::Value *allocSite = state.prevPC->inst;
   size_t allocationAlignment = 8;
-  mo = memory->allocate(moV2->size, isLocal, 1, allocSite,
+  mo = memory->allocate(moSize, isLocal, 1, allocSite,
                         allocationAlignment);
   ObjectState *os = NULL;
   if (!mo) {
@@ -6236,9 +6257,9 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, MemoryObjectV2 *moV2
   // Traverse the writable locations
   int locationCount = 0;
   std:: string locationKey = "writableLocation" + llvm::utostr(++locationCount);
-  while(j[locationKey].count>0){
-    unint64_t offset = j[locationKey]["offset_in_mo"];
-    Expr::Width size = j[locationKey]["width"];
+  while(j[locationKey]){
+    uint64_t offset = j[locationKey]["offset_in_mo"];
+    Expr::Width size = 8;
 
     // make the writable location in mo symbolic
     MemoryObject *newMo = memory->allocate(size, isLocal, 1, allocSite, allocationAlignment);
@@ -6262,20 +6283,20 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, MemoryObjectV2 *moV2
     locationInMo.offset = offset;
     locationInMo.width = size;
     //FIX ME HERE. do we need size in struct locationInMemoryObject?
-    locationInMo.constraints = j[locationKey]["constraints"];
+    //locationInMo.constraints = j[locationKey]["constraints"];
     locationInMo.isWritable = true;
 
     // Traverse the constraints
     std::vector<ref<Expr>> constraints;
-    for (auto &constraintJson: j[locationKey]["constraints"]){
-      ref<Expr> constraint = jsonToExpr(state, mo, name, 0, constraintJson, false);
+    json constraintJson = j[locationKey]["constraints"];
+    ref<Expr> constraint = jsonToExpr(state, mo, name, 0, constraintJson, false);
       if (!constraint){
         klee_second_test_info("The constaint exceeds the mo range %s: . The second test teminates",
                               constraintJson.dump(4).c_str());
-        return false;
+        return NULL;
       }  
       constraints.push_back(constraint);
-    }
+    
     locationInMo.cs = ConstraintSet(constraints);
     locationKey = "writableLocation" + llvm::utostr(++locationCount);
    }
@@ -6442,7 +6463,12 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
   initializeGlobals(*state);
 
   processTree = std::make_unique<PTree>(state);
-  run(*state);
+
+  //run(*state);
+  std::string jsonFlieName1 = "/home/klee/klee_test/test_files/klee-out-13/description_lazy_alloc2.json";
+  std::string jsonFlieName2 = "/home/klee/klee_test/test_files/klee-out-13/description_lazy_alloc2.json";
+  bool result = interAnalysis(*state, jsonFlieName1, jsonFlieName2);
+  klee_debug_message("DEBUG: Inter Analysis return %d",result);
   processTree = nullptr;
 
   // hack to clear memory objects
@@ -6457,6 +6483,30 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
 }
 
 
+bool Executor::interAnalysis(ExecutionState &state, std::string jsonFlieName1, std::string jsonFlieName2){
+  json j1,j2;
+  std::ifstream file1(jsonFlieName1);
+  if (file1.is_open()){
+      file1 >> j1;
+  }else{
+        klee_error("Cannot open the file: %s", jsonFlieName1.c_str());
+  }
+      file1.close();
+  std::ifstream file2(jsonFlieName2);
+  if (file2.is_open()){
+      file2 >> j2;
+  }else{
+        klee_error("Cannot open the file: %s", jsonFlieName2.c_str());
+  }
+      file2.close();
+  std::string name = j2["name"];
+  std::cout << j2.dump(4) << std::endl; 
+  std::cout << name << std::endl; 
+  MemoryObjectV2 *moV2 = jsonToMoV2(state, j2);
+  if(moV2 == NULL) return false;
+  bool result = canPointToOtherMemoryObject(state,*moV2, j1);
+  return result;
+}
 
 
 

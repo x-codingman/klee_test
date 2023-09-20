@@ -8,7 +8,7 @@
 #include "klee/Expr/Constraints.h"
 
 #include <vector>
-
+#include <nlohmann/json.hpp>
 namespace klee {
   class ExecutionState;
   class MemoryObject;
@@ -18,8 +18,10 @@ namespace klee {
         uint64_t offset;
         Expr::Width width;
         uint64_t size;
-        json constraints;
+
+        
         ConstraintSet cs;
+
         bool isWritable;
   };
 

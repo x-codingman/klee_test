@@ -1,0 +1,224 @@
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94786247574040
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94786247573896
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94786247574096
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: dump address and result
+KLEE: DEBUG: Lazy alloc name: lazy_alloc2
+KLEE: DEBUG: detect controllable address
+KLEE: mo address: 94786247574040
+KLEE: newMo address: 94786248573440
+KLEE: alloc controllable mo!!!
+KLEE: DEBUG: The symbolic pointer has been allocated, alloc size: 24,        alloc address: 94786248573440
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: dump address and result
+KLEE: DEBUG: Lazy alloc name: lazy_alloc3
+KLEE: DEBUG: detect controllable address
+KLEE: mo address: 94786247573896
+KLEE: newMo address: 94786247574192
+KLEE: alloc controllable mo!!!
+KLEE: DEBUG: The symbolic pointer has been allocated, alloc size: 4,        alloc address: 94786247574192
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: dump address and result
+KLEE: DEBUG: Lazy alloc name: lazy_alloc4
+KLEE: DEBUG: detect controllable address
+KLEE: mo address: 94786247574096
+KLEE: newMo address: 94786247574200
+KLEE: alloc controllable mo!!!
+KLEE: DEBUG: The symbolic pointer has been allocated, alloc size: 4,        alloc address: 94786247574200
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94786247573944
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94786247574384
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94786247574256
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: add constraints in addressConstraintsForTargetApp
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: add constraints in addressConstraintsForTargetApp
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: lazyResolve failed, found a symbolic pointer
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: lazyResolve failed, found a symbolic pointer
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: /home/klee/klee_test/build/../threadx_test/evaluation/test_files/klee-out-1/description_lazy_alloc2.json
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: lazyResolve failed, found a symbolic pointer
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: /home/klee/klee_test/build/../threadx_test/evaluation/test_files/klee-out-1/description_lazy_alloc2.json
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: /home/klee/klee_test/build/../threadx_test/evaluation/test_files/klee-out-1/description_lazy_alloc2.json
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: lazyResolve failed, found a symbolic pointer
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: lazyResolve failed, found a symbolic pointer
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: /home/klee/klee_test/build/../threadx_test/evaluation/test_files/klee-out-1/description_lazy_alloc2.json
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: lazyResolve failed, found a symbolic pointer
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: /home/klee/klee_test/build/../threadx_test/evaluation/test_files/klee-out-1/description_lazy_alloc2.json
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: /home/klee/klee_test/build/../threadx_test/evaluation/test_files/klee-out-1/description_lazy_alloc2.json
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 0

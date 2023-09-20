@@ -1,8 +1,0 @@
-{
-    "dereference location": {
-        "name": "_tx_thread_current_ptr",
-        "offset": 0,
-        "width": 64
-    },
-    "constraints": []
-}

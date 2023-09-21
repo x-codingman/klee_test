@@ -6146,33 +6146,46 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
 
   for(int ptrOffset=0; ptrOffset<moV2.size; ptrOffset++){
     int locationCount = 0;
-    std::string locationKey = "writable location " + llvm::utostr(++locationCount);
-    while(j[locationKey]){
+    std::string locationKey = "writable location " + llvm::utostr(locationCount);
+    while(j.count(locationKey)>0){
+      
       ConstraintSet cs = moV2Cs;
+      bool res = false;
       for (auto &constraintJson: j[locationKey]["constraints"]){
-        ref<Expr> constraint = jsonToExpr(state, mo, moV2.name, ptrOffset, constraintJson, false);
+        ref<Expr> constraint = jsonToExpr(state, mo, j["name"], ptrOffset, constraintJson, false);
         if (!constraint){
           klee_second_test_info("The constaint exceeds the mo range %s: . The second test teminates",
                                 constraintJson.dump(4).c_str());
           return false;
-        }  
+        }
+        
+        bool success = solver->mustBeFalse(cs,
+                                         constraint,
+                                         res, state.queryMetaData);
+        if(res == true)
+          break;
         cs.push_back(constraint);
       }
-
-      // FIX ME HERE. is getInitialValues() suitable to detect the overlapping
-      std::vector<std::vector<unsigned char>> values;
-      std::vector<const Array *> objects;
-      for (unsigned i = 0; i != state.symbolics.size(); ++i)
-        objects.push_back(state.symbolics[i].second);
-      bool isSatisfied = solver->getInitialValues(cs, objects, values,
-                                                  state.queryMetaData);
-      if(isSatisfied){
-        return true;
-        break;
-      }else{
-        continue;
+      if(!res){
+         // FIX ME HERE. is getInitialValues() suitable to detect the overlapping
+        // std::vector<std::vector<unsigned char>> values;
+        // std::vector<const Array *> objects;
+        // for (unsigned i = 0; i != state.symbolics.size(); ++i)
+        //   objects.push_back(state.symbolics[i].second);
+        // bool isSatisfied = solver->getInitialValues(cs, objects, values,
+        //                                             state.queryMetaData);
+        bool isSatisfied;
+        if(isSatisfied){
+          klee_debug_message("The offset is :%d",ptrOffset);
+          return true;
+          break;
+        }else{
+          continue;
+        }
       }
+     
     }
+    locationKey = "writable location " + llvm::utostr(++locationCount);
   }
 
   return false;
@@ -6221,7 +6234,7 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
   MemoryObjectV2 *moV2 = new MemoryObjectV2();
   //read json
   klee_debug_message("hello");
-  moV2->name = j["name"];
+  
   moV2->size = j["size"];
   // Initialize the locations
   // We assume the location is 
@@ -6251,10 +6264,12 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
       "V2MoAlloc" + llvm::utostr(++V2allocNameCount); 
   klee_debug_message("DEBUG: Memory object V2 alloc name: %s",name.c_str());
   state.addressSpace.record.push_back(mo);
+  mo->name = name;
+  moV2->name = name;
    
   // Traverse the writable locations
   int locationCount = 0;
-  std:: string locationKey = "writable location " + llvm::utostr(++locationCount);
+  std:: string locationKey = "writable location " + llvm::utostr(locationCount);
   while(j.count(locationKey)>0){
     uint64_t offset = j[locationKey]["offset_in_mo"];
     Expr::Width size = 8;
@@ -6287,7 +6302,7 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
     // Traverse the constraints
     std::vector<ref<Expr>> constraints;
     for (auto &constraintJson: j[locationKey]["constraints"]){
-      ref<Expr> constraint = jsonToExpr(state, mo, name, 0, constraintJson, false);
+      ref<Expr> constraint = jsonToExpr(state, mo, j["name"], 0, constraintJson, false);
       if (!constraint){
         klee_second_test_info("The constaint exceeds the mo range %s: . The second test teminates",
                               constraintJson.dump(4).c_str());
@@ -6297,6 +6312,7 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
     }
     locationInMo.cs = ConstraintSet(constraints);
     locationKey = "writable location " + llvm::utostr(++locationCount);
+    moV2->locations.push_back(locationInMo);
    }
    
   return moV2;
@@ -6463,7 +6479,7 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
   processTree = std::make_unique<PTree>(state);
 
   //run(*state);
-  std::string jsonFlieName1 = "/home/klee/klee_test/test_files/klee-out-13/description_lazy_alloc2.json";
+  std::string jsonFlieName1 = "/home/klee/klee_test/test_files/klee-out-13/description_lazy_alloc2_1.json";
   std::string jsonFlieName2 = "/home/klee/klee_test/test_files/klee-out-13/description_lazy_alloc2.json";
   bool result = interAnalysis(*state, jsonFlieName1, jsonFlieName2);
   klee_debug_message("DEBUG: Inter Analysis return %d",result);
@@ -6503,6 +6519,7 @@ bool Executor::interAnalysis(ExecutionState &state, std::string jsonFlieName1, s
   MemoryObjectV2 *moV2 = jsonToMoV2(state, j2);
   if(moV2 == NULL) return false;
   bool result = canPointToOtherMemoryObject(state,*moV2, j1);
+  klee_debug_message("at the end");
   return result;
 }
 

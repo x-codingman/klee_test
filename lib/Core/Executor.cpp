@@ -2175,7 +2175,7 @@ Function *Executor::getTargetFunction(Value *calledVal, ExecutionState &state) {
 void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   Instruction *i = ki->inst;
   // add to locate instruction
-  klee_message("Execute: %s:%d", ki->info->file.c_str(), ki->info->line);
+  klee_debug_message("Execute: %s:%d", ki->info->file.c_str(), ki->info->line);
   switch (i->getOpcode()) {
     // Control flow
   case Instruction::Ret: {
@@ -2969,8 +2969,8 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
 
         if(newMo==NULL)
           newMo = lazyAlloc(state, size, false, ki, alignment);
-        std::string name = "";
-        executeMakeSymbolic(state, newMo, name);
+        // std::string name = "";
+        // executeMakeSymbolic(state, newMo, name);
         state.addressSpace.address_mo_info[result] = newMo;
         state.addressSpace.mo_controllable_info[newMo] = state.addressSpace.mo_controllable_info[oldMo];
       }
@@ -4690,9 +4690,9 @@ void Executor::executeMemoryOperation(
   // Detect the arbitrary writing operation
   if (state.addressSpace.isSymbolicBaseAddress(mo->getBaseExpr())) {
     if (isWrite) {
-        // Detect the infomation leak vulnerability.
+        // Detect the information leak vulnerability.
   
-      detectInfomationLeak(state, address, value, target);
+      detectInformationLeak(state, address, value, target);
       // add memory address constraint
       // Test if the attacker can write a desired value on the memory.
       uint64_t desired_value = 0;
@@ -4840,7 +4840,7 @@ void Executor::executeMemoryOperation(
           }
           klee_debug_message("DEBUG: record writable location");
           address_test.get()->dump();
-          recordWritableLocationsToJson(state, mo, address_offset);
+          recordWritableLocationsToJson(state, mo, address_offset, type);
         }
       }
     }
@@ -5711,9 +5711,12 @@ bool Executor::determineMoOverlap(ExecutionState &state, const MemoryObject* mo,
 void Executor::exprToJson(const ref<Expr> &expression, json &j){
   switch (expression->getKind()){
   case Expr::Constant:{
-    uint64_t value = dyn_cast<ConstantExpr>(expression)->getZExtValue();
+    ConstantExpr *ce = dyn_cast<ConstantExpr>(expression);
+    unsigned width = ce->getWidth(); 
+    uint64_t value = ce->getZExtValue();
     j["type"] = Expr::Constant;
     j["type_name"] = "Constant";
+    j["width"] = width;
     j["value"] = value;
     break;
   }
@@ -5827,14 +5830,15 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
   }
 }
 
-ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, std::string name, 
-                               uint64_t relativeOffset, json &j, bool isUnderflow){
+ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, std::string name, uint64_t relativeOffset, 
+                               json &j, bool isUnderflow, bool needMarked, bool needMatch, bool *res){
   Expr::Kind type = j["type"];
   ref<Expr> expression = NULL;
   switch (type){
   case Expr::Constant:{
     uint64_t value = j["value"];
-    expression = ConstantExpr::create(value, 64);
+    unsigned width = j["width"];
+    expression = ConstantExpr::create(value, width);
     break;
   }
   case Expr::Read:{
@@ -5845,9 +5849,18 @@ ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, st
       uint64_t offset = j["index"];
       offset += relativeOffset;
       if (!isUnderflow || (offset < relativeOffset)){
-        const auto os = state.addressSpace.objects.lookup(mo);
+        const auto op = state.addressSpace.objects.lookup(mo);
+        ObjectState *os = op->second.get();
         // now we assume only concrete offset will appear
-        expression = os->second.get()->read(offset, 8);
+        expression = os->read(offset, 8);
+        if (needMarked)
+          os->setRecordMask(offset,1);
+        if (needMatch && res){
+          if (os->isRecordMaskAllSet(offset, 1))
+            *res = true;
+          else
+            *res = false;
+        }
       }
     }
     break;
@@ -5861,53 +5874,62 @@ ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, st
       offset += relativeOffset;
       if (!isUnderflow || (offset < relativeOffset)){
         unsigned width = j["width"];
-        const auto os = state.addressSpace.objects.lookup(mo);
-        expression = os->second.get()->read(offset, width);
+        const auto op = state.addressSpace.objects.lookup(mo);
+        ObjectState *os = op->second.get();
+        expression = os->read(offset, width);
+        if (needMarked)
+          os->setRecordMask(offset, width/8);
+        if (needMatch && res){
+          if (os->isRecordMaskAllSet(offset, width/8))
+            *res = true;
+          else
+            *res = false;
+        }
       }
     }
     break;
   }
   case Expr::Eq:{
     json leftJson = j["left"];
-    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
     json rightJson = j["right"];
-    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
     if (leftExpr && rightExpr)
       expression = EqExpr::create(leftExpr, rightExpr);
     break;
   }
   case Expr::Ult:{
     json leftJson = j["left"];
-    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
     json rightJson = j["right"];
-    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
     if (leftExpr && rightExpr)
       expression = UltExpr::create(leftExpr, rightExpr);
     break;
   }
   case Expr::Ule:{
     json leftJson = j["left"];
-    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
     json rightJson = j["right"];
-    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
     if (leftExpr && rightExpr)
       expression = UleExpr::create(leftExpr, rightExpr);
     break;
   }
   case Expr::Ugt:{
     json leftJson = j["left"];
-    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
     json rightJson = j["right"];
-    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
     if (leftExpr && rightExpr)
       expression = UgtExpr::create(leftExpr, rightExpr);
     break;
   }
   case Expr::Uge:{
     json leftJson = j["left"];
-    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow);
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
     json rightJson = j["right"];
-    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow);
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
     if (leftExpr && rightExpr)
       expression = UgeExpr::create(leftExpr, rightExpr);
     break;
@@ -5945,96 +5967,95 @@ Expr::Kind Executor::getExprInfo(const ref<Expr>  &e, std::string &moName, uint6
           }
           return k;
 }
-bool Executor::recordWritableLocationsToJson(ExecutionState &state,const MemoryObject *mo, uint64_t address_offset){
-          std::string moName = mo->name;
-          // uint64_t offset;
-          // unsigned width; 
-           json j;
-          // getExprInfo(address,moName,offset,width);
-          std::string filename = description_file+"_"+moName+".json";
-          std::ifstream inFile(filename);
-          if (inFile.is_open()) {
-              inFile >> j;
-              inFile.close();
-          } else {
-              assert("Cannot open the file");
-          }
-          std::vector<json> constraintsJson;
+bool Executor::recordWritableLocationsToJson(ExecutionState &state, const MemoryObject *mo, uint64_t address_offset, Expr::Width width){
+    std::string moName = mo->name;
+    // uint64_t offset;
+    // unsigned width; 
+    json j;
+    // getExprInfo(address,moName,offset,width);
+    std::string filename = description_file+"_"+moName+".json";
+    std::ifstream inFile(filename);
+    if (inFile.is_open()) {
+      inFile >> j;
+      inFile.close();
+    } else {
+      assert("Cannot open the file");
+    }
+    std::vector<json> constraintsJson;  
           
+    ConstraintSet cs;
+    ConstraintManager cm(cs);
+    for (auto &constraint:state.addressConstraintsForTargetApp){
+    if (cm.containMo(constraint, moName)){
+      json constraintJson;
+      exprToJson(constraint, constraintJson);
+      constraintsJson.push_back(constraintJson);
+    }
+  }
+  if(writable_record.count(moName)==0){
+    writable_record[moName] = 0;
+    j["name"] = moName;
+    j["size"] = mo->size;
+  }
+  uint64_t id = writable_record[moName];
+                    
+  j["writable location "+std::to_string(id)] = {{"offset_in_mo", address_offset}, {"width", width}, {"constraints", constraintsJson} }; 
           
-          ConstraintSet cs;
-          ConstraintManager cm(cs);
-          for (auto &constraint:state.addressConstraintsForTargetApp){
-            if (cm.containMo(constraint, moName)){
-              json constraintJson;
-              exprToJson(constraint, constraintJson);
-              constraintsJson.push_back(constraintJson);
-            }
-          }
-          if(writable_record.count(moName)==0){
-            writable_record[moName] = 0;
-            j["name"] = moName;
-            j["size"] = mo->size;
-          }
-          uint64_t id = writable_record[moName];
-            
-          
-          j["writable location "+std::to_string(id)] = {{"offset_in_mo", address_offset}, {"width",8}, {"constraints", constraintsJson} }; 
-          
-          std::ofstream file(filename);
-          klee_debug_message(filename.c_str());
-          if (file.is_open()){
-            file << std::setw(4) << j;
-          }else{
-            assert("Cannot open the file");
-          }
-          file.close();
-          writable_record[moName] ++;
+  std::ofstream file(filename);
+  klee_debug_message(filename.c_str());
+  if (file.is_open()){
+    file << std::setw(4) << j;
+  }else{
+    assert("Cannot open the file");
+  }
+  file.close();
+  writable_record[moName] ++;
 }
 
-void Executor::recordReadableLocationToJson(ExecutionState &state,const ref<Expr> &value){
-          std::string moName="";
-          uint64_t offset=0;
-          unsigned width=0;
-          std::vector<json> constraintsJson; 
-          Expr::Kind k = getExprInfo(value, moName, offset, width);
-          std::string filename = description_file+"_"+moName+".json";
-          std::ifstream inFile(filename);
-          json j;
-          if (inFile.is_open()) {
-              inFile >> j;
-              inFile.close();
-          } else {
-              assert("Cannot open the file");
-          }
-          // Check if the location has been record before
-          if(readableLocationRecord.find(make_pair(moName,offset))!=readableLocationRecord.end()){
-            return;
-          }
-          ConstraintSet cs;
-          ConstraintManager cm(cs);
-          for (auto &constraint:state.addressConstraintsForTargetApp){
-            if (cm.containMo(constraint, moName)){
-              json constraintJson;
-              exprToJson(constraint, constraintJson);
-              constraintsJson.push_back(constraintJson);
-            }
-          }
-          j["readable location "+std::to_string(readable_location_id)] = {{"name", moName}, {"offset_in_mo", offset}, {"width", width}, {"constraints", constraintsJson} }; 
-          std::ofstream outFile(filename);
-          klee_debug_message(filename.c_str());
-          if (outFile.is_open()){
-            outFile << std::setw(4) << j;
-          }else{
-            assert("Cannot open the file");
-          }
-          outFile.close();
-          readable_location_id++;
+void Executor::recordReadableLocationToJson(ExecutionState &state, const MemoryObject *mo, uint64_t offset, Expr::Width width){
+  std::string moName = mo->name;
+  // std::string moName="";
+  // uint64_t offset=0;
+  // unsigned width=0;
+  std::vector<json> constraintsJson; 
+  // Expr::Kind k = getExprInfo(value, moName, offset, width); 
+  std::string filename = description_file+"_"+moName+".json";
+  std::ifstream inFile(filename);
+  json j;
+  if (inFile.is_open()) {
+    inFile >> j;
+    inFile.close();
+  } else {
+    assert("Cannot open the file");
+  }
+  // Check if the location has been record before
+  if(readableLocationRecord.find(make_pair(moName,offset))!=readableLocationRecord.end()){
+    return;
+  }
+  ConstraintSet cs;
+  ConstraintManager cm(cs);
+  for (auto &constraint:state.addressConstraintsForTargetApp){
+    if (cm.containMo(constraint, moName)){
+      json constraintJson;
+      exprToJson(constraint, constraintJson);
+      constraintsJson.push_back(constraintJson);
+    }
+  }
+  j["readable location "+std::to_string(readable_location_id)] = {{"name", moName}, {"offset_in_mo", offset}, {"width", width}, {"constraints", constraintsJson} }; 
+  std::ofstream outFile(filename);
+  klee_debug_message(filename.c_str());
+  if (outFile.is_open()){
+    outFile << std::setw(4) << j;
+  }else{
+    assert("Cannot open the file");
+  }
+  outFile.close();
+  readable_location_id++;
 }
 
 
 
-void Executor::detectInfomationLeak(ExecutionState &state, ref<Expr> &address, ref<Expr> &value, KInstruction *target){
+void Executor::detectInformationLeak(ExecutionState &state, ref<Expr> &address, ref<Expr> &value, KInstruction *target){
   ref<Expr> address_test = address;
   uint64_t address_offset;
   // Convert the concrete address to it symbolic expression
@@ -6046,7 +6067,7 @@ void Executor::detectInfomationLeak(ExecutionState &state, ref<Expr> &address, r
           assert(address && "FIX ME: find mo with no existing record");
   }
 
-  // We assume there is an Infomationleak vulnerability if the value is extracted from 
+  // We assume there is an Informationleak vulnerability if the value is extracted from 
   // a lazy initialized memory object.
 
   // First check if the value is a concrete value.
@@ -6074,7 +6095,7 @@ void Executor::detectInfomationLeak(ExecutionState &state, ref<Expr> &address, r
     return;
   }else{
     std::string report_str = "information leak vulnerability";
-    recordReadableLocationToJson(state,value);
+    recordReadableLocationToJson(state, mo, offset, width);
     vulnerabilityReport(report_str, target);
   }
 }
@@ -6139,8 +6160,8 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
     ConstraintSet::const_iterator oi = end;
 
     while(oi != begin){
-      moV2Cs.push_back(*oi);
       oi--;
+      moV2Cs.push_back(*oi);
     }
   }
 
@@ -6148,33 +6169,40 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
     int locationCount = 0;
     std::string locationKey = "writable location " + llvm::utostr(locationCount);
     while(j.count(locationKey)>0){
+      uint64_t offset = j[locationKey]["offset_in_mo"];
+      Expr::Width size = j[locationKey]["width"];
+      const ObjectState *os = state.addressSpace.findObject(mo);
+      // if(!const_cast<ObjectState *>(os)->isRecordMaskAllSet(offset+ptrOffset, size/8))
+      //   break;
       
       ConstraintSet cs = moV2Cs;
       bool res = false;
       for (auto &constraintJson: j[locationKey]["constraints"]){
-        ref<Expr> constraint = jsonToExpr(state, mo, j["name"], ptrOffset, constraintJson, false);
+        ref<Expr> constraint = jsonToExpr(state, mo, j["name"], ptrOffset, constraintJson, false, false, true, &res);
         if (!constraint){
           klee_second_test_info("The constaint exceeds the mo range %s: . The second test teminates",
                                 constraintJson.dump(4).c_str());
           return false;
         }
-        
-        bool success = solver->mustBeFalse(cs,
-                                         constraint,
-                                         res, state.queryMetaData);
+        if (res == false){
+          // to bypass the following getInitialValues() test
+          res = true;
+          break;
+        }
+        // determine that there are no constraint conflicts
+        bool success = solver->mustBeFalse(cs, constraint, res, state.queryMetaData);
         if(res == true)
           break;
         cs.push_back(constraint);
       }
       if(!res){
-         // FIX ME HERE. is getInitialValues() suitable to detect the overlapping
-        // std::vector<std::vector<unsigned char>> values;
-        // std::vector<const Array *> objects;
-        // for (unsigned i = 0; i != state.symbolics.size(); ++i)
-        //   objects.push_back(state.symbolics[i].second);
-        // bool isSatisfied = solver->getInitialValues(cs, objects, values,
-        //                                             state.queryMetaData);
-        bool isSatisfied;
+        // FIX ME HERE. is getInitialValues() suitable to detect the overlapping
+        std::vector<std::vector<unsigned char>> values;
+        std::vector<const Array *> objects;
+        for (unsigned i = 0; i != state.symbolics.size(); ++i)
+          objects.push_back(state.symbolics[i].second);
+        bool isSatisfied = solver->getInitialValues(cs, objects, values,
+                                                    state.queryMetaData);
         if(isSatisfied){
           klee_debug_message("The offset is :%d",ptrOffset);
           return true;
@@ -6183,9 +6211,8 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
           continue;
         }
       }
-     
-    }
     locationKey = "writable location " + llvm::utostr(++locationCount);
+    }
   }
 
   return false;
@@ -6250,21 +6277,22 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
   size_t allocationAlignment = 8;
   mo = memory->allocate(moV2->size, isLocal, 1, allocSite,
                         allocationAlignment);
-  ObjectState *os = NULL;
+  // ObjectState *os = NULL;
   if (!mo) {
     terminateStateOnError(
         state, "FIX ME: Allocate MO failed",
         StateTerminationType::Ptr);
   } else {
-    os = bindObjectInState(state, mo, isLocal);
+    ObjectState *os = bindObjectInState(state, mo, isLocal);
     os->initializeToZero();
   }
   // FIX ME HERE. naming issues
   std::string name =
       "V2MoAlloc" + llvm::utostr(++V2allocNameCount); 
   klee_debug_message("DEBUG: Memory object V2 alloc name: %s",name.c_str());
+  executeMakeSymbolic(state, mo, name);
   state.addressSpace.record.push_back(mo);
-  mo->name = name;
+  // mo->name = name;
   moV2->name = name;
    
   // Traverse the writable locations
@@ -6272,37 +6300,42 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
   std:: string locationKey = "writable location " + llvm::utostr(locationCount);
   while(j.count(locationKey)>0){
     uint64_t offset = j[locationKey]["offset_in_mo"];
-    Expr::Width size = 8;
+    Expr::Width size = j[locationKey]["width"];
 
     // make the writable location in mo symbolic
     MemoryObject *newMo = memory->allocate(size, isLocal, 1, allocSite, allocationAlignment);
-    ObjectState *nos = NULL;
     if (!newMo) {
     terminateStateOnError(
         state, "FIX ME: Allocate newMO in mo failed",
         StateTerminationType::Ptr);
     } else {
-      nos = bindObjectInState(state, newMo, isLocal);
+      ObjectState *nos = bindObjectInState(state, newMo, isLocal);
       nos->initializeToZero();
     } 
     // FIX ME HERE. naming issues
     std::string locationName = "locationAlloc" + llvm::utostr(++allocLocationCount);
     executeMakeSymbolic(state, newMo, locationName);
+    state.addressSpace.record.push_back(newMo);
+
+    // After executeMakeSymbolic(), get the new objecstate
+    const ObjectState *nos = state.addressSpace.findObject(newMo);
     ref<Expr> value = nos->read(newMo->getOffsetExpr(newMo->getBaseExpr()), size);
+    const ObjectState *os = state.addressSpace.findObject(mo);
     ObjectState *wos = state.addressSpace.getWriteable(mo, os);
     wos->write(offset, value);
+
+    // 
+    const_cast<ObjectState *>(os)->setRecordMask(offset, size/8);
 
     locationInMemoryObject locationInMo;
     locationInMo.offset = offset;
     locationInMo.width = size;
-    //FIX ME HERE. do we need size in struct locationInMemoryObject?
-    //locationInMo.constraints = j[locationKey]["constraints"];
     locationInMo.isWritable = true;
 
     // Traverse the constraints
     std::vector<ref<Expr>> constraints;
     for (auto &constraintJson: j[locationKey]["constraints"]){
-      ref<Expr> constraint = jsonToExpr(state, mo, j["name"], 0, constraintJson, false);
+      ref<Expr> constraint = jsonToExpr(state, mo, j["name"], 0, constraintJson, false, true);
       if (!constraint){
         klee_second_test_info("The constaint exceeds the mo range %s: . The second test teminates",
                               constraintJson.dump(4).c_str());
@@ -6311,8 +6344,8 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
       constraints.push_back(constraint);
     }
     locationInMo.cs = ConstraintSet(constraints);
-    locationKey = "writable location " + llvm::utostr(++locationCount);
     moV2->locations.push_back(locationInMo);
+    locationKey = "writable location " + llvm::utostr(++locationCount);
    }
    
   return moV2;
@@ -6479,8 +6512,8 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
   processTree = std::make_unique<PTree>(state);
 
   //run(*state);
-  std::string jsonFlieName1 = "/home/klee/klee_test/test_files/klee-out-13/description_lazy_alloc2_1.json";
-  std::string jsonFlieName2 = "/home/klee/klee_test/test_files/klee-out-13/description_lazy_alloc2.json";
+  std::string jsonFlieName1 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/klee-out-0/description_lazy_alloc2.json";
+  std::string jsonFlieName2 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/klee-out-1/description_lazy_alloc2.json";
   bool result = interAnalysis(*state, jsonFlieName1, jsonFlieName2);
   klee_debug_message("DEBUG: Inter Analysis return %d",result);
   processTree = nullptr;

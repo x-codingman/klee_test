@@ -59,3 +59,7 @@
 - 增加unitialized pointer dereference的检查。
 - 增加record writable和readable的信息，并将它们以memory object对象单独进行记录。
 - 增加threadx的测试文件自动生成。
+
+## [interapi-analysis-implementation] - 2023-9-22
+- 修改bitcast中对mo重复命名和符号化
+- 增加inter-api检查

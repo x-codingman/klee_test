@@ -52,3 +52,4 @@ UINT _txe_thread_suspend(TX_THREAD *thread_ptr);
 UINT _txe_thread_terminate(TX_THREAD *thread_ptr);
 UINT _txe_thread_time_slice_change(TX_THREAD *thread_ptr, ULONG new_time_slice, ULONG *old_time_slice);
 UINT _txe_thread_wait_abort(TX_THREAD *thread_ptr);
+UINT _txe_timer_change(TX_TIMER *timer_ptr, ULONG initial_ticks, ULONG reschedule_ticks);

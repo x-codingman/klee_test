@@ -78,6 +78,7 @@ ObjectState::ObjectState(const MemoryObject *mo)
     object(mo),
     concreteStore(new uint8_t[mo->size]),
     concreteMask(nullptr),
+    recordMask(nullptr),
     knownSymbolics(nullptr),
     unflushedMask(nullptr),
     updates(nullptr, nullptr),
@@ -98,6 +99,7 @@ ObjectState::ObjectState(const MemoryObject *mo, const Array *array)
     object(mo),
     concreteStore(new uint8_t[mo->size]),
     concreteMask(nullptr),
+    recordMask(nullptr),
     knownSymbolics(nullptr),
     unflushedMask(nullptr),
     updates(array, nullptr),
@@ -207,6 +209,24 @@ void ObjectState::flushToConcreteStore(TimingSolver *solver,
         ce->toMemory(concreteStore + i);
     }
   }
+}
+
+void ObjectState::setRecordMask(uint64_t offset, Expr::Width width){
+  if(!recordMask)
+    recordMask = new BitArray(size);
+  for(unsigned i=0; i<width; i++){
+    recordMask->set(offset);
+    ++offset;
+  }
+}
+
+bool ObjectState::isRecordMaskAllSet(uint64_t offset, Expr::Width width){
+  for(unsigned i=0; i<width; i++){
+    if(!recordMask->get(offset))
+      return false;
+    ++offset;
+  }
+  return true;
 }
 
 void ObjectState::makeConcrete() {

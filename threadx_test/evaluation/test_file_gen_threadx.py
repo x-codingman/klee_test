@@ -50,7 +50,9 @@ def generate_c_file(func_name, params):
 #include "klee/klee.h"
 #include "klee_help.h"\n\n'''
 
+    content += 'extern TX_THREAD *    _tx_thread_current_ptr;\n\n'
     content += 'int main()\n{\n'
+    content += '    klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);\n'
 
     call_params = []
     for param_type, param_name in params:
@@ -72,7 +74,7 @@ with open('funcs.txt', 'r') as f:
     content = f.read().splitlines()
 
 for line in content:
-    match = re.match(r'(.+)\s+_txe_(\w+)\((.*)\);', line)
+    match = re.match(r'(.+)\s+(_txe_\w+)\((.*)\);', line)
     if match:
         return_type, func_name, param_str = match.groups()
         params = extract_params(param_str)

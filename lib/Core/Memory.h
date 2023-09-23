@@ -183,6 +183,11 @@ private:
   /// @brief concreteMask[byte] is set if byte is known to be concrete
   BitArray *concreteMask;
 
+  // add
+  // only used in klee-inter-analysis
+  // recordMask[byte] is set if byte is included by constraints or writable locations
+  BitArray *recordMask;
+
   /// knownSymbolics[byte] holds the symbolic expression for byte,
   /// if byte is known to be symbolic
   ref<Expr> *knownSymbolics;
@@ -241,6 +246,12 @@ public:
   */
   void flushToConcreteStore(TimingSolver *solver,
                             const ExecutionState &state) const;
+
+  // add
+  void setRecordMask(uint64_t offset, Expr::Width width);
+
+  // add
+  bool isRecordMaskAllSet(uint64_t offset, Expr::Width width);
 
 private:
   const UpdateList &getUpdates() const;

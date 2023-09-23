@@ -17,9 +17,6 @@ namespace klee {
   struct locationInMemoryObject{
         uint64_t offset;
         Expr::Width width;
-        uint64_t size;
-
-        
         ConstraintSet cs;
 
         bool isWritable;

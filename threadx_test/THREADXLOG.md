@@ -9,6 +9,11 @@
 - 注释txm_module_manager_thread_reset.c里面的TX_DISABLE和TX_RESOTRE
 - 注释txm_module_manager_thread_reset.c里面的_txm_module_manager_thread_stack_build
 
+- 注释 /home/klee/threadx/threadx/ports_module/cortex_m33/gnu/inc/tx_port.h 575行的 | _tx_ipsr_get()
+- 注释 /home/klee/threadx/threadx/common/src/tx_thread_initialize.c 74行=  TX_INITIALIZE_IN_PROGRESS;
+- 注释 tx_timer_change.c里面的TX_DISABLE和TX_RESOTRE
+- 注释 tx_thread_time_slice_change.c里面的TX_DISABLE和TX_RESOTRE
+
 
 
 

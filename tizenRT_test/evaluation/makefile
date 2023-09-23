@@ -96,7 +96,7 @@ TEST_FINAL_BC_FILES         := $(TEST_SOURCE_FILES:%.c= $(BUILD_DIR)/test_files/
 
 
 
-CFLAGS                :=  -emit-llvm -c -g  -fno-asm
+CFLAGS                :=  -emit-llvm -c -g  
 # CFLAGS                += --sysroot=/usr/lib/gcc/arm-none-eabi/6.3.1
 
 

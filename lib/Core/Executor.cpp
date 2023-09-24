@@ -4352,7 +4352,7 @@ MemoryObject *Executor::lazyAlloc(ExecutionState &state, ref<Expr> size,
         StateTerminationType::Ptr);
   }
   std::string name =
-      "lazy_alloc" + llvm::utostr(++allocname); // address->toString();
+      "lazy_alloc" + llvm::utostr(allocname++); // address->toString();
   klee_debug_message("DEBUG: Lazy alloc name: %s",name.c_str());
   executeMakeSymbolic(state, mo, name);
   state.addressSpace.record.push_back(mo);
@@ -4822,7 +4822,8 @@ void Executor::executeMemoryOperation(
         assert(success && "FIXME: Unhandled solver failure");
 
         // FIX ME HERE. We need to to consider whether the controllable flag needs to be added. 
-        if(value_test_result){
+        // if(value_test_result)
+        {
           ref<Expr> offset = mo->getOffsetExpr(address);
           if(ConstantExpr* ce = dyn_cast<ConstantExpr>(offset)){
             bool overlap;
@@ -5823,6 +5824,244 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
     j["right"] = rightJson;
     break;
   }
+  case Expr::Slt:{
+    SltExpr* ee = dyn_cast<SltExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Slt;
+    j["type_name"] = "Slt";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Sle:{
+    SleExpr* ee = dyn_cast<SleExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Sle;
+    j["type_name"] = "Sle";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Sgt:{
+    SgtExpr* ee = dyn_cast<SgtExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Sgt;
+    j["type_name"] = "Sgt";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Sge:{
+    SgeExpr* ee = dyn_cast<SgeExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Sge;
+    j["type_name"] = "Sge";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Add:{
+    AddExpr* ee = dyn_cast<AddExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Add;
+    j["type_name"] = "Add";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Sub:{
+    SubExpr* ee = dyn_cast<SubExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Sub;
+    j["type_name"] = "Sub";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Mul:{
+    MulExpr* ee = dyn_cast<MulExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Mul;
+    j["type_name"] = "Mul";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::UDiv:{
+    UDivExpr* ee = dyn_cast<UDivExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::UDiv;
+    j["type_name"] = "UDiv";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::SDiv:{
+    SDivExpr* ee = dyn_cast<SDivExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::SDiv;
+    j["type_name"] = "SDiv";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::URem:{
+    URemExpr* ee = dyn_cast<URemExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::URem;
+    j["type_name"] = "URem";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::SRem:{
+    SRemExpr* ee = dyn_cast<SRemExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::SRem;
+    j["type_name"] = "SRem";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::And:{
+    AndExpr* ee = dyn_cast<AndExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::And;
+    j["type_name"] = "And";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Or:{
+    OrExpr* ee = dyn_cast<OrExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Or;
+    j["type_name"] = "Or";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Xor:{
+    XorExpr* ee = dyn_cast<XorExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Xor;
+    j["type_name"] = "Xor";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::Shl:{
+    ShlExpr* ee = dyn_cast<ShlExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::Shl;
+    j["type_name"] = "Shl";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::LShr:{
+    LShrExpr* ee = dyn_cast<LShrExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::LShr;
+    j["type_name"] = "LShr";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
+  case Expr::AShr:{
+    AShrExpr* ee = dyn_cast<AShrExpr>(expression);
+    ref<Expr> left = ee->left;
+    json leftJson;
+    exprToJson(left, leftJson);
+    ref<Expr> right = ee->right;
+    json rightJson;
+    exprToJson(right, rightJson);
+    j["type"] = Expr::AShr;
+    j["type_name"] = "AShr";
+    j["left"] = leftJson;
+    j["right"] = rightJson;
+    break;
+  }
   default:
     assert("FIXME in exprToJson(): Unprocessed expression types");
     break;
@@ -5848,7 +6087,7 @@ ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, st
     }else{
       uint64_t offset = j["index"];
       offset += relativeOffset;
-      if (!isUnderflow || (offset < relativeOffset)){
+      if ((!isUnderflow || (offset < relativeOffset)) && (offset <= mo->size)){
         const auto op = state.addressSpace.objects.lookup(mo);
         ObjectState *os = op->second.get();
         // now we assume only concrete offset will appear
@@ -5872,7 +6111,7 @@ ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, st
     }else{
       uint64_t offset = j["index"];
       offset += relativeOffset;
-      if (!isUnderflow || (offset < relativeOffset)){
+      if ((!isUnderflow || (offset < relativeOffset)) && (offset <= mo->size)){
         unsigned width = j["width"];
         const auto op = state.addressSpace.objects.lookup(mo);
         ObjectState *os = op->second.get();
@@ -5932,6 +6171,159 @@ ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, st
     ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
     if (leftExpr && rightExpr)
       expression = UgeExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Slt:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = SltExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Sle:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = SleExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Sgt:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = SgtExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Sge:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = SgeExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Add:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = AddExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Sub:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = SubExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Mul:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = MulExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::UDiv:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = UDivExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::SDiv:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = SDivExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::URem:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = URemExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::SRem:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = SRemExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::And:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = AndExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Or:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = OrExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Xor:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = XorExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::Shl:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = ShlExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::LShr:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = LShrExpr::create(leftExpr, rightExpr);
+    break;
+  }
+  case Expr::AShr:{
+    json leftJson = j["left"];
+    ref<Expr> leftExpr = jsonToExpr(state, mo, name, relativeOffset, leftJson, isUnderflow, needMarked, needMatch, res);
+    json rightJson = j["right"];
+    ref<Expr> rightExpr = jsonToExpr(state, mo, name, relativeOffset, rightJson, isUnderflow, needMarked, needMatch, res);
+    if (leftExpr && rightExpr)
+      expression = AShrExpr::create(leftExpr, rightExpr);
     break;
   }
   default:
@@ -6165,7 +6557,11 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
     }
   }
 
-  for(int ptrOffset=0; ptrOffset<moV2.size; ptrOffset++){
+  uint64_t mo1Size = j["size"];
+  for(uint64_t ptrOffset=0; ptrOffset<moV2.size+mo1Size; ptrOffset++){
+    uint64_t relativeOffset = ptrOffset - mo1Size;
+    bool isUnderflow = (relativeOffset > ptrOffset)? true : false;
+
     int locationCount = 0;
     std::string locationKey = "writable location " + llvm::utostr(locationCount);
     while(j.count(locationKey)>0){
@@ -6178,11 +6574,11 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
       ConstraintSet cs = moV2Cs;
       bool res = false;
       for (auto &constraintJson: j[locationKey]["constraints"]){
-        ref<Expr> constraint = jsonToExpr(state, mo, j["name"], ptrOffset, constraintJson, false, false, true, &res);
+        ref<Expr> constraint = jsonToExpr(state, mo, j["name"], relativeOffset, constraintJson, isUnderflow, false, true, &res);
         if (!constraint){
-          klee_second_test_info("The constaint exceeds the mo range %s: . The second test teminates",
+          klee_second_test_info("The constaint exceeds the mo range: %s.",
                                 constraintJson.dump(4).c_str());
-          return false;
+          // return false;
         }
         if (res == false){
           // to bypass the following getInitialValues() test
@@ -6204,7 +6600,7 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
         bool isSatisfied = solver->getInitialValues(cs, objects, values,
                                                     state.queryMetaData);
         if(isSatisfied){
-          klee_debug_message("The offset is :%d",ptrOffset);
+          klee_debug_message("The offset is :%d", ptrOffset-mo1Size);
           return true;
           break;
         }else{
@@ -6512,8 +6908,8 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
   processTree = std::make_unique<PTree>(state);
 
   //run(*state);
-  std::string jsonFlieName1 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/klee-out-0/description_lazy_alloc2.json";
-  std::string jsonFlieName2 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/klee-out-1/description_lazy_alloc2.json";
+  std::string jsonFlieName1 = "/home/klee/FreeRTOS/symbolic_execution/klee-out-152/description_lazy_alloc1.json";
+  std::string jsonFlieName2 = "/home/klee/FreeRTOS/symbolic_execution/klee-out-156/description_lazy_alloc1.json";
   bool result = interAnalysis(*state, jsonFlieName1, jsonFlieName2);
   klee_debug_message("DEBUG: Inter Analysis return %d",result);
   processTree = nullptr;

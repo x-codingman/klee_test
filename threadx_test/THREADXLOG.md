@@ -1,4 +1,4 @@
-- //注释 /home/klee/threadx/threadx/common/inc/tx_api.h 128行，“#include "tx_port.h"”, 不考虑架构相关代码。
+- 注释 /home/klee/threadx/threadx/common/inc/tx_api.h 128行，“#include "tx_port.h"”, 不考虑架构相关代码。
 - 注释 /home/klee/threadx/threadx/common/src/tx_initialize_kernel_enter.c 117，121行，忽略架构相关代码。
 - 注释 /home/klee/threadx/threadx/common/src/tx_thread_create.c 225行，忽略thread的stack初始化，
 - 注释 /home/klee/threadx/threadx/ports/cortex_m33/gnu/inc/tx_port.h 628，629行，忽略架构底层汇编指令

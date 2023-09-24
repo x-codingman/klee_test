@@ -132,6 +132,8 @@ ObjectState::ObjectState(const ObjectState &os)
 ObjectState::~ObjectState() {
   delete concreteMask;
   delete unflushedMask;
+  // add
+  delete recordMask;
   delete[] knownSymbolics;
   delete[] concreteStore;
 }

@@ -93,6 +93,8 @@ typedef unsigned TypeSize;
 #include <vector>
 #include <set>
 #include <iostream>
+#include <dirent.h>
+
 
 
 // add sxh
@@ -6374,7 +6376,7 @@ bool Executor::recordWritableLocationsToJson(ExecutionState &state, const Memory
     // unsigned width; 
     json j;
     // getExprInfo(address,moName,offset,width);
-    std::string filename = description_file+"_"+moName+".json";
+    std::string filename = description_file+"_"+std::to_string(state.id)+"_"+moName+".json";
     std::ifstream inFile(filename);
     if (inFile.is_open()) {
       inFile >> j;
@@ -6934,6 +6936,42 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
 
   if (statsTracker)
     statsTracker->done();
+}
+
+void Executor::interAnalysisMain(ExecutionState &state, std::string directoryPath){
+  std::vector<std::string> jsonFiles;
+  // First we traverse the json files
+    DIR* dir = opendir(directoryPath.c_str());
+    if (dir == nullptr) {
+        std::cerr << "Failed to open directory: " << directoryPath << std::endl;
+        return;
+    }
+
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        if (entry->d_type == DT_REG) { // If the entry is a regular file
+            std::string filePath = directoryPath + "/" + entry->d_name;
+            if (filePath.substr(filePath.find_last_of(".") + 1) == "json") {
+                    std::ifstream file(filePath);
+                    if (!file.is_open()) {
+                      klee_debug_message("DEBUG: fail to open the dir");
+                      return;
+                      }         
+                    jsonFiles.push_back(filePath);
+                    file.close();
+            }
+        }
+    }
+  closedir(dir);
+  // Second we try to process the inter analysis.
+  for(int i=0;i<jsonFiles.size();i++){
+    for(int j=0; j<jsonFiles.size();j++){
+      interAnalysis(state, jsonFiles[i], jsonFiles[j]);
+    }
+  }
+  return;
+
+  
 }
 
 

@@ -452,7 +452,14 @@ KleeHandler::KleeHandler(int argc, char **argv)
     // get dereference location file directory
     dereference_location_file = getOutputFilename("dereference_location");
     writable_location_file = getOutputFilename("writable_location");
-    description_file = getOutputFilename("description");
+    if(test_info_dir_given){
+       SmallString<128> description_path = test_info_directory;
+       sys::path::append(description_path,"description");
+       description_file = description_path.c_str();
+    }else{
+       description_file = getOutputFilename("description");
+    }
+      
   }else{
     // add
     // get dereference locations files

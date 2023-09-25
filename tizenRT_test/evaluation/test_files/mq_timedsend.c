@@ -1,8 +1,12 @@
 #include "klee_help.h"
 #include <mqueue.h>
 #include <klee/klee.h>
+#include "queue.h"
+extern volatile dq_queue_t g_readytorun;
+extern FAR struct tcb_s klee_tcb;
 int main()
 {
+g_readytorun.head = (dq_entry_t*)&klee_tcb;
 mqd_t arg0;
 const char* arg1;
 size_t arg2;

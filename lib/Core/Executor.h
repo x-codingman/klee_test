@@ -309,6 +309,7 @@ private:
                          char **envp) override;
  bool interAnalysis(ExecutionState &state, std::string jsonFlieName1, std::string jsonFlieName2);
  MemoryObjectV2* jsonToMoV2(ExecutionState &state, json j);
+ void interAnalysisMain(ExecutionState &state, std::string directoryPath);
   /// Allocate and bind a new object in a particular state. NOTE: This
   /// function may fork.
   ///

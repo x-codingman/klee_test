@@ -74,7 +74,7 @@ with open('funcs.txt', 'r') as f:
     content = f.read().splitlines()
 
 for line in content:
-    match = re.match(r'(.+)\s+(_txe_\w+)\((.*)\);', line)
+    match = re.match(r'(.+)\s+_txe_(\w+)\((.*)\);', line)
     if match:
         return_type, func_name, param_str = match.groups()
         params = extract_params(param_str)

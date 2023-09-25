@@ -114,6 +114,7 @@ ObjectState::ObjectState(const ObjectState &os)
     object(os.object),
     concreteStore(new uint8_t[os.size]),
     concreteMask(os.concreteMask ? new BitArray(*os.concreteMask, os.size) : nullptr),
+    recordMask(os.recordMask ? new BitArray(*os.recordMask, os.size) : nullptr),
     knownSymbolics(nullptr),
     unflushedMask(os.unflushedMask ? new BitArray(*os.unflushedMask, os.size) : nullptr),
     updates(os.updates),
@@ -133,7 +134,8 @@ ObjectState::~ObjectState() {
   delete concreteMask;
   delete unflushedMask;
   // add
-  delete recordMask;
+  if (recordMask)
+    delete recordMask;
   delete[] knownSymbolics;
   delete[] concreteStore;
 }
@@ -223,6 +225,8 @@ void ObjectState::setRecordMask(uint64_t offset, Expr::Width width){
 }
 
 bool ObjectState::isRecordMaskAllSet(uint64_t offset, Expr::Width width){
+  if(!recordMask)
+    return false;
   for(unsigned i=0; i<width; i++){
     if(!recordMask->get(offset))
       return false;

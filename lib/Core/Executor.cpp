@@ -2613,6 +2613,11 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
             if (!hasInvalid) {
               terminateStateOnExecError(state, "invalid function pointer");
               hasInvalid = true;
+              // add 
+              // It is unsure why the loop is determined by free and fork() to handle the symbolic pointer
+              // Now we just report the symbolic pointer, and continue the execution without further resolution
+              klee_debug_message("Execute: Find symbolic pointer");
+              break; 
             }
           }
         }
@@ -6072,7 +6077,7 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
 ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, std::string name, uint64_t relativeOffset, 
                                json &j, bool isUnderflow, bool needMarked, bool needMatch, bool *res){
   Expr::Kind type = j["type"];
-  ref<Expr> expression = NULL;
+  ref<Expr> expression = NULL; 
   switch (type){
   case Expr::Constant:{
     uint64_t value = j["value"];
@@ -6081,6 +6086,8 @@ ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, st
     break;
   }
   case Expr::Read:{
+    if (res)
+      *res = false;
     std::string readName = j["name"];
     if (name != readName){
       assert("FIXME in jsonToExpr(): additional mo appears in the constraint");
@@ -6105,6 +6112,8 @@ ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, st
     break;
   }
   case Expr::Concat:{
+    if (res)
+      *res = false;
     std::string readName = j["name"];
     if (name != readName){
       assert("FIXME in jsonToExpr(): additional mo appears in the constraint");
@@ -6567,31 +6576,31 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
     while(j.count(locationKey)>0){
       uint64_t offset = j[locationKey]["offset_in_mo"];
       Expr::Width size = j[locationKey]["width"];
-      const ObjectState *os = state.addressSpace.findObject(mo);
+      // const ObjectState *os = state.addressSpace.findObject(mo);
       // if(!const_cast<ObjectState *>(os)->isRecordMaskAllSet(offset+ptrOffset, size/8))
       //   break;
       
       ConstraintSet cs = moV2Cs;
-      bool res = false;
+      // matchRes & conflictRes need to be initialized considering that a writable location has no constraint
+      bool matchRes = true;
+      bool conflictRes = false;
       for (auto &constraintJson: j[locationKey]["constraints"]){
-        ref<Expr> constraint = jsonToExpr(state, mo, j["name"], relativeOffset, constraintJson, isUnderflow, false, true, &res);
+        ref<Expr> constraint = jsonToExpr(state, mo, j["name"], relativeOffset, constraintJson, isUnderflow, false, true, &matchRes);
         if (!constraint){
           klee_second_test_info("The constaint exceeds the mo range: %s.",
                                 constraintJson.dump(4).c_str());
           // return false;
         }
-        if (res == false){
-          // to bypass the following getInitialValues() test
-          res = true;
+        if (matchRes == false)
           break;
-        }
+        
         // determine that there are no constraint conflicts
-        bool success = solver->mustBeFalse(cs, constraint, res, state.queryMetaData);
-        if(res == true)
+        bool success = solver->mustBeFalse(cs, constraint, conflictRes, state.queryMetaData);
+        if(conflictRes == true)
           break;
         cs.push_back(constraint);
       }
-      if(!res){
+      if(matchRes && !conflictRes){
         // FIX ME HERE. is getInitialValues() suitable to detect the overlapping
         std::vector<std::vector<unsigned char>> values;
         std::vector<const Array *> objects;
@@ -6604,6 +6613,8 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
           return true;
           break;
         }else{
+          // because locationKey will not be changed after continue statement
+          locationKey = "writable location " + llvm::utostr(++locationCount);
           continue;
         }
       }
@@ -6908,8 +6919,8 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
   processTree = std::make_unique<PTree>(state);
 
   //run(*state);
-  std::string jsonFlieName1 = "/home/klee/FreeRTOS/symbolic_execution/klee-out-152/description_lazy_alloc1.json";
-  std::string jsonFlieName2 = "/home/klee/FreeRTOS/symbolic_execution/klee-out-156/description_lazy_alloc1.json";
+  std::string jsonFlieName1 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/queue_send_notify/description_lazy_alloc1.json";
+  std::string jsonFlieName2 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/thread_time_slice_change/description_lazy_alloc1.json";
   bool result = interAnalysis(*state, jsonFlieName1, jsonFlieName2);
   klee_debug_message("DEBUG: Inter Analysis return %d",result);
   processTree = nullptr;

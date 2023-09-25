@@ -13,7 +13,18 @@
 - 注释 /home/klee/threadx/threadx/common/src/tx_thread_initialize.c 74行=  TX_INITIALIZE_IN_PROGRESS;
 - 注释 tx_timer_change.c里面的TX_DISABLE和TX_RESOTRE
 - 注释 tx_thread_time_slice_change.c里面的TX_DISABLE和TX_RESOTRE
-
+- 注释 tx_thread_system_resume.c里面的TX_DISABLE, TX_RESOTREE和TX_THREAD_SYSTEM_RETURN_CHECK()
+- 注释 tx_queue_delete.c里面的TX_DISABLE和TX_RESOTRE
+- 修改 tx_queue_delete.c 148行while循环为if语句
+- 注释 tx_queue_front_send.c里面的TX_DISABLE和TX_RESOTRE
+- 注释 tx_queue_flush.c里面的TX_DISABLE和TX_RESOTRE, 153行break
+- 修改 tx_queue_flush.c 142行while循环为if语句
+- 注释 tx_queue_prioritize.c里面的TX_DISABLE和TX_RESOTRE, 147行do, 210行while循环
+- 注释 tx_queue_receive.c里面的TX_DISABLE和TX_RESOTRE
+- 注释 tx_queue_send_notify.c里面的TX_DISABLE和TX_RESOTRE
+- 注释 tx_queue_send.c里面的TX_DISABLE和TX_RESOTRE
+- 注释 tx_thread_entry_exit_notify.c里面的TX_DISABLE和TX_RESOTRE
+- 注释 tx_preemption_change.c里面的TX_DISABLE和TX_RESOTRE
 
 
 

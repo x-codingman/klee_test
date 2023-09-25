@@ -13,5 +13,5 @@ int main()
     klee_make_symbolic_controllable(&initial_ticks, sizeof(initial_ticks), "initial_ticks", true);
     ULONG reschedule_ticks;
     klee_make_symbolic_controllable(&reschedule_ticks, sizeof(reschedule_ticks), "reschedule_ticks", true);
-    m_txe_timer_change(timer_ptr, initial_ticks, reschedule_ticks);
+    mtimer_change(timer_ptr, initial_ticks, reschedule_ticks);
 }

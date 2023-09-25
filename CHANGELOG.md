@@ -63,3 +63,5 @@
 ## [interapi-analysis-implementation] - 2023-9-22
 - 修改bitcast中对mo重复命名和符号化
 - 增加inter-api检查
+- 增加mo中对writable位置（包括相关约束对应位置）的标记
+- 增加偏移量为负的位置匹配过程

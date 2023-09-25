@@ -1,2 +1,0 @@
-KLEE: Error: write vulnerabilityon file test_api_2.c: line 18. desired value: 0, desired address 4026478592-4026478592
-KLEE: Error: write vulnerabilityon file test_api_2.c: line 19. desired value: 0, desired address 4026478592-4026478592

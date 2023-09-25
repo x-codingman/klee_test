@@ -1,1 +1,0 @@
-KLEE: ERROR: cannot open file "/home/klee/klee_test/build/../test_files/klee-out-4/extra_info/test_info.txt": No such file or directory

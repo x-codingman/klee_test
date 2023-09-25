@@ -1,5 +1,0 @@
-KLEE: in Inter analysis
-KLEE: hello
-KLEE: DEBUG: Memory object V2 alloc name: V2MoAlloc1
-KLEE: hello
-KLEE: DEBUG: Inter Analysis return 0

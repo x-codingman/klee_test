@@ -1,4 +1,0 @@
-KLEE: The mo can be overlapped with desired value in range of MPU region at file test_api_2.c: line 18.
-KLEE: The mo can be overlapped with desired value in range of MPU region at file test_api_2.c: line 18.
-KLEE: The mo can be overlapped with desired value in range of MPU region at file test_api_2.c: line 19.
-KLEE: The mo can be overlapped with desired value in range of MPU region at file test_api_2.c: line 19.

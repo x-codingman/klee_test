@@ -19,5 +19,5 @@ int main()
     klee_make_symbolic_controllable(&suspended_count, sizeof(suspended_count), "suspended_count", true);
     TX_SEMAPHORE ** next_semaphore;
     klee_make_symbolic_controllable(&next_semaphore, sizeof(next_semaphore), "next_semaphore", true);
-    msemaphore_info_get(semaphore_ptr, name, current_value, first_suspended, suspended_count, next_semaphore);
+    m_txe_semaphore_info_get(semaphore_ptr, name, current_value, first_suspended, suspended_count, next_semaphore);
 }

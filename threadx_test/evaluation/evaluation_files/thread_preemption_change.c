@@ -13,5 +13,5 @@ int main()
     klee_make_symbolic_controllable(&new_threshold, sizeof(new_threshold), "new_threshold", true);
     UINT * old_threshold;
     klee_make_symbolic_controllable(&old_threshold, sizeof(old_threshold), "old_threshold", true);
-    mthread_preemption_change(thread_ptr, new_threshold, old_threshold);
+    m_txe_thread_preemption_change(thread_ptr, new_threshold, old_threshold);
 }

@@ -11,5 +11,5 @@ int main()
     klee_make_symbolic_controllable(&group_ptr, sizeof(group_ptr), "group_ptr", true);
     VOID (*events_set_notify)(TX_EVENT_FLAGS_GROUP *notify_group_ptr);
     klee_make_symbolic_controllable(&events_set_notify, sizeof(events_set_notify), "events_set_notify", true);
-    mevent_flags_set_notify(group_ptr, events_set_notify);
+    m_txe_event_flags_set_notify(group_ptr, events_set_notify);
 }

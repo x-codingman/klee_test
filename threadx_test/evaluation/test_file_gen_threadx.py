@@ -65,7 +65,7 @@ def generate_c_file(func_name, params):
             content += f'    klee_make_symbolic_controllable(&{param_name}, sizeof({param_name}), "{param_name}", true);\n'
             call_params.append(param_name)
 
-    func_call = "{}({});".format("m"+func_name, ', '.join(call_params))
+    func_call = "{}({});".format("m_txe_"+func_name, ', '.join(call_params))
     content += f'    {func_call}\n'
     content += '}\n'
     return content

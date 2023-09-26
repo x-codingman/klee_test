@@ -25,5 +25,5 @@ int main()
     klee_make_symbolic_controllable(&next_thread, sizeof(next_thread), "next_thread", true);
     TX_THREAD ** next_suspended_thread;
     klee_make_symbolic_controllable(&next_suspended_thread, sizeof(next_suspended_thread), "next_suspended_thread", true);
-    mthread_info_get(thread_ptr, name, state, run_count, priority, preemption_threshold, time_slice, next_thread, next_suspended_thread);
+    m_txe_thread_info_get(thread_ptr, name, state, run_count, priority, preemption_threshold, time_slice, next_thread, next_suspended_thread);
 }

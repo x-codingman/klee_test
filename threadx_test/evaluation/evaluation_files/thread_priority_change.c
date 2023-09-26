@@ -13,5 +13,5 @@ int main()
     klee_make_symbolic_controllable(&new_priority, sizeof(new_priority), "new_priority", true);
     UINT * old_priority;
     klee_make_symbolic_controllable(&old_priority, sizeof(old_priority), "old_priority", true);
-    mthread_priority_change(thread_ptr, new_priority, old_priority);
+    m_txe_thread_priority_change(thread_ptr, new_priority, old_priority);
 }

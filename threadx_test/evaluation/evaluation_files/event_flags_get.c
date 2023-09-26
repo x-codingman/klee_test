@@ -17,5 +17,5 @@ int main()
     klee_make_symbolic_controllable(&actual_flags_ptr, sizeof(actual_flags_ptr), "actual_flags_ptr", true);
     ULONG wait_option;
     klee_make_symbolic_controllable(&wait_option, sizeof(wait_option), "wait_option", true);
-    mevent_flags_get(group_ptr, requested_flags, get_option, actual_flags_ptr, wait_option);
+    m_txe_event_flags_get(group_ptr, requested_flags, get_option, actual_flags_ptr, wait_option);
 }

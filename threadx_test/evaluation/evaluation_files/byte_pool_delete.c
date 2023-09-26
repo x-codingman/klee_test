@@ -9,5 +9,5 @@ int main()
     klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);
     TX_BYTE_POOL * pool_ptr;
     klee_make_symbolic_controllable(&pool_ptr, sizeof(pool_ptr), "pool_ptr", true);
-    mbyte_pool_delete(pool_ptr);
+    m_txe_byte_pool_delete(pool_ptr);
 }

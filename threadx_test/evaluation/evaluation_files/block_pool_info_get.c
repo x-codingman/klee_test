@@ -21,5 +21,5 @@ int main()
     klee_make_symbolic_controllable(&suspended_count, sizeof(suspended_count), "suspended_count", true);
     TX_BLOCK_POOL ** next_pool;
     klee_make_symbolic_controllable(&next_pool, sizeof(next_pool), "next_pool", true);
-    mblock_pool_info_get(pool_ptr, name, available_blocks, total_blocks, first_suspended, suspended_count, next_pool);
+    m_txe_block_pool_info_get(pool_ptr, name, available_blocks, total_blocks, first_suspended, suspended_count, next_pool);
 }

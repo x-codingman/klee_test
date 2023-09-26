@@ -9,5 +9,5 @@ int main()
     klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);
     TX_SEMAPHORE * semaphore_ptr;
     klee_make_symbolic_controllable(&semaphore_ptr, sizeof(semaphore_ptr), "semaphore_ptr", true);
-    msemaphore_delete(semaphore_ptr);
+    m_txe_semaphore_delete(semaphore_ptr);
 }

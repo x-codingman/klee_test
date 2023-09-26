@@ -21,5 +21,5 @@ int main()
     klee_make_symbolic_controllable(&suspended_count, sizeof(suspended_count), "suspended_count", true);
     TX_MUTEX ** next_mutex;
     klee_make_symbolic_controllable(&next_mutex, sizeof(next_mutex), "next_mutex", true);
-    mmutex_info_get(mutex_ptr, name, count, owner, first_suspended, suspended_count, next_mutex);
+    m_txe_mutex_info_get(mutex_ptr, name, count, owner, first_suspended, suspended_count, next_mutex);
 }

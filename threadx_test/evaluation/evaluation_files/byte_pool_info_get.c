@@ -21,5 +21,5 @@ int main()
     klee_make_symbolic_controllable(&suspended_count, sizeof(suspended_count), "suspended_count", true);
     TX_BYTE_POOL ** next_pool;
     klee_make_symbolic_controllable(&next_pool, sizeof(next_pool), "next_pool", true);
-    mbyte_pool_info_get(pool_ptr, name, available_bytes, fragments, first_suspended, suspended_count, next_pool);
+    m_txe_byte_pool_info_get(pool_ptr, name, available_bytes, fragments, first_suspended, suspended_count, next_pool);
 }

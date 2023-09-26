@@ -9,5 +9,5 @@ int main()
     klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);
     VOID * block_ptr;
     klee_make_symbolic_controllable(&block_ptr, sizeof(block_ptr), "block_ptr", true);
-    mblock_release(block_ptr);
+    m_txe_block_release(block_ptr);
 }

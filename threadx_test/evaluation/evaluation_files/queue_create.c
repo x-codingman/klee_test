@@ -19,5 +19,5 @@ int main()
     klee_make_symbolic_controllable(&queue_size, sizeof(queue_size), "queue_size", true);
     UINT queue_control_block_size;
     klee_make_symbolic_controllable(&queue_control_block_size, sizeof(queue_control_block_size), "queue_control_block_size", true);
-    mqueue_create(queue_ptr, name_ptr, message_size, queue_start, queue_size, queue_control_block_size);
+    m_txe_queue_create(queue_ptr, name_ptr, message_size, queue_start, queue_size, queue_control_block_size);
 }

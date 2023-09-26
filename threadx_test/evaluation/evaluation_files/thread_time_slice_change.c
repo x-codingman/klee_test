@@ -13,5 +13,5 @@ int main()
     klee_make_symbolic_controllable(&new_time_slice, sizeof(new_time_slice), "new_time_slice", true);
     ULONG * old_time_slice;
     klee_make_symbolic_controllable(&old_time_slice, sizeof(old_time_slice), "old_time_slice", true);
-    mthread_time_slice_change(thread_ptr, new_time_slice, old_time_slice);
+    m_txe_thread_time_slice_change(thread_ptr, new_time_slice, old_time_slice);
 }

@@ -15,5 +15,5 @@ int main()
     klee_make_symbolic_controllable(&inherit, sizeof(inherit), "inherit", true);
     UINT mutex_control_block_size;
     klee_make_symbolic_controllable(&mutex_control_block_size, sizeof(mutex_control_block_size), "mutex_control_block_size", true);
-    mmutex_create(mutex_ptr, name_ptr, inherit, mutex_control_block_size);
+    m_txe_mutex_create(mutex_ptr, name_ptr, inherit, mutex_control_block_size);
 }

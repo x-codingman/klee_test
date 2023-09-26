@@ -19,5 +19,5 @@ int main()
     klee_make_symbolic_controllable(&pool_size, sizeof(pool_size), "pool_size", true);
     UINT pool_control_block_size;
     klee_make_symbolic_controllable(&pool_control_block_size, sizeof(pool_control_block_size), "pool_control_block_size", true);
-    mblock_pool_create(pool_ptr, name_ptr, block_size, pool_start, pool_size, pool_control_block_size);
+    m_txe_block_pool_create(pool_ptr, name_ptr, block_size, pool_start, pool_size, pool_control_block_size);
 }

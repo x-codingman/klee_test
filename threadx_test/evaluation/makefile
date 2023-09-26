@@ -142,5 +142,8 @@ $(BUILD_DIR)/evaluation_files//home/klee/klee_test/threadx_test/evaluation/evalu
 # 	llvm-link $^ -o $@
 
 
+clean_bc:
+	rm -rf $(TEST_BC_FILES)
+
 clean:
 	rm -rf $(BUILD_DIR)   

@@ -29,5 +29,5 @@ int main()
     klee_make_symbolic_controllable(&auto_start, sizeof(auto_start), "auto_start", true);
     UINT thread_control_block_size;
     klee_make_symbolic_controllable(&thread_control_block_size, sizeof(thread_control_block_size), "thread_control_block_size", true);
-    mthread_create(thread_ptr, name_ptr, entry_function, entry_input, stack_start, stack_size, priority, preempt_threshold, time_slice, auto_start, thread_control_block_size);
+    m_txe_thread_create(thread_ptr, name_ptr, entry_function, entry_input, stack_start, stack_size, priority, preempt_threshold, time_slice, auto_start, thread_control_block_size);
 }

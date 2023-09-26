@@ -21,5 +21,5 @@ int main()
     klee_make_symbolic_controllable(&suspended_count, sizeof(suspended_count), "suspended_count", true);
     TX_QUEUE ** next_queue;
     klee_make_symbolic_controllable(&next_queue, sizeof(next_queue), "next_queue", true);
-    mqueue_info_get(queue_ptr, name, enqueued, available_storage, first_suspended, suspended_count, next_queue);
+    m_txe_queue_info_get(queue_ptr, name, enqueued, available_storage, first_suspended, suspended_count, next_queue);
 }

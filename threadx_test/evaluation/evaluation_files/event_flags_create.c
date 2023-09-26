@@ -13,5 +13,5 @@ int main()
     klee_make_symbolic_controllable(&name_ptr, sizeof(name_ptr), "name_ptr", true);
     UINT event_control_block_size;
     klee_make_symbolic_controllable(&event_control_block_size, sizeof(event_control_block_size), "event_control_block_size", true);
-    mevent_flags_create(group_ptr, name_ptr, event_control_block_size);
+    m_txe_event_flags_create(group_ptr, name_ptr, event_control_block_size);
 }

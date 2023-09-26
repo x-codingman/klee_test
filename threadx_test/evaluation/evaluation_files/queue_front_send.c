@@ -13,5 +13,5 @@ int main()
     klee_make_symbolic_controllable(&source_ptr, sizeof(source_ptr), "source_ptr", true);
     ULONG wait_option;
     klee_make_symbolic_controllable(&wait_option, sizeof(wait_option), "wait_option", true);
-    mqueue_front_send(queue_ptr, source_ptr, wait_option);
+    m_txe_queue_front_send(queue_ptr, source_ptr, wait_option);
 }

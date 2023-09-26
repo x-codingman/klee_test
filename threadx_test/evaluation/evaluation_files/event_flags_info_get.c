@@ -19,5 +19,5 @@ int main()
     klee_make_symbolic_controllable(&suspended_count, sizeof(suspended_count), "suspended_count", true);
     TX_EVENT_FLAGS_GROUP ** next_group;
     klee_make_symbolic_controllable(&next_group, sizeof(next_group), "next_group", true);
-    mevent_flags_info_get(group_ptr, name, current_flags, first_suspended, suspended_count, next_group);
+    m_txe_event_flags_info_get(group_ptr, name, current_flags, first_suspended, suspended_count, next_group);
 }

@@ -15,5 +15,5 @@ int main()
     klee_make_symbolic_controllable(&initial_count, sizeof(initial_count), "initial_count", true);
     UINT semaphore_control_block_size;
     klee_make_symbolic_controllable(&semaphore_control_block_size, sizeof(semaphore_control_block_size), "semaphore_control_block_size", true);
-    msemaphore_create(semaphore_ptr, name_ptr, initial_count, semaphore_control_block_size);
+    m_txe_semaphore_create(semaphore_ptr, name_ptr, initial_count, semaphore_control_block_size);
 }

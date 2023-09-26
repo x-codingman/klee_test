@@ -11,5 +11,5 @@ int main()
     klee_make_symbolic_controllable(&queue_ptr, sizeof(queue_ptr), "queue_ptr", true);
     VOID (*queue_send_notify)(TX_QUEUE *notify_queue_ptr);
     klee_make_symbolic_controllable(&queue_send_notify, sizeof(queue_send_notify), "queue_send_notify", true);
-    mqueue_send_notify(queue_ptr, queue_send_notify);
+    m_txe_queue_send_notify(queue_ptr, queue_send_notify);
 }

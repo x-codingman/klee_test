@@ -15,5 +15,5 @@ int main()
     klee_make_symbolic_controllable(&memory_size, sizeof(memory_size), "memory_size", true);
     ULONG wait_option;
     klee_make_symbolic_controllable(&wait_option, sizeof(wait_option), "wait_option", true);
-    mbyte_allocate(pool_ptr, memory_ptr, memory_size, wait_option);
+    m_txe_byte_allocate(pool_ptr, memory_ptr, memory_size, wait_option);
 }

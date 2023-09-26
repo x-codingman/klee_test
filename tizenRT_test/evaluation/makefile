@@ -34,10 +34,11 @@ INCLUDE_DIRS          += -I${RTOS_DIR}/os/fs/tmpfs
 INCLUDE_DIRS          += -I${RTOS_DIR}/os/arch/arm/src/common
 INCLUDE_DIRS          += -I${RTOS_DIR}/os/include/arch/chip
 INCLUDE_DIRS          += -I${RTOS_DIR}/os/arch/arm/src/armv7-m
+INCLUDE_DIRS          += -I/home/klee/tizenrt/os/board/rtl8730e/src/component/file_system/fatfs/r0.14b/include/ff.h
 
 SOURCE_FILES          := $(shell find ${OS_DIR} -type f -name '*.c')
 # SOURCE_FILES          += $(wildcard ${KERNEL_DIR}/../arch/arm/src/armv7-m/*.c)
-# SOURCE_FILES          += $(wildcard ${KERNEL_DIR}/../arch/arm/src/common/*.c)
+SOURCE_FILES          += $(wildcard ${KERNEL_DIR}/../arch/arm/src/common/*.c)
 # SOURCE_FILES          += $(wildcard ${KERNEL_DIR}/../arch/arm/src/chip/*.c)
 
 IGNORE_FILES  := ${KERNEL_DIR}/debug/mem_leak_checker.c
@@ -96,13 +97,13 @@ TEST_FINAL_BC_FILES         := $(TEST_SOURCE_FILES:%.c= $(BUILD_DIR)/test_files/
 
 
 
-CFLAGS                :=  -emit-llvm -c -g  -fno-asm
+CFLAGS                :=  -emit-llvm -c -w -g  -Wundef
 # CFLAGS                += --sysroot=/usr/lib/gcc/arm-none-eabi/6.3.1
 
 
 
 
-all: $(TEST_FINAL_BC_FILES) 
+all: $(TEST_FINAL_BC_FILES) $(NEW_SOURCE_BC_FILES)
 $(TEST_FINAL_BC_FILES):$(NEW_SOURCE_BC_FILES) 
 
 

@@ -865,8 +865,8 @@ void Executor::initializeGlobalObjects(ExecutionState &state) {
     //   os->write(0, ConstantExpr::create(5,64));
     // }
 
-    // add to allocate memory for global pointer
-    // version 2
+    // //add to allocate memory for global pointer
+    // //version 2
     // Type *ty = v.getType()->getElementType();
 
     // if (ty->isPointerTy() && v.getName().str() != "pxCurrentTCB") {
@@ -909,9 +909,11 @@ void Executor::initializeGlobalObjects(ExecutionState &state) {
     //   }
 
     //   os->write(0, newMo->getBaseExpr());
-    //   state.addressSpace.mo_controllable_info[newMo]=false;
+    //   state.addressSpace.mo_controllable_info[newMo].first=false;
+    //   state.addressSpace.mo_controllable_info[newMo].second = NULL;
     // }
-    // state.addressSpace.mo_controllable_info[mo]=false;
+    // state.addressSpace.mo_controllable_info[mo].first=false;
+    // state.addressSpace.mo_controllable_info[mo].second=NULL;
   }
 
   // initialise constant memory that is potentially used with external calls
@@ -4172,6 +4174,11 @@ void Executor::callExternalFunction(ExecutionState &state, KInstruction *target,
     terminateStateOnUserError(state, "external calls disallowed");
     return;
   }
+  llvm::StringRef funcName = callable->getName();
+  if(funcName.find("__asm__")!=funcName.npos){
+    klee_debug_message("DEBUG: Detect __asm__ external function!");
+    return;
+  }
 
   // normal external function handling path
   // allocate 512 bits for each argument (+return value) to support
@@ -4248,6 +4255,7 @@ void Executor::callExternalFunction(ExecutionState &state, KInstruction *target,
     std::string TmpStr;
     llvm::raw_string_ostream os(TmpStr);
     os << "calling external: " << callable->getName().str() << "(";
+    
     for (unsigned i = 0; i < arguments.size(); i++) {
       os << arguments[i];
       if (i != arguments.size() - 1)
@@ -4634,7 +4642,6 @@ void Executor::executeMemoryOperation(
   if (!isa<ConstantExpr>(address))
     address = ConstraintManager::simplifyExpr(state.constraints, address);
   if (isWrite && !isa<ConstantExpr>(value)){
-  
     value = ConstraintManager::simplifyExpr(state.constraints, value);
   }
     
@@ -4647,11 +4654,13 @@ void Executor::executeMemoryOperation(
       state.addressSpace.lazyResolve(state, solver, address, op, needBound);
   if (!success) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(address)) {
+      klee_debug_message("DEBUG: dump address value");
+      address.get()->dump();
       klee_debug_message("DEBUG: lazyResolve failed, found a constant address, "
                          "its value is: %lu",
                          CE->getZExtValue());
       
-      unitializedPointerDereferenceReport(target);
+      
     } else {
       klee_debug_message("DEBUG: lazyResolve failed, found a symbolic pointer");
     }
@@ -4875,102 +4884,125 @@ void Executor::executeMemoryOperation(
     }
   } else {
     ref<Expr> result = os->read(mo->getOffsetExpr(address), type);
+    klee_debug_message("DEBUG: dump the result of address");
     result.get()->dump();
-    if (target->inst->getType()->isPointerTy() &&
-        dyn_cast<ConcatExpr>(result)
+
+
+    
+    
+    if (target->inst->getType()->isPointerTy()
         && state.addressSpace.address_mo_info.count(result)==0) {
-      // It needs resolve here to determine whether the pointer represented
+
       
-      // the result has been allocated the pointer cannot be resolved, so
-      // allocate memory
-      ObjectPair resultOp;
-      bool resultNeedBound = false;
-      if (!state.addressSpace.lazyResolve(state, solver, result, resultOp,
-                                          resultNeedBound)) {
-        klee_debug_message("dump address and result");
-        address.get()->dump();
-        result.get()->dump();
-
-        llvm::Type *elementType =
-            target->inst->getType()->getPointerElementType();
-
-        // Pay attention here, the type may be an array
-        // However, we don't consider dealing with it
-        // It is supposed that the pointer points to either a function or avariable 
-        unsigned elementSize; 
-        if (elementType->isFunctionTy()){
-          // just allocate 8 bytes for a virtual function
-         klee_debug_message("DEBUG: found a function pointer here!!");
-          elementSize = 8;
-        }
-        else{
-          elementSize = kmodule->targetData->getTypeStoreSize(elementType);
-        }
-
-        ref<Expr> size = Expr::createPointer(elementSize);
-        size_t alignment = bytes;
-        MemoryObject *newMo=NULL;
-        if (isDesiredType(elementType)) {
-            klee_debug_message("DEBUG: alloc TCB in executeMemoryOperation!!"); 
-            size_t stackSize=0x1000;
-            newMo=lazyAllocTCBSymbolic(state,(size_t)elementSize,stackSize,false,alignment);
-        }
-
-        if(newMo==NULL)
-          newMo = lazyAlloc(state, size, !mo->isAGlobal(), target,
-          alignment);
-
-        // if (os->readOnly) {
-        //   terminateStateOnError(state, "memory error: object read only",
-        //                         StateTerminationType::ReadOnly);
-        // } else {
-        //   ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-        //   wos->write(mo->getOffsetExpr(address), newMo->getBaseExpr());
-        //   // result = newMo->getBaseExpr();
-        //   result = wos->read(mo->getOffsetExpr(address), type);
-        // }
-        //addConstraint(state, EqExpr::create(result, newMo->getBaseExpr()));
-        state.addressSpace.address_mo_info[result]=newMo;
-        //Initialize the mo if there is no record for whether it is controllable.
-        if(state.addressSpace.mo_controllable_info.count(mo)==0){
-          state.addressSpace.mo_controllable_info[mo].first=false;
-          state.addressSpace.mo_controllable_info[mo].second=NULL;
-        }
-        // Assign the controllable flag as same as its pointer.
-        bool controllable = state.addressSpace.mo_controllable_info[mo].first;
-        state.addressSpace.mo_controllable_info[newMo].first=controllable;
-        state.addressSpace.mo_controllable_info[newMo].second=state.addressSpace.getOriginalExprFromMo(const_cast<MemoryObject*>(mo));
-        // Record the controllable info of the pointer.
-        state.addressSpace.pointer_of_mo_controllable_info[newMo] = controllable;
-        if(state.addressSpace.mo_controllable_info[newMo].first==true)
-          state.addressSpace.mo_controllable_info[newMo].first = isControllableAddress(state,result);
-
-        klee_debug_message("mo address: %lu",mo->address);
-        klee_debug_message("newMo address: %lu",newMo->address);
-        if(state.addressSpace.mo_controllable_info[newMo].first){
-          klee_debug_message("alloc controllable mo!!!");
-        }else{
-          klee_debug_message("alloc uncontrollable mo!!!");
-        }
-
+        // It needs resolve here to determine whether the pointer represented
         
-        
-        klee_debug_message("DEBUG: The symbolic pointer has been allocated, alloc size: %lu,\
-        alloc address: %lu",elementSize,newMo->address);
-      }
-      // the pointer has been allocated
-      // check whether the memoryObject is newly allocated one
-      // It needs to make sure that the lazyResolve() will return the exact
-      // memoryObject if the pointer is allocated
-      else {
-        const MemoryObject *resultMo = resultOp.first;
-        if (!state.addressSpace.isSymbolicBaseAddress(
-                resultMo->getBaseExpr())) {
-          terminateStateOnError(
-              state, "resolve doesn't return the newly allocated memory",
-              StateTerminationType::Ptr);
+        // the result has been allocated the pointer cannot be resolved, so
+        // allocate memory
+        ObjectPair resultOp;
+        bool resultNeedBound = false;
+        if (!state.addressSpace.lazyResolve(state, solver, result, resultOp,
+                                            resultNeedBound)) {
+
+          llvm::Type *elementType =
+                target->inst->getType()->getPointerElementType();
+
+            // Pay attention here, the type may be an array
+            // However, we don't consider dealing with it
+            // It is supposed that the pointer points to either a function or avariable 
+            unsigned elementSize; 
+            if (elementType->isFunctionTy()){
+              // just allocate 8 bytes for a virtual function
+            klee_debug_message("DEBUG: found a function pointer here!!");
+            elementSize = 8;
+            }
+            else{
+              elementSize = kmodule->targetData->getTypeStoreSize(elementType);
+            }
+
+            ref<Expr> size = Expr::createPointer(elementSize);
+            size_t alignment = bytes;
+          
+          // We need to handle that the result is a constant value.
+          // Such as unintialized global values.
+          if(!dyn_cast<ConcatExpr>(result)){
+
+            unitializedPointerDereferenceReport(target);
+            MemoryObject *newMo = lazyAlloc(state, size, !mo->isAGlobal(), target,
+              alignment);
+            ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+            wos->write(mo->getOffsetExpr(address), newMo->getBaseExpr());
+            klee_debug_message("DEBUG: Detect a unintialzied constant pointer.");
+            klee_debug_message("DEBUG: Alloc a new memory object for it. Alloc size:%lu and address:%lu",elementSize,newMo->address);
+            result = newMo->getBaseExpr();
+          }else{
+            klee_debug_message("DEBUG: dump address and result");
+            address.get()->dump();
+            result.get()->dump();
+
+            
+            MemoryObject *newMo=NULL;
+            if (isDesiredType(elementType)) {
+                klee_debug_message("DEBUG: alloc TCB in executeMemoryOperation!!"); 
+                size_t stackSize=0x1000;
+                newMo=lazyAllocTCBSymbolic(state,(size_t)elementSize,stackSize,false,alignment);
+            }
+
+            if(newMo==NULL)
+              newMo = lazyAlloc(state, size, !mo->isAGlobal(), target,
+              alignment);
+
+            // if (os->readOnly) {
+            //   terminateStateOnError(state, "memory error: object read only",
+            //                         StateTerminationType::ReadOnly);
+            // } else {
+            //   ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+            //   wos->write(mo->getOffsetExpr(address), newMo->getBaseExpr());
+            //   // result = newMo->getBaseExpr();
+            //   result = wos->read(mo->getOffsetExpr(address), type);
+            // }
+            //addConstraint(state, EqExpr::create(result, newMo->getBaseExpr()));
+            state.addressSpace.address_mo_info[result]=newMo;
+            //Initialize the mo if there is no record for whether it is controllable.
+            if(state.addressSpace.mo_controllable_info.count(mo)==0){
+              state.addressSpace.mo_controllable_info[mo].first=false;
+              state.addressSpace.mo_controllable_info[mo].second=NULL;
+            }
+            // Assign the controllable flag as same as its pointer.
+            bool controllable = state.addressSpace.mo_controllable_info[mo].first;
+            state.addressSpace.mo_controllable_info[newMo].first=controllable;
+            state.addressSpace.mo_controllable_info[newMo].second=state.addressSpace.getOriginalExprFromMo(const_cast<MemoryObject*>(mo));
+            // Record the controllable info of the pointer.
+            state.addressSpace.pointer_of_mo_controllable_info[newMo] = controllable;
+            if(state.addressSpace.mo_controllable_info[newMo].first==true)
+              state.addressSpace.mo_controllable_info[newMo].first = isControllableAddress(state,result);
+
+            klee_debug_message("mo address: %lu",mo->address);
+            klee_debug_message("newMo address: %lu",newMo->address);
+            if(state.addressSpace.mo_controllable_info[newMo].first){
+              klee_debug_message("alloc controllable mo!!!");
+            }else{
+              klee_debug_message("alloc uncontrollable mo!!!");
+            }
+            klee_debug_message("DEBUG: The symbolic pointer has been allocated, alloc size: %lu,\
+            alloc address: %lu",elementSize,newMo->address);
+          }
+
+          
         }
-      }
+        // the pointer has been allocated
+        // check whether the memoryObject is newly allocated one
+        // It needs to make sure that the lazyResolve() will return the exact
+        // memoryObject if the pointer is allocated
+        else {
+          const MemoryObject *resultMo = resultOp.first;
+          if (!state.addressSpace.isSymbolicBaseAddress(
+                  resultMo->getBaseExpr())) {
+            // terminateStateOnError(
+            //     state, "resolve doesn't return the newly allocated memory",
+            //     StateTerminationType::Ptr);
+          }
+        }
+
     }
     bindLocal(target, state, result);
   }

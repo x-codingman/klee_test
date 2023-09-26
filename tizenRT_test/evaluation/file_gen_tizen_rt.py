@@ -39,9 +39,13 @@ def generate_c_file(func, defines, undefines):
     content.append('#include "klee_help.h"')
     content.append(f'#include <{includes}>')
     content.append('#include <klee/klee.h>')
+    content.append('#include "queue.h"')
+    content.append('extern volatile dq_queue_t g_readytorun;')
+    content.append('extern FAR struct tcb_s klee_tcb;')
     content.append('int main()')
     content.append('{')
-
+    
+    content.append('g_readytorun.head = (dq_entry_t*)&klee_tcb;')
     content.append('\n'.join([f"{t};" for t in args_with_type]))
     for i in range(len(args_with_type)):
         content.append(f'klee_make_symbolic_controllable(&arg{i}, sizeof(arg{i}), "arg{i}", true);')

@@ -444,6 +444,7 @@ unsigned readable_location_id = 0;
 bool isFirstAPI = true;
 uint64_t V2allocNameCount = 0;
 uint64_t allocLocationCount = 0;
+std::map<Instruction*, uint64_t> biCount;
 std::vector<std::string> dereference_locations_files;
 std::vector<json> dereference_locations_jsons;
 std::map<std::string, uint64_t> writable_record;
@@ -2278,6 +2279,14 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   }
   case Instruction::Br: {
     BranchInst *bi = cast<BranchInst>(i);
+    
+    if(biCount.count(i)<0){
+      biCount[i]=0;
+    }else if(biCount[i]>20){
+      break;
+    }else{
+      biCount[i]++;
+    }
     if (bi->isUnconditional()) {
       transferToBasicBlock(bi->getSuccessor(0), bi->getParent(), state);
     } else {

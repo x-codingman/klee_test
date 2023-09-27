@@ -1,4 +1,0 @@
-build/bin/klee --search=dfs /home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/queue_prioritize.linked.bc
-PID: 911239
-Using monotonic steady clock with 1/1000000000s resolution
-Started: 2023-09-24 13:09:20

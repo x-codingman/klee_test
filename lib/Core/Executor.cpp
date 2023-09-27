@@ -2283,6 +2283,19 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     BranchInst *bi = cast<BranchInst>(i);
     
     if (bi->isUnconditional()) {
+      klee_debug_message("DEBUG: enter unconditional branch");
+      if(biCount.count(i)==0){
+        biCount[i]=0;
+      }else if(biCount[i]>5){
+        klee_debug_message("DEBUG: Try to break the loop");
+        biCount[i]=0;
+        if(bi->getNumSuccessors()==1)
+          break;
+        transferToBasicBlock(bi->getSuccessor(1), bi->getParent(), state);
+        break;
+      }else{
+        biCount[i]++;
+      }
       transferToBasicBlock(bi->getSuccessor(0), bi->getParent(), state);
     } else {
       // FIXME: Find a way that we don't have this hidden dependency.

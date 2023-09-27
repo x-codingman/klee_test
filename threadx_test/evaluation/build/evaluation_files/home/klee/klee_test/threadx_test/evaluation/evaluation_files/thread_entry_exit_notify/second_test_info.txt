@@ -1,3 +1,0 @@
-KLEE: The mo can be overlapped with desired value in range of MPU region at file threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h: line 2124.
-KLEE: The mo can be overlapped with desired value in range of MPU region at file threadx/threadx/common/src/tx_thread_entry_exit_notify.c: line 102.
-KLEE: The mo can be overlapped with desired value in range of MPU region at file threadx/threadx/common/src/tx_thread_entry_exit_notify.c: line 102.

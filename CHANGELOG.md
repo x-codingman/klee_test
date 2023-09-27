@@ -71,3 +71,4 @@
 
 ## 
 - 增加处理constant的未初始化的global pointer
+- 增加处理asm的情况，对asm的执行返回符号值（如果需要返回的话）

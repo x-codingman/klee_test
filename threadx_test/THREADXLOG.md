@@ -26,6 +26,8 @@
 - 注释 tx_thread_entry_exit_notify.c里面的TX_DISABLE和TX_RESOTRE
 - 注释 tx_preemption_change.c里面的TX_DISABLE和TX_RESOTRE
 
+- 注释/home/klee/threadx/threadx/ports_module/cortex_m33/gnu/inc/tx_port.h 的674行constant地址赋值
+
 
 
 

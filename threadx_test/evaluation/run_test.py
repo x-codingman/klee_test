@@ -16,7 +16,7 @@ func_names = []
 command_clean_dir = [
         "rm", 
         "-rf", 
-        test_info_dir+shlex.quote("*")
+        test_info_dir+"*"
     ]
 print("Executing command: " + " ".join(command_clean_dir))
 subprocess.run(command_clean_dir, check=True)

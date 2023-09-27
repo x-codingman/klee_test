@@ -438,7 +438,6 @@ unsigned allocname = 1;
 std::string dereference_location_file;
 std::string writable_location_file;
 std::string  description_file; 
-unsigned dereference_location_id = 0;
 unsigned writable_location_id = 0;
 unsigned readable_location_id = 0;
 bool isFirstAPI = true;
@@ -4761,53 +4760,10 @@ void Executor::executeMemoryOperation(
                           desired_address_start,desired_address_end);
           }
         }
-        if (!address_controllable && value_test_result && address_test_result) {
-          std::string moName;
-          uint64_t offset;
-          unsigned width; 
-          switch(address_test.get()->getKind()){
-            case Expr::Concat:{
-              ConcatExpr* address_test_concat = dyn_cast<ConcatExpr>(address_test);
-              ReadExpr* left = dyn_cast<ReadExpr>(address_test_concat->getLeft());
-              moName = left->updates.root->name;
-              width = address_test_concat->getWidth();
-              offset = dyn_cast<ConstantExpr>(left->index)->getZExtValue() + 1 - width/8;
-              break;
-            }
-            case Expr::Read:{
-              ReadExpr* address_test_read = dyn_cast<ReadExpr>(address_test);
-              moName = address_test_read->updates.root->name;
-              offset = dyn_cast<ConstantExpr>(address_test_read->index)->getZExtValue();
-              width = 8;
-              break;
-            }
-            default:
-              assert("FIXME in executeMemoryOperation(): Unprocessed expression types");
-              break;
-          }
-          json j;
-          std::vector<json> constraintsJson;
-          j["dereference location"] = {{"name", moName}, {"offset", offset}, {"width", width}}; 
-          ConstraintSet cs;
-          ConstraintManager cm(cs);
-          for (auto &constraint:state.addressConstraintsForTargetApp){
-            if (cm.containMo(constraint, moName)){
-              json constraintJson;
-              exprToJson(constraint, constraintJson);
-              constraintsJson.push_back(constraintJson);
-            }
-          }
-          j["constraints"] = constraintsJson;
-          std::string filename = dereference_location_file+std::to_string(dereference_location_id)+".json";
-          std::ofstream file(filename);
-          klee_debug_message(filename.c_str());
-          if (file.is_open()){
-            file << std::setw(4) << j;
-          }else{
-            assert("Cannot open the file");
-          }
-          file.close();
-          dereference_location_id ++;
+        // to record any pointer which can point to MPU region
+        // if (!address_controllable && value_test_result && address_test_result) 
+        if (value_test_result && address_test_result){
+          recordDereferenceLocationsToJson(state, address_test);
         }
       //}else{
         // Check the value to see whether it can reach the range of dangrous region.
@@ -4830,22 +4786,29 @@ void Executor::executeMemoryOperation(
 
         // FIX ME HERE. We need to to consider whether the controllable flag needs to be added. 
         // if(value_test_result)
+        ObjectPair address_test_op;
+        success = state.addressSpace.lazyResolve(state, solver, address_test, address_test_op, needBound);
+        if (!success) {
+          klee_debug_message("DEBUG: lazyResolve failed for whether to record writable locations to json");
+        }
+        // only record the mo directly pointed by pointer parameter
+        if(success && !address_test_op.first->name.find("lazy_alloc") && !address_test_op.first->name.find("const"))
         {
-          ref<Expr> offset = mo->getOffsetExpr(address);
-          if(ConstantExpr* ce = dyn_cast<ConstantExpr>(offset)){
-            bool overlap;
-            for (auto &j: dereference_locations_jsons){
-              overlap = determineMoOverlap(state, mo, ce->getZExtValue(), j);
-              if (!overlap)
-                break;
-            }
-            if (overlap)
-              klee_second_test_info("The mo can be overlapped with desired value in range of MPU region at file %s: line %d.",
-                            target->info->file.c_str(),
-                            target->info->line);
-          }else{
-            assert("FIXME in executeMemoryOperation(): symbolic index is not considered");
-          }
+          // ref<Expr> offset = mo->getOffsetExpr(address);
+          // if(ConstantExpr* ce = dyn_cast<ConstantExpr>(offset)){
+          //   bool overlap;
+          //   for (auto &j: dereference_locations_jsons){
+          //     overlap = determineMoOverlap(state, mo, ce->getZExtValue(), j);
+          //     if (!overlap)
+          //       break;
+          //   }
+          //   if (overlap)
+          //     klee_second_test_info("The mo can be overlapped with desired value in range of MPU region at file %s: line %d.",
+          //                   target->info->file.c_str(),
+          //                   target->info->line);
+          // }else{
+          //   assert("FIXME in executeMemoryOperation(): symbolic index is not considered");
+          // }
           klee_debug_message("DEBUG: record writable location");
           address_test.get()->dump();
           recordWritableLocationsToJson(state, mo, address_offset, type);
@@ -6069,6 +6032,68 @@ void Executor::exprToJson(const ref<Expr> &expression, json &j){
     j["right"] = rightJson;
     break;
   }
+  case Expr::Select:{
+    SelectExpr* se = dyn_cast<SelectExpr>(expression);
+    ref<Expr> cond = se->cond;
+    json condJson;
+    exprToJson(cond, condJson);
+    ref<Expr> trueExpr = se->trueExpr;
+    json trueJson;
+    exprToJson(trueExpr, trueJson);
+    ref<Expr> falseExpr = se->falseExpr;
+    json falseJson;
+    exprToJson(falseExpr, falseJson);
+    j["type"] = Expr::Select;
+    j["type_name"] = "Select";
+    j["cond"] = condJson;
+    j["trueExpr"] = trueJson;
+    j["falseExpr"] = falseJson;
+    break;
+  }
+  case Expr::Extract:{
+    ExtractExpr* ee = dyn_cast<ExtractExpr>(expression);
+    ref<Expr> src = ee->expr;
+    json srcJson;
+    exprToJson(src, srcJson);
+    j["type"] = Expr::Extract;
+    j["type_name"] = "Extract";
+    j["src"] = srcJson;
+    j["offset"] = ee->offset;
+    j["width"] = ee->getWidth();
+    break;
+  }
+  case Expr::NotOptimized:{
+    NotOptimizedExpr* ne = dyn_cast<NotOptimizedExpr>(expression);
+    ref<Expr> src = ne->src;
+    json srcJson;
+    exprToJson(src, srcJson);
+    j["type"] = Expr::NotOptimized;
+    j["type_name"] = "NotOptimized";
+    j["src"] = srcJson;
+    break;
+  }
+  case Expr::SExt:{
+    SExtExpr* se = dyn_cast<SExtExpr>(expression);
+    ref<Expr> src = se->src;
+    json srcJson;
+    exprToJson(src, srcJson);
+    j["type"] = Expr::SExt;
+    j["type_name"] = "SExt";
+    j["src"] = srcJson;
+    j["width"] = se->getWidth();
+    break;
+  }
+  case Expr::ZExt:{
+    ZExtExpr* ze = dyn_cast<ZExtExpr>(expression);
+    ref<Expr> src = ze->src;
+    json srcJson;
+    exprToJson(src, srcJson);
+    j["type"] = Expr::ZExt;
+    j["type_name"] = "ZExt";
+    j["src"] = srcJson;
+    j["width"] = ze->getWidth();
+    break;
+  }
   default:
     assert("FIXME in exprToJson(): Unprocessed expression types");
     break;
@@ -6337,6 +6362,49 @@ ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, st
       expression = AShrExpr::create(leftExpr, rightExpr);
     break;
   }
+  case Expr::Select:{
+    json condJson = j["cond"];
+    ref<Expr> condExpr = jsonToExpr(state, mo, name, relativeOffset, condJson, isUnderflow, needMarked, needMatch, res);
+    json trueJson = j["trueExpr"];
+    ref<Expr> trueExpr = jsonToExpr(state, mo, name, relativeOffset, trueJson, isUnderflow, needMarked, needMatch, res);
+    json falseJson = j["falseExpr"];
+    ref<Expr> falseExpr = jsonToExpr(state, mo, name, relativeOffset, falseJson, isUnderflow, needMarked, needMatch, res);
+    if (condExpr && trueExpr && falseExpr)
+      expression = SelectExpr::create(condExpr, trueExpr, falseExpr);
+    break;
+  }
+  case Expr::Extract:{
+    json srcJson = j["src"];
+    ref<Expr> srcExpr = jsonToExpr(state, mo, name, relativeOffset, srcJson, isUnderflow, needMarked, needMatch, res);
+    unsigned offset = j["offset"];
+    unsigned width = j["width"];
+    if (srcExpr)
+      expression = ExtractExpr::create(srcExpr, offset, width);
+    break;
+  }
+  case Expr::NotOptimized:{
+    json srcJson = j["src"];
+    ref<Expr> srcExpr = jsonToExpr(state, mo, name, relativeOffset, srcJson, isUnderflow, needMarked, needMatch, res);
+    if (srcExpr)
+      expression = NotOptimizedExpr::create(srcExpr);
+    break;
+  }
+  case Expr::SExt:{
+    json srcJson = j["src"];
+    ref<Expr> srcExpr = jsonToExpr(state, mo, name, relativeOffset, srcJson, isUnderflow, needMarked, needMatch, res);
+    unsigned width = j["width"];
+    if (srcExpr)
+      expression = SExtExpr::create(srcExpr, width);
+    break;
+  }
+  case Expr::ZExt:{
+    json srcJson = j["src"];
+    ref<Expr> srcExpr = jsonToExpr(state, mo, name, relativeOffset, srcJson, isUnderflow, needMarked, needMatch, res);
+    unsigned width = j["width"];
+    if (srcExpr)
+      expression = ZExtExpr::create(srcExpr, width);
+    break;
+  }
   default:
     assert("FIXME in exprToJson(): Unprocessed expression types");
     break;
@@ -6370,25 +6438,88 @@ Expr::Kind Executor::getExprInfo(const ref<Expr>  &e, std::string &moName, uint6
           }
           return k;
 }
-bool Executor::recordWritableLocationsToJson(ExecutionState &state, const MemoryObject *mo, uint64_t address_offset, Expr::Width width){
-    std::string moName = mo->name;
-    // uint64_t offset;
-    // unsigned width; 
-    json j;
-    // getExprInfo(address,moName,offset,width);
-    std::string filename = description_file+"_"+std::to_string(state.id)+"_"+moName+".json";
-    std::ifstream inFile(filename);
-    if (inFile.is_open()) {
-      inFile >> j;
-      inFile.close();
-    } else {
-      assert("Cannot open the file");
+
+void Executor::recordDereferenceLocationsToJson(ExecutionState &state, ref<Expr> address){
+  std::string moName;
+  uint64_t offset;
+  unsigned width; 
+  switch(address.get()->getKind()){
+    case Expr::Concat:{
+      ConcatExpr* address_concat = dyn_cast<ConcatExpr>(address);
+      ReadExpr* left = dyn_cast<ReadExpr>(address_concat->getLeft());
+      moName = left->updates.root->name;
+      width = address_concat->getWidth();
+      if (ConstantExpr *index = dyn_cast<ConstantExpr>(left->index)){
+        offset = index->getZExtValue() + 1 - width/8;
+        break;
+      }else{
+        return;
+      }
     }
-    std::vector<json> constraintsJson;  
-          
+    case Expr::Read:{
+      ReadExpr* address_read = dyn_cast<ReadExpr>(address);
+      moName = address_read->updates.root->name;
+      width = 8;
+      if (ConstantExpr *index = dyn_cast<ConstantExpr>(address_read->index)){
+        offset = dyn_cast<ConstantExpr>(address_read->index)->getZExtValue();
+        break;
+      }else{
+        return;
+      }
+    }
+    default:
+      assert("FIXME in executeMemoryOperation(): Unprocessed expression types");
+      break;
+    }
+
+    json j;
+    std::vector<json> constraintsJson;
+    
     ConstraintSet cs;
     ConstraintManager cm(cs);
     for (auto &constraint:state.addressConstraintsForTargetApp){
+      if (cm.containMo(constraint, moName)){
+        json constraintJson;
+        exprToJson(constraint, constraintJson);
+        constraintsJson.push_back(constraintJson);
+      }
+    }
+
+    j["name"] = moName;
+    j["size"] = state.addressSpace.findMemoryObjectFromName(moName)->size;
+    j["dereference location"] = {{"name", moName}, {"offset", offset}, {"width", width}, {"constraints", constraintsJson}}; 
+
+    std::string filename = dereference_location_file+"_"+std::to_string(state.id)+"_"+moName+".json";
+    std::ofstream file(filename);
+    klee_debug_message(filename.c_str());
+    if (file.is_open()){
+      file << std::setw(4) << j;
+    }else{
+      assert("Cannot open the file");
+    }
+    file.close();
+}
+
+
+bool Executor::recordWritableLocationsToJson(ExecutionState &state, const MemoryObject *mo, uint64_t address_offset, Expr::Width width){
+  std::string moName = mo->name;
+  // uint64_t offset;
+  // unsigned width; 
+  json j;
+  // getExprInfo(address,moName,offset,width);
+  std::string filename = description_file+"_"+std::to_string(state.id)+"_"+moName+".json";
+  std::ifstream inFile(filename);
+  if (inFile.is_open()) {
+    inFile >> j;
+    inFile.close();
+  } else {
+    assert("Cannot open the file");
+  }
+  std::vector<json> constraintsJson;  
+          
+  ConstraintSet cs;
+  ConstraintManager cm(cs);
+  for (auto &constraint:state.addressConstraintsForTargetApp){
     if (cm.containMo(constraint, moName)){
       json constraintJson;
       exprToJson(constraint, constraintJson);
@@ -6397,11 +6528,11 @@ bool Executor::recordWritableLocationsToJson(ExecutionState &state, const Memory
   }
   if(writable_record.count(moName)==0){
     writable_record[moName] = 0;
-    j["name"] = moName;
-    j["size"] = mo->size;
   }
   uint64_t id = writable_record[moName];
-                    
+
+  j["name"] = moName;
+  j["size"] = mo->size;                
   j["writable location "+std::to_string(id)] = {{"offset_in_mo", address_offset}, {"width", width}, {"constraints", constraintsJson} }; 
           
   std::ofstream file(filename);
@@ -6422,7 +6553,7 @@ void Executor::recordReadableLocationToJson(ExecutionState &state, const MemoryO
   // unsigned width=0;
   std::vector<json> constraintsJson; 
   // Expr::Kind k = getExprInfo(value, moName, offset, width); 
-  std::string filename = description_file+"_"+moName+".json";
+  std::string filename = description_file+"_"+std::to_string(state.id)+"_"+moName+".json";
   std::ifstream inFile(filename);
   json j;
   if (inFile.is_open()) {

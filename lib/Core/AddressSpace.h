@@ -162,6 +162,9 @@ namespace klee {
 
     /// Lookup a binding from a MemoryObject.
     const ObjectState *findObject(const MemoryObject *mo) const;
+    // add
+    // find a mo from its name
+    const MemoryObject *findMemoryObjectFromName(const std::string name) const;
 
     /// \brief Obtain an ObjectState suitable for writing.
     ///

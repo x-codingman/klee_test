@@ -1,0 +1,599 @@
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:7
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333032
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:7
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333056
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:7
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333048
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:9
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:10
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:11
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:11
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:12
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:13
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:13
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:14
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:15
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:15
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:16
+KLEE: dump address and result
+KLEE: DEBUG: Lazy alloc name: lazy_alloc1
+KLEE: DEBUG: detect controllable address
+KLEE: mo address: 94153236333032
+KLEE: newMo address: 94153236376192
+KLEE: alloc controllable mo!!!
+KLEE: DEBUG: The symbolic pointer has been allocated, alloc size: 432,        alloc address: 94153236376192
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:16
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:16
+KLEE: dump address and result
+KLEE: DEBUG: Lazy alloc name: lazy_alloc2
+KLEE: DEBUG: detect controllable address
+KLEE: mo address: 94153236333048
+KLEE: newMo address: 94153236333232
+KLEE: alloc controllable mo!!!
+KLEE: DEBUG: The symbolic pointer has been allocated, alloc size: 8,        alloc address: 94153236333232
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: evaluation_files/thread_time_slice_change.c:16
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:71
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153229235296
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:71
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333296
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:71
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333376
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:71
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:71
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:71
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:71
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:71
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:71
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:71
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:74
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_lib/src/txm_thread_time_slice_change.c:77
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333280
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333248
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333408
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333352
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333480
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333496
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333512
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:97
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:100
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:100
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:101
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:105
+KLEE: dump address and result
+KLEE: DEBUG: Allocate global memory!!!alloc size: 432, states size: 1
+KLEE: DEBUG: Lazy alloc name: lazy_alloc3
+KLEE: mo address: 94153229238120
+KLEE: newMo address: 94153236376640
+KLEE: alloc uncontrollable mo!!!
+KLEE: DEBUG: The symbolic pointer has been allocated, alloc size: 432,        alloc address: 94153236376640
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:105
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:105
+KLEE: DEBUG: lazyResolve failed, found a symbolic pointer
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: dump address and result
+KLEE: DEBUG: Allocate global memory!!!alloc size: 1, states size: 1
+KLEE: DEBUG: Lazy alloc name: lazy_alloc4
+KLEE: mo address: 94153236376640
+KLEE: newMo address: 94153236333600
+KLEE: alloc uncontrollable mo!!!
+KLEE: DEBUG: The symbolic pointer has been allocated, alloc size: 1,        alloc address: 94153236333600
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:105
+KLEE: DEBUG: Allocate global memory!!!alloc size: 2312, states size: 1
+KLEE: DEBUG: Lazy alloc name: lazy_alloc5
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:105
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:108
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:108
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 1
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:108
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: add constraints in addressConstraintsForTargetApp
+KLEE: DEBUG: states size 1
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:114
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:114
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:687
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:687
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:687
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:687
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:687
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333024
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333696
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333728
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333760
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333768
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333784
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2636
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2639
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2641
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2641
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2641
+KLEE: DEBUG: lazyResolve failed, found a symbolic pointer
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2641
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2641
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 2
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2641
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 2
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2651
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2651
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2652
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2653
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2653
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2650
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333880
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236334016
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333712
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:80
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:84
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:84
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 3
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:84
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: add constraints in addressConstraintsForTargetApp
+KLEE: DEBUG: states size 3
+KLEE: DEBUG: states size 4
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:92
+KLEE: DEBUG: states size 4
+KLEE: DEBUG: states size 4
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:92
+KLEE: DEBUG: states size 4
+KLEE: DEBUG: states size 4
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:92
+KLEE: DEBUG: lazyResolve failed, found a symbolic pointer
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: DEBUG: states size 4
+KLEE: DEBUG: states size 4
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:92
+KLEE: DEBUG: states size 4
+KLEE: DEBUG: states size 4
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:92
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 4
+KLEE: DEBUG: states size 5
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:100
+KLEE: DEBUG: states size 5
+KLEE: DEBUG: states size 5
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:100
+KLEE: DEBUG: states size 5
+KLEE: DEBUG: states size 5
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:100
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: add constraints in addressConstraintsForTargetApp
+KLEE: DEBUG: states size 5
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:108
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:108
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:108
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:118
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:118
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:118
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:118
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:78
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333952
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:78
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333984
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:78
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236333896
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:78
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:78
+KLEE: DEBUG: Allocate 8 bytes!!!,mo address: 94153236334104
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:78
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:78
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:78
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:78
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:78
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:78
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:81
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:83
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:96
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:96
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:96
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:96
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:96
+KLEE: DEBUG: lazyResolve failed, found a symbolic pointer
+KLEE: DEBUG: Binding a symbolic pointer with address expression:
+KLEE: /home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/klee-out-2/description_lazy_alloc1.json
+KLEE: DEBUG: record writable location
+KLEE: /home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/klee-out-2/description_lazy_alloc2.json
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:99
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:99
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:99
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:99
+KLEE: DEBUG: record writable location
+KLEE: /home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/klee-out-2/description_lazy_alloc1.json
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:100
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:100
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:100
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:100
+KLEE: DEBUG: record writable location
+KLEE: /home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/klee-out-2/description_lazy_alloc1.json
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:103
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:103
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:106
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:106
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:106
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:106
+KLEE: DEBUG: forking state!!!
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/tx_thread_time_slice_change.c:117
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:118
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:77
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:122
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common/src/txe_thread_time_slice_change.c:122
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2650
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2650
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2655
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2655
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2655
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2656
+KLEE: DEBUG: states size 6
+KLEE: DEBUG: states size 6
+KLEE: Execute: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2656

@@ -1,0 +1,10 @@
+KLEE: Error: information leak vulnerabilityon file threadx/threadx/common/src/tx_queue_front_send.c: line 212. 
+KLEE: Error: information leak vulnerabilityon file threadx/threadx/common/src/tx_queue_front_send.c: line 216. 
+KLEE: Error: information leak vulnerabilityon file threadx/threadx/common/src/tx_queue_front_send.c: line 220. 
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_front_send.c: line 221. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_front_send.c: line 225. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_front_send.c: line 230. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: information leak vulnerabilityon file threadx/threadx/common/src/tx_queue_front_send.c: line 246. 
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_front_send.c: line 249. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_thread_system_resume.c: line 127. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: Uninitialized pointer dereferencing!! Found a unresolved constant addresson file threadx/threadx/ports_module/cortex_m33/gnu/inc/tx_port.h: line 674. 

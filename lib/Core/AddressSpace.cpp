@@ -45,6 +45,25 @@ const ObjectState *AddressSpace::findObject(const MemoryObject *mo) const {
   return res ? res->second.get() : nullptr;
 }
 
+const MemoryObject *AddressSpace::findMemoryObjectFromName(const std::string name) const {
+  MemoryObject* result= NULL;
+  
+  MemoryMap::iterator begin = objects.begin();
+  MemoryMap::iterator end = objects.end();
+  MemoryMap::iterator oi = end;
+
+  while(oi != begin){
+    --oi;
+    const MemoryObject *mo = oi->first;
+    if(mo->name == name){
+      result = const_cast<MemoryObject *>(mo);
+
+      break;
+    }
+  }
+  return result;
+}
+
 ObjectState *AddressSpace::getWriteable(const MemoryObject *mo,
                                         const ObjectState *os) {
   assert(!os->readOnly);

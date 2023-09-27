@@ -443,6 +443,7 @@ unsigned readable_location_id = 0;
 bool isFirstAPI = true;
 uint64_t V2allocNameCount = 0;
 uint64_t allocLocationCount = 0;
+uint64_t asmResultCount = 0;
 std::map<Instruction*, uint64_t> biCount;
 std::vector<std::string> dereference_locations_files;
 std::vector<json> dereference_locations_jsons;
@@ -2281,13 +2282,6 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   case Instruction::Br: {
     BranchInst *bi = cast<BranchInst>(i);
     
-    // if(biCount.count(i)<0){
-    //   biCount[i]=0;
-    // }else if(biCount[i]>20){
-    //   break;
-    // }else{
-    //   biCount[i]++;
-    // }
     if (bi->isUnconditional()) {
       transferToBasicBlock(bi->getSuccessor(0), bi->getParent(), state);
     } else {
@@ -4173,11 +4167,33 @@ void Executor::callExternalFunction(ExecutionState &state, KInstruction *target,
     terminateStateOnUserError(state, "external calls disallowed");
     return;
   }
-  llvm::StringRef funcName = callable->getName();
-  if(funcName.find("__asm__")!=funcName.npos){
+
+
+  // If we meet __asm__ function, we will step the function procedure and return a symbol as the function result. 
+    {
     klee_debug_message("DEBUG: Detect __asm__ external function!");
+  // We check if it need a return value
+    
+    Type *resultType = target->inst->getType();
+    if (resultType != Type::getVoidTy(kmodule->module->getContext())){
+      uint64_t size = kmodule->targetData->getTypeStoreSize(resultType);
+      Expr::Width width = getWidthForLLVMType(resultType);
+      unsigned bytes = Expr::getMinBytesForWidth(width);
+      size_t alignment = bytes;
+      const llvm::Value *allocSite = state.prevPC->inst;
+      MemoryObject *newMo = memory->allocate(size, 0, 1, allocSite, alignment);
+      std::string moName = "asm_result" + llvm::utostr(++asmResultCount);
+      executeMakeSymbolic(state, newMo, moName);
+      // After executeMakeSymbolic(), get the new objecstate
+      const ObjectState *nos = state.addressSpace.findObject(newMo);
+      ref<Expr> e = nos->read(0, width);
+      
+      e.get()->dump();
+      klee_debug_message("DEBUG: test!");
+      bindLocal(target, state, e);
+    }
     return;
-  }
+    }
 
   // normal external function handling path
   // allocate 512 bits for each argument (+return value) to support
@@ -4889,7 +4905,7 @@ void Executor::executeMemoryOperation(
           
           // We need to handle that the result is a constant value.
           // Such as unintialized global values.
-          if(!dyn_cast<ConcatExpr>(result)){
+          if(!dyn_cast<ConcatExpr>(result) && !elementType->isFunctionTy()){
 
             unitializedPointerDereferenceReport(target);
             MemoryObject *newMo = lazyAlloc(state, size, !mo->isAGlobal(), target,

@@ -1,0 +1,336 @@
+array _tx_thread_current_ptr[8] : w32 -> w8 = symbolic
+array lazy_alloc1[120] : w32 -> w8 = symbolic
+array lazy_alloc10[432] : w32 -> w8 = symbolic
+array lazy_alloc11[432] : w32 -> w8 = symbolic
+array lazy_alloc12[432] : w32 -> w8 = symbolic
+array lazy_alloc13[432] : w32 -> w8 = symbolic
+array lazy_alloc14[432] : w32 -> w8 = symbolic
+array lazy_alloc15[432] : w32 -> w8 = symbolic
+array lazy_alloc16[432] : w32 -> w8 = symbolic
+array lazy_alloc17[432] : w32 -> w8 = symbolic
+array lazy_alloc18[432] : w32 -> w8 = symbolic
+array lazy_alloc19[432] : w32 -> w8 = symbolic
+array lazy_alloc2[432] : w32 -> w8 = symbolic
+array lazy_alloc20[432] : w32 -> w8 = symbolic
+array lazy_alloc21[432] : w32 -> w8 = symbolic
+array lazy_alloc22[432] : w32 -> w8 = symbolic
+array lazy_alloc23[432] : w32 -> w8 = symbolic
+array lazy_alloc24[432] : w32 -> w8 = symbolic
+array lazy_alloc25[432] : w32 -> w8 = symbolic
+array lazy_alloc26[432] : w32 -> w8 = symbolic
+array lazy_alloc27[432] : w32 -> w8 = symbolic
+array lazy_alloc28[432] : w32 -> w8 = symbolic
+array lazy_alloc29[432] : w32 -> w8 = symbolic
+array lazy_alloc30[432] : w32 -> w8 = symbolic
+array lazy_alloc31[432] : w32 -> w8 = symbolic
+array lazy_alloc32[432] : w32 -> w8 = symbolic
+array lazy_alloc33[432] : w32 -> w8 = symbolic
+array lazy_alloc34[432] : w32 -> w8 = symbolic
+array lazy_alloc35[432] : w32 -> w8 = symbolic
+array lazy_alloc36[432] : w32 -> w8 = symbolic
+array lazy_alloc37[432] : w32 -> w8 = symbolic
+array lazy_alloc38[432] : w32 -> w8 = symbolic
+array lazy_alloc39[432] : w32 -> w8 = symbolic
+array lazy_alloc4[2312] : w32 -> w8 = symbolic
+array lazy_alloc40[432] : w32 -> w8 = symbolic
+array lazy_alloc41[432] : w32 -> w8 = symbolic
+array lazy_alloc42[432] : w32 -> w8 = symbolic
+array lazy_alloc43[432] : w32 -> w8 = symbolic
+array lazy_alloc44[432] : w32 -> w8 = symbolic
+array lazy_alloc45[432] : w32 -> w8 = symbolic
+array lazy_alloc46[432] : w32 -> w8 = symbolic
+array lazy_alloc47[432] : w32 -> w8 = symbolic
+array lazy_alloc48[432] : w32 -> w8 = symbolic
+array lazy_alloc49[432] : w32 -> w8 = symbolic
+array lazy_alloc5[432] : w32 -> w8 = symbolic
+array lazy_alloc50[432] : w32 -> w8 = symbolic
+array lazy_alloc51[432] : w32 -> w8 = symbolic
+array lazy_alloc52[432] : w32 -> w8 = symbolic
+array lazy_alloc53[432] : w32 -> w8 = symbolic
+array lazy_alloc54[432] : w32 -> w8 = symbolic
+array lazy_alloc55[432] : w32 -> w8 = symbolic
+array lazy_alloc56[432] : w32 -> w8 = symbolic
+array lazy_alloc57[432] : w32 -> w8 = symbolic
+array lazy_alloc6[432] : w32 -> w8 = symbolic
+array lazy_alloc7[432] : w32 -> w8 = symbolic
+array lazy_alloc8[432] : w32 -> w8 = symbolic
+array lazy_alloc9[432] : w32 -> w8 = symbolic
+array queue_ptr[8] : w32 -> w8 = symbolic
+(query [(Eq 94264757537408
+             (ReadLSB w64 0 _tx_thread_current_ptr))
+         (Eq 94264769942528
+             (ReadLSB w64 264 lazy_alloc2))
+         (Eq 0
+             (And w64 (ReadLSB w64 24 lazy_alloc4)
+                      2))
+         (Eq 94264745174784
+             (ReadLSB w64 0 queue_ptr))
+         (Eq 1364542805
+             (ReadLSB w64 0 lazy_alloc1))
+         (Eq false
+             (Ult N0:(ReadLSB w32 72 lazy_alloc1)
+                  2))
+         (Eq false (Eq 2 N0))
+         (Eq 94264757540096
+             (ReadLSB w64 64 lazy_alloc1))
+         (Eq 94264757540544
+             (ReadLSB w64 208 lazy_alloc5))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc6)
+                  N1:(ReadLSB w32 88 lazy_alloc5)))
+         (Eq 94264757541440
+             (ReadLSB w64 208 lazy_alloc6))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc7)
+                  N1))
+         (Eq 94264757549056
+             (ReadLSB w64 208 lazy_alloc7))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc8)
+                  N1))
+         (Eq 94264757806848
+             (ReadLSB w64 208 lazy_alloc8))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc9)
+                  N1))
+         (Eq 94264757811776
+             (ReadLSB w64 208 lazy_alloc9))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc10)
+                  N1))
+         (Eq 94264757817152
+             (ReadLSB w64 208 lazy_alloc10))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc11)
+                  N1))
+         (Eq 94264757897728
+             (ReadLSB w64 208 lazy_alloc11))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc12)
+                  N1))
+         (Eq 94264757887872
+             (ReadLSB w64 208 lazy_alloc12))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc13)
+                  N1))
+         (Eq 94264757902208
+             (ReadLSB w64 208 lazy_alloc13))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc14)
+                  N1))
+         (Eq 94264757986944
+             (ReadLSB w64 208 lazy_alloc14))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc15)
+                  N1))
+         (Eq 94264757820736
+             (ReadLSB w64 208 lazy_alloc15))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc16)
+                  N1))
+         (Eq 94264758048000
+             (ReadLSB w64 208 lazy_alloc16))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc17)
+                  N1))
+         (Eq 94264758051584
+             (ReadLSB w64 208 lazy_alloc17))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc18)
+                  N1))
+         (Eq 94264758128448
+             (ReadLSB w64 208 lazy_alloc18))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc19)
+                  N1))
+         (Eq 94264758201280
+             (ReadLSB w64 208 lazy_alloc19))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc20)
+                  N1))
+         (Eq 94264758125312
+             (ReadLSB w64 208 lazy_alloc20))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc21)
+                  N1))
+         (Eq 94264758275456
+             (ReadLSB w64 208 lazy_alloc21))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc22)
+                  N1))
+         (Eq 94264758321920
+             (ReadLSB w64 208 lazy_alloc22))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc23)
+                  N1))
+         (Eq 94264758270528
+             (ReadLSB w64 208 lazy_alloc23))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc24)
+                  N1))
+         (Eq 94264758382400
+             (ReadLSB w64 208 lazy_alloc24))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc25)
+                  N1))
+         (Eq 94264758379712
+             (ReadLSB w64 208 lazy_alloc25))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc26)
+                  N1))
+         (Eq 94264758517184
+             (ReadLSB w64 208 lazy_alloc26))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc27)
+                  N1))
+         (Eq 94264758576320
+             (ReadLSB w64 208 lazy_alloc27))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc28)
+                  N1))
+         (Eq 94264758576768
+             (ReadLSB w64 208 lazy_alloc28))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc29)
+                  N1))
+         (Eq 94264758655424
+             (ReadLSB w64 208 lazy_alloc29))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc30)
+                  N1))
+         (Eq 94264758695488
+             (ReadLSB w64 208 lazy_alloc30))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc31)
+                  N1))
+         (Eq 94264758725696
+             (ReadLSB w64 208 lazy_alloc31))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc32)
+                  N1))
+         (Eq 94264758749376
+             (ReadLSB w64 208 lazy_alloc32))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc33)
+                  N1))
+         (Eq 94264758830848
+             (ReadLSB w64 208 lazy_alloc33))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc34)
+                  N1))
+         (Eq 94264758880000
+             (ReadLSB w64 208 lazy_alloc34))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc35)
+                  N1))
+         (Eq 94264758997376
+             (ReadLSB w64 208 lazy_alloc35))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc36)
+                  N1))
+         (Eq 94264758460288
+             (ReadLSB w64 208 lazy_alloc36))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc37)
+                  N1))
+         (Eq 94264759120704
+             (ReadLSB w64 208 lazy_alloc37))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc38)
+                  N1))
+         (Eq 94264759068416
+             (ReadLSB w64 208 lazy_alloc38))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc39)
+                  N1))
+         (Eq 94264759126080
+             (ReadLSB w64 208 lazy_alloc39))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc40)
+                  N1))
+         (Eq 94264759258048
+             (ReadLSB w64 208 lazy_alloc40))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc41)
+                  N1))
+         (Eq 94264759343104
+             (ReadLSB w64 208 lazy_alloc41))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc42)
+                  N1))
+         (Eq 94264759447808
+             (ReadLSB w64 208 lazy_alloc42))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc43)
+                  N1))
+         (Eq 94264759463296
+             (ReadLSB w64 208 lazy_alloc43))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc44)
+                  N1))
+         (Eq 94264759543872
+             (ReadLSB w64 208 lazy_alloc44))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc45)
+                  N1))
+         (Eq 94264759547008
+             (ReadLSB w64 208 lazy_alloc45))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc46)
+                  N1))
+         (Eq 94264759668096
+             (ReadLSB w64 208 lazy_alloc46))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc47)
+                  N1))
+         (Eq 94264759715904
+             (ReadLSB w64 208 lazy_alloc47))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc48)
+                  N1))
+         (Eq 94264759720832
+             (ReadLSB w64 208 lazy_alloc48))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc49)
+                  N1))
+         (Eq 94264759426048
+             (ReadLSB w64 208 lazy_alloc49))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc50)
+                  N1))
+         (Eq 94264745895680
+             (ReadLSB w64 208 lazy_alloc50))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc51)
+                  N1))
+         (Eq 94264759864704
+             (ReadLSB w64 208 lazy_alloc51))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc52)
+                  N1))
+         (Eq 94264759859328
+             (ReadLSB w64 208 lazy_alloc52))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc53)
+                  N1))
+         (Eq 94264760055936
+             (ReadLSB w64 208 lazy_alloc53))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc54)
+                  N1))
+         (Eq 94264760097664
+             (ReadLSB w64 208 lazy_alloc54))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc55)
+                  N1))
+         (Eq 94264760148288
+             (ReadLSB w64 208 lazy_alloc55))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc56)
+                  N1))
+         (Eq 94264760289472
+             (ReadLSB w64 208 lazy_alloc56))
+         (Eq false
+             (Ult (ReadLSB w32 88 lazy_alloc57)
+                  N1))]
+        false)

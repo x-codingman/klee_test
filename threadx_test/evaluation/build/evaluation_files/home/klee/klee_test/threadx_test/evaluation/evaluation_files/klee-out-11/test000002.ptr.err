@@ -1,0 +1,13 @@
+Error: resolve failed
+File: threadx/threadx/ports_module/cortex_m33/gnu/inc/tx_port.h
+Line: 674
+assembly.ll line: 1356
+State: 14
+Stack: 
+	#000001356 in _tx_thread_system_resume(thread_ptr=symbolic) at threadx/threadx/ports_module/cortex_m33/gnu/inc/tx_port.h:674
+	#100031638 in _tx_queue_front_send(queue_ptr=symbolic, source_ptr=symbolic, wait_option=symbolic) at threadx/threadx/common/src/tx_queue_front_send.c:267
+	#200031350 in _txe_queue_front_send(queue_ptr=symbolic, source_ptr=symbolic, wait_option=symbolic) at threadx/threadx/common/src/txe_queue_front_send.c:154
+	#300012839 in _txm_module_manager_tx_queue_front_send_dispatch(module_instance=symbolic, param_0=symbolic, param_1=symbolic, param_2=symbolic) at threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:1362
+	#400007081 in _txm_module_manager_kernel_dispatch(kernel_request=37, param_0=symbolic, param_1=symbolic, param_2=symbolic) at threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:399
+	#500000235 in mqueue_front_send(queue_ptr=symbolic, source_ptr=symbolic, wait_option=symbolic) at threadx/threadx/common_modules/module_lib/src/txm_queue_front_send.c:77
+	#600000209 in main() at evaluation_files/queue_front_send.c:16

@@ -53,7 +53,7 @@ def generate_c_file(func_name, params):
     content += 'extern TX_THREAD *    _tx_thread_current_ptr;\n\n'
     content += 'int main()\n{\n'
     content += '    klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);\n'
-
+    content += '    _txm_module_kernel_call_dispatcher=_txm_module_manager_kernel_dispatch;\n'
     call_params = []
     for param_type, param_name in params:
         if '(' in param_type:  # If it's a function pointer

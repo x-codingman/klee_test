@@ -12,8 +12,7 @@
     #define ATTACK_CAPABILITY_REGION_END 0x8fffffff
 
     extern ALIGN_TYPE _txm_module_manager_kernel_dispatch(ULONG kernel_request, ALIGN_TYPE param_0, ALIGN_TYPE param_1, ALIGN_TYPE param_2);
-    ULONG (*_txm_module_kernel_call_dispatcher)(ULONG kernel_request, ULONG param_1, ULONG param_2, ULONG param3)=\
-    _txm_module_manager_kernel_dispatch;
+    ULONG (*_txm_module_kernel_call_dispatcher)(ULONG kernel_request, ULONG param_1, ULONG param_2, ULONG param3);
 
 // _txm_module_manager_object_pool_created = true;
 // _txm_module_manager_object_pool = 0;

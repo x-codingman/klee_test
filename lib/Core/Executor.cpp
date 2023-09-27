@@ -2281,13 +2281,13 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   case Instruction::Br: {
     BranchInst *bi = cast<BranchInst>(i);
     
-    if(biCount.count(i)<0){
-      biCount[i]=0;
-    }else if(biCount[i]>20){
-      break;
-    }else{
-      biCount[i]++;
-    }
+    // if(biCount.count(i)<0){
+    //   biCount[i]=0;
+    // }else if(biCount[i]>20){
+    //   break;
+    // }else{
+    //   biCount[i]++;
+    // }
     if (bi->isUnconditional()) {
       transferToBasicBlock(bi->getSuccessor(0), bi->getParent(), state);
     } else {
@@ -4810,7 +4810,9 @@ void Executor::executeMemoryOperation(
           klee_debug_message("DEBUG: lazyResolve failed for whether to record writable locations to json");
         }
         // only record the mo directly pointed by pointer parameter
-        if(success && !address_test_op.first->name.find("lazy_alloc") && !address_test_op.first->name.find("const"))
+        bool isParameterPointer1 = address_test_op.first->name.find("lazy_alloc");
+        bool isParameterPointer2 = address_test_op.first->name.find("const");
+        if(success && !isParameterPointer1 && !isParameterPointer2)
         {
           // ref<Expr> offset = mo->getOffsetExpr(address);
           // if(ConstantExpr* ce = dyn_cast<ConstantExpr>(offset)){

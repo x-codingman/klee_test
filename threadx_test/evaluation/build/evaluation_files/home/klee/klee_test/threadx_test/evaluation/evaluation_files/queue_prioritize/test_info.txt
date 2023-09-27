@@ -1,8 +1,0 @@
-KLEE: Error: information leak vulnerabilityon file threadx/threadx/common/src/tx_queue_prioritize.c: line 227. 
-KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_prioritize.c: line 228. desired value: 0, desired address 4026478592-4026478592
-KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_prioritize.c: line 232. desired value: 0, desired address 4026478592-4026478592
-KLEE: Error: information leak vulnerabilityon file threadx/threadx/common/src/tx_queue_prioritize.c: line 233. 
-KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_prioritize.c: line 234. desired value: 0, desired address 4026478592-4026478592
-KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_prioritize.c: line 235. desired value: 0, desired address 4026478592-4026478592
-KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_prioritize.c: line 238. desired value: 0, desired address 4026478592-4026478592
-KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_prioritize.c: line 122. desired value: 0, desired address 4026478592-4026478592

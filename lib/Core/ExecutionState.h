@@ -243,6 +243,8 @@ public:
   /// @brief Disables forking for this state. Set by user code
   bool forkDisabled = false;
 
+  std::map<llvm::Instruction*, std::uint64_t> biCount;
+
 public:
 #ifdef KLEE_UNITTEST
   // provide this function only in the context of unittests

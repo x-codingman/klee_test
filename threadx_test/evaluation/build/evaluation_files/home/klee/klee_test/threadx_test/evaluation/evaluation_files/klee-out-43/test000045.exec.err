@@ -1,0 +1,10 @@
+Error: external call with symbolic argument: _txm_module_manager_inside_data_check
+File: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h
+Line: 1300
+assembly.ll line: 12322
+State: 2
+Stack: 
+	#000012322 in _txm_module_manager_tx_queue_delete_dispatch(module_instance=symbolic, param_0=symbolic) at threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:1300
+	#100006839 in _txm_module_manager_kernel_dispatch(kernel_request=35, param_0=symbolic, param_1=0, param_2=0) at threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:383
+	#200000214 in mqueue_delete(queue_ptr=symbolic) at threadx/threadx/common_modules/module_lib/src/txm_queue_delete.c:74
+	#300000197 in main() at evaluation_files/queue_delete.c:12

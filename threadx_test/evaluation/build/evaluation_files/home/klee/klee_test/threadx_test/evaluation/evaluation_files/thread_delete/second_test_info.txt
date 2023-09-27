@@ -1,0 +1,6 @@
+KLEE: The mo can be overlapped with desired value in range of MPU region at file threadx/threadx/common/src/tx_thread_delete.c: line 128.
+KLEE: The mo can be overlapped with desired value in range of MPU region at file threadx/threadx/common/src/tx_thread_delete.c: line 146.
+KLEE: The mo can be overlapped with desired value in range of MPU region at file threadx/threadx/common/src/tx_thread_delete.c: line 147.
+KLEE: The mo can be overlapped with desired value in range of MPU region at file threadx/threadx/common/src/tx_thread_delete.c: line 128.
+KLEE: The mo can be overlapped with desired value in range of MPU region at file threadx/threadx/common/src/tx_thread_delete.c: line 146.
+KLEE: The mo can be overlapped with desired value in range of MPU region at file threadx/threadx/common/src/tx_thread_delete.c: line 147.

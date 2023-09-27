@@ -1,0 +1,38 @@
+{
+    "name": "queue_ptr",
+    "size": 8,
+    "dereference location": {
+        "name": "queue_ptr",
+        "offset": 0,
+        "width": 64,
+        "constraints": [
+            {
+                "type": 23,
+                "type_name": "Eq",
+                "left": {
+                    "type": 0,
+                    "type_name": "Constant",
+                    "width": 1,
+                    "value": 0
+                },
+                "right": {
+                    "type": 23,
+                    "type_name": "Eq",
+                    "left": {
+                        "type": 0,
+                        "type_name": "Constant",
+                        "width": 64,
+                        "value": 0
+                    },
+                    "right": {
+                        "type": 5,
+                        "type_name": "Concat",
+                        "name": "queue_ptr",
+                        "index": 0,
+                        "width": 64
+                    }
+                }
+            }
+        ]
+    }
+}

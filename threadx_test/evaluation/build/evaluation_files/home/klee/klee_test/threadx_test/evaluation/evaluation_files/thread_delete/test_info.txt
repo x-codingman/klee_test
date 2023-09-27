@@ -1,0 +1,3 @@
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_thread_delete.c: line 128. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: information leak vulnerabilityon file threadx/threadx/common/src/tx_thread_delete.c: line 146. 
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_thread_delete.c: line 147. desired value: 0, desired address 4026478592-4026478592

@@ -1,0 +1,12 @@
+Error: failed external call: _tx_thread_secure_stack_free
+File: threadx/threadx/common/src/tx_thread_delete.c
+Line: 113
+assembly.ll line: 25955
+State: 6
+Stack: 
+	#000025955 in _tx_thread_delete(thread_ptr=symbolic) at threadx/threadx/common/src/tx_thread_delete.c:113
+	#100025891 in _txe_thread_delete(thread_ptr=symbolic) at threadx/threadx/common/src/txe_thread_delete.c:106
+	#200015429 in _txm_module_manager_tx_thread_delete_dispatch(module_instance=symbolic, param_0=symbolic) at threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2072
+	#300007089 in _txm_module_manager_kernel_dispatch(kernel_request=56, param_0=symbolic, param_1=0, param_2=0) at threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:551
+	#400000214 in mthread_delete(thread_ptr=symbolic) at threadx/threadx/common_modules/module_lib/src/txm_thread_delete.c:74
+	#500000197 in main() at evaluation_files/thread_delete.c:12

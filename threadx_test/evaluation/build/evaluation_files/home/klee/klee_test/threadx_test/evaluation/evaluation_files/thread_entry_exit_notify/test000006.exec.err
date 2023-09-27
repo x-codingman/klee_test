@@ -1,0 +1,10 @@
+Error: external call with symbolic argument: _txm_module_manager_inside_data_check
+File: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h
+Line: 2100
+assembly.ll line: 15499
+State: 2
+Stack: 
+	#000015499 in _txm_module_manager_tx_thread_entry_exit_notify_dispatch(module_instance=symbolic, param_0=symbolic, param_1=symbolic) at threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2100
+	#100007108 in _txm_module_manager_kernel_dispatch(kernel_request=57, param_0=symbolic, param_1=symbolic, param_2=0) at threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:559
+	#200000225 in mthread_entry_exit_notify(thread_ptr=symbolic, thread_entry_exit_notify=symbolic) at threadx/threadx/common_modules/module_lib/src/txm_thread_entry_exit_notify.c:75
+	#300000203 in main() at evaluation_files/thread_entry_exit_notify.c:14

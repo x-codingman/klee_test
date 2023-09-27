@@ -60,8 +60,14 @@
 - 增加record writable和readable的信息，并将它们以memory object对象单独进行记录。
 - 增加threadx的测试文件自动生成。
 
+
 ## [interapi-analysis-implementation] - 2023-9-22
 - 修改bitcast中对mo重复命名和符号化
 - 增加inter-api检查
 - 增加mo中对writable位置（包括相关约束对应位置）的标记
 - 增加偏移量为负的位置匹配过程
+- 增加对符号函数指针的处理
+- 限制了branch的次数来规避loop
+
+## 
+- 增加处理constant的未初始化的global pointer

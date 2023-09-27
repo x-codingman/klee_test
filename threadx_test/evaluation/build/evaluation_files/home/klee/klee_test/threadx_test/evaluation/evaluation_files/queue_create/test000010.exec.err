@@ -1,0 +1,10 @@
+Error: external call with symbolic argument: _txm_module_manager_inside_data_check
+File: threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h
+Line: 1267
+assembly.ll line: 12322
+State: 2
+Stack: 
+	#000012322 in _txm_module_manager_tx_queue_create_dispatch(module_instance=symbolic, param_0=symbolic, param_1=symbolic, extra_parameters=94850333340704) at threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:1267
+	#100006967 in _txm_module_manager_kernel_dispatch(kernel_request=34, param_0=symbolic, param_1=symbolic, param_2=94850333340704) at threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:375
+	#200000280 in mqueue_create(queue_ptr=symbolic, name_ptr=symbolic, message_size=symbolic, queue_start=symbolic, queue_size=symbolic, queue_control_block_size=symbolic) at threadx/threadx/common_modules/module_lib/src/txm_queue_create.c:86
+	#300000227 in main() at evaluation_files/queue_create.c:22

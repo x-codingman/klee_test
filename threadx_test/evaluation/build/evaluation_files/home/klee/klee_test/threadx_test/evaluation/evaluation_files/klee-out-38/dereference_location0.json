@@ -1,0 +1,8 @@
+{
+    "dereference location": {
+        "name": "lazy_alloc6",
+        "offset": 232,
+        "width": 64
+    },
+    "constraints": []
+}

@@ -1,0 +1,8 @@
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_delete.c: line 104. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: information leak vulnerabilityon file threadx/threadx/common/src/tx_queue_delete.c: line 122. 
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_delete.c: line 123. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_delete.c: line 139. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_delete.c: line 141. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_delete.c: line 159. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_thread_system_resume.c: line 127. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: Uninitialized pointer dereferencing!! Found a unresolved constant addresson file threadx/threadx/common_modules/module_manager/src/txm_module_manager_object_deallocate.c: line 94. 

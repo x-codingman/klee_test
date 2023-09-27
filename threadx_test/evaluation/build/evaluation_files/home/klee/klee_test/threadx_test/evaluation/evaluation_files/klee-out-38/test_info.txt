@@ -1,0 +1,14 @@
+KLEE: Error: information leak vulnerabilityon file threadx/threadx/common/src/tx_queue_send.c: line 208. 
+KLEE: Error: information leak vulnerabilityon file threadx/threadx/common/src/tx_queue_send.c: line 212. 
+KLEE: Error: information leak vulnerabilityon file threadx/threadx/common/src/tx_queue_send.c: line 216. 
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_send.c: line 217. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_send.c: line 221. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_send.c: line 226. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: information leak vulnerabilityon file threadx/threadx/common/src/tx_queue_send.c: line 235. 
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_send.c: line 238. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_thread_system_resume.c: line 127. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_thread_system_resume.c: line 444. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_thread_system_resume.c: line 429. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_thread_system_resume.c: line 432. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_thread_system_resume.c: line 404. desired value: 0, desired address 4026478592-4026478592
+KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_thread_system_resume.c: line 175. desired value: 0, desired address 4026478592-4026478592

@@ -1,1 +1,0 @@
-KLEE: Error: write vulnerabilityon file threadx/threadx/common/src/tx_queue_delete.c: line 104. desired value: 0, desired address 4026478592-4026478592

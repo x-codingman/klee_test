@@ -1,4 +1,0 @@
-array _tx_thread_current_ptr[8] : w32 -> w8 = symbolic
-(query [(Eq 94264757537408
-             (ReadLSB w64 0 _tx_thread_current_ptr))]
-        false)

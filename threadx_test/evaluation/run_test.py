@@ -76,5 +76,5 @@ def run_command(func_name):
 
 print(func_names)
 
-with concurrent.futures.ProcessPoolExecutor() as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
     executor.map(run_command, func_names)

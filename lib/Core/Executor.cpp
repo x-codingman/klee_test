@@ -6621,14 +6621,17 @@ bool Executor::recordWritableLocationsToJson(ExecutionState &state, const Memory
       constraintsJson.push_back(constraintJson);
     }
   }
-  if(writable_record.count(moName)==0){
-    writable_record[moName] = 0;
-  }
-  uint64_t id = writable_record[moName];
 
+  uint64_t id = 0;
+  // Lookup the last id
+  std::string writableKey = "writeable location "+std::to_string(id);
+  while(j.count(writableKey)>0){
+    id++;
+    writableKey = "writeable location "+std::to_string(id);
+  }
   j["name"] = moName;
   j["size"] = mo->size;                
-  j["writable location "+std::to_string(id)] = {{"offset_in_mo", address_offset}, {"width", width}, {"constraints", constraintsJson} }; 
+  j[writableKey] = {{"offset_in_mo", address_offset}, {"width", width}, {"constraints", constraintsJson} }; 
           
   std::ofstream file(filename);
   klee_debug_message(filename.c_str());
@@ -6638,7 +6641,6 @@ bool Executor::recordWritableLocationsToJson(ExecutionState &state, const Memory
     assert("Cannot open the file");
   }
   file.close();
-  writable_record[moName] ++;
 }
 
 void Executor::recordReadableLocationToJson(ExecutionState &state, const MemoryObject *mo, uint64_t offset, Expr::Width width){

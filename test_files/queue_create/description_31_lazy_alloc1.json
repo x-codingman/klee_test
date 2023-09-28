@@ -1,0 +1,64 @@
+{
+    "name": "lazy_alloc1",
+    "size": 120,
+    "writable location 24": {
+        "offset_in_mo": 0,
+        "width": 8,
+        "constraints": []
+    },
+    "writable location 25": {
+        "offset_in_mo": 8,
+        "width": 64,
+        "constraints": []
+    },
+    "writable location 26": {
+        "offset_in_mo": 16,
+        "width": 32,
+        "constraints": []
+    },
+    "writable location 27": {
+        "offset_in_mo": 32,
+        "width": 64,
+        "constraints": []
+    },
+    "writable location 28": {
+        "offset_in_mo": 40,
+        "width": 64,
+        "constraints": []
+    },
+    "writable location 29": {
+        "offset_in_mo": 48,
+        "width": 64,
+        "constraints": []
+    },
+    "writable location 30": {
+        "offset_in_mo": 56,
+        "width": 64,
+        "constraints": []
+    },
+    "writable location 31": {
+        "offset_in_mo": 28,
+        "width": 32,
+        "constraints": []
+    },
+    "writable location 32": {
+        "offset_in_mo": 20,
+        "width": 32,
+        "constraints": []
+    },
+    "writable location 33": {
+        "offset_in_mo": 0,
+        "width": 64,
+        "constraints": []
+    },
+    "writable location 34": {
+        "offset_in_mo": 80,
+        "width": 64,
+        "constraints": []
+    },
+    "writable location 35": {
+        "offset_in_mo": 88,
+        "width": 64,
+        "constraints": []
+    }
+}

@@ -1,3 +1,4 @@
+### 代码注释部分
 - 注释 /home/klee/threadx/threadx/common/inc/tx_api.h 128行，“#include "tx_port.h"”, 不考虑架构相关代码。
 - 注释 /home/klee/threadx/threadx/common/src/tx_initialize_kernel_enter.c 117，121行，忽略架构相关代码。
 - 注释 /home/klee/threadx/threadx/common/src/tx_thread_create.c 225行，忽略thread的stack初始化，
@@ -36,7 +37,8 @@
 - 注释/home/klee/threadx/threadx/ports_module/cortex_m33/gnu/inc/tx_port.h 的674行constant地址赋值
 
 
-
+### 额外修改
+- 重写了参数检查部分，具体见modified_files文件夹。
 
 
 ### 编译问题

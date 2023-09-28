@@ -2301,11 +2301,23 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
       if(state.biCount.count(i)==0){
         state.biCount[i]=0;
       }else if(state.biCount[i]>10){
+        Solver::Validity res;
+        
+        bool success = solver->evaluate(state.constraints, cond, res,
+                                  state.queryMetaData);
+        solver->setTimeout(time::Span());
+        if (!success) {
+          state.pc = state.prevPC;
+          terminateStateOnSolverError(state, "Query timed out (Br).");
+          break;
+        }
         klee_debug_message("DEBUG: Try to break the loop");
         state.biCount[i]=0;
         biMap[i]=1;
         transferToBasicBlock(bi->getSuccessor(1), bi->getParent(), state);
-        addConstraint(state, Expr::createIsZero(cond));
+        // If we want to break the loop, we first need to check if we need to add the constraint
+        if(res == Solver::Unknown)
+          addConstraint(state, Expr::createIsZero(cond));
         break;
       }else{
         state.biCount[i]++;
@@ -4940,6 +4952,17 @@ void Executor::executeMemoryOperation(
             klee_debug_message("DEBUG: Detect a unintialzied constant pointer.");
             klee_debug_message("DEBUG: Alloc a new memory object for it. Alloc size:%lu and address:%lu",elementSize,newMo->address);
             result = newMo->getBaseExpr();
+            state.addressSpace.address_mo_info[result]=newMo;
+            //Initialize the mo if there is no record for whether it is controllable.
+            if(state.addressSpace.mo_controllable_info.count(mo)==0){
+              state.addressSpace.mo_controllable_info[mo].first=false;
+              state.addressSpace.mo_controllable_info[mo].second=NULL;
+            }
+            state.addressSpace.mo_controllable_info[newMo].first=false;
+            state.addressSpace.mo_controllable_info[newMo].second=NULL;
+            // Record the controllable info of the pointer.
+            state.addressSpace.pointer_of_mo_controllable_info[newMo] = false;
+
           }else{
             klee_debug_message("DEBUG: dump address and result");
             address.get()->dump();

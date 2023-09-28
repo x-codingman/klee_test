@@ -4959,7 +4959,8 @@ void Executor::executeMemoryOperation(
               state.addressSpace.mo_controllable_info[mo].second=NULL;
             }
             state.addressSpace.mo_controllable_info[newMo].first=false;
-            state.addressSpace.mo_controllable_info[newMo].second=NULL;
+            // We need to check if it is right!
+            state.addressSpace.mo_controllable_info[newMo].second=result;
             // Record the controllable info of the pointer.
             state.addressSpace.pointer_of_mo_controllable_info[newMo] = false;
 

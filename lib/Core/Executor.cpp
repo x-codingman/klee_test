@@ -6750,11 +6750,40 @@ void Executor::detectUnintializedPointersDereferencing(ExecutionState &state, re
 bool Executor::getMoControllableInfo(ExecutionState &state, const MemoryObject* mo){
       bool address_controllable = state.addressSpace.pointer_of_mo_controllable_info[mo];
       // Update the controllable info
+      // if (address_controllable && state.addressSpace.mo_controllable_info[mo].second){
+      //   address_controllable = isControllableAddress(state, state.addressSpace.mo_controllable_info[mo].second);
+      //   if (!address_controllable)
+      //     state.addressSpace.pointer_of_mo_controllable_info[mo] = address_controllable;
+      //     state.addressSpace.mo_controllable_info[mo].first = address_controllable;
+      // }
+      //
       if (address_controllable && state.addressSpace.mo_controllable_info[mo].second){
-        address_controllable = isControllableAddress(state, state.addressSpace.mo_controllable_info[mo].second);
-        if (!address_controllable)
-          state.addressSpace.pointer_of_mo_controllable_info[mo] = address_controllable;
-          state.addressSpace.mo_controllable_info[mo].first = address_controllable;
+        ObjectPair pointerOP;
+        bool needBound;
+        ref<Expr> pointerAddress = state.addressSpace.mo_controllable_info[mo].second;
+        bool success = state.addressSpace.lazyResolve(state, solver, pointerAddress, pointerOP, needBound);
+        if (!success){
+          klee_debug_message("DEBUG: lazyResolve failed to resolve the pointer mo");
+        }
+
+        // check whether pointer MO is still controllable 
+        const MemoryObject *pointerMo = pointerOP.first;
+        getMoControllableInfo(state, pointerMo);
+
+        // After updating the controllable info of pointer Mo, 
+        // check whether MO is still controllable
+        if (state.addressSpace.mo_controllable_info[pointerMo].first){
+          ref<Expr> moExpr = state.addressSpace.getOriginalExprFromMo(const_cast<MemoryObject*>(mo));
+          state.addressSpace.mo_controllable_info[mo].first = isControllableAddress(state, moExpr);
+        }else{
+          state.addressSpace.pointer_of_mo_controllable_info[mo] = false;
+          state.addressSpace.mo_controllable_info[mo].first = false;
+        }
+        address_controllable = state.addressSpace.pointer_of_mo_controllable_info[mo];
+      }
+      if (address_controllable && !state.addressSpace.mo_controllable_info[mo].second){
+        ref<Expr> moExpr = state.addressSpace.getOriginalExprFromMo(const_cast<MemoryObject*>(mo));
+        state.addressSpace.mo_controllable_info[mo].first = isControllableAddress(state, moExpr);
       }
       return address_controllable;
 }

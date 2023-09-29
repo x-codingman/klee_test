@@ -1,0 +1,4 @@
+/home/klee/klee_test/build/bin/klee --search=dfs --dereference-locations-input-dir=/home/klee/klee_test/threadx_test/evaluation/test_files/klee-out-0 /home/klee/klee_test/threadx_test/evaluation/test_files/test_api_1.bc
+PID: 946334
+Using monotonic steady clock with 1/1000000000s resolution
+Started: 2023-09-29 09:42:58

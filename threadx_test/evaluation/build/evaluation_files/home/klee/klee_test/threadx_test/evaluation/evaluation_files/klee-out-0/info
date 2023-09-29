@@ -1,0 +1,20 @@
+build/bin/klee --search=dfs /home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/queue_front_send.linked.bc
+PID: 146559
+Using monotonic steady clock with 1/1000000000s resolution
+Started: 2023-09-28 08:16:23
+BEGIN searcher description
+DFSSearcher
+END searcher description
+Finished: 2023-09-28 08:16:23
+Elapsed: 00:00:00
+KLEE: done: explored paths = 1
+KLEE: done: avg. constructs per query = 18
+KLEE: done: total queries = 3
+KLEE: done: valid queries = 0
+KLEE: done: invalid queries = 3
+KLEE: done: query cex = 3
+
+KLEE: done: total instructions = 35
+KLEE: done: completed paths = 0
+KLEE: done: partially completed paths = 1
+KLEE: done: generated tests = 1

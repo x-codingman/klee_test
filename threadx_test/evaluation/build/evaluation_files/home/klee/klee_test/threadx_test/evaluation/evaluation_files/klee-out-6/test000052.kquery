@@ -1,0 +1,30 @@
+array _tx_thread_current_ptr[8] : w32 -> w8 = symbolic
+array lazy_alloc1[432] : w32 -> w8 = symbolic
+array lazy_alloc4[432] : w32 -> w8 = symbolic
+array lazy_alloc6[2312] : w32 -> w8 = symbolic
+array new_priority[4] : w32 -> w8 = symbolic
+array old_priority[8] : w32 -> w8 = symbolic
+array thread_ptr[8] : w32 -> w8 = symbolic
+(query [(Eq 94447409491008
+             (ReadLSB w64 0 _tx_thread_current_ptr))
+         (Eq 94447409359360
+             (ReadLSB w64 264 lazy_alloc4))
+         (Eq 0
+             (And w64 (ReadLSB w64 24 lazy_alloc6)
+                      2))
+         (Eq 94447409490560
+             (ReadLSB w64 0 thread_ptr))
+         (Eq 1414025796
+             (ReadLSB w64 0 lazy_alloc1))
+         (Eq false
+             (Ule 32
+                  (Extract w32 0 (ZExt w64 (ReadLSB w32 0 new_priority)))))
+         (Eq 94447409392712
+             (ReadLSB w64 0 old_priority))
+         (Eq 0
+             (ReadLSB w32 92 lazy_alloc1))
+         (Eq 94447409490560
+             (ReadLSB w64 64 lazy_alloc1))
+         (Ule 64
+              (ZExt w64 (ReadLSB w32 88 lazy_alloc1)))]
+        false)

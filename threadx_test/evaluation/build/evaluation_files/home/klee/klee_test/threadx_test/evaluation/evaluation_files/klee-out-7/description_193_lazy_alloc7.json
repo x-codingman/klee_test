@@ -1,0 +1,70 @@
+{
+    "readable location 13": {
+        "name": "lazy_alloc7",
+        "offset_in_mo": 208,
+        "width": 64,
+        "constraints": [
+            {
+                "type": 23,
+                "type_name": "Eq",
+                "left": {
+                    "type": 0,
+                    "type_name": "Constant",
+                    "width": 1,
+                    "value": 0
+                },
+                "right": {
+                    "type": 23,
+                    "type_name": "Eq",
+                    "left": {
+                        "type": 0,
+                        "type_name": "Constant",
+                        "width": 32,
+                        "value": 1
+                    },
+                    "right": {
+                        "type": 5,
+                        "type_name": "Concat",
+                        "name": "lazy_alloc7",
+                        "index": 240,
+                        "width": 32
+                    }
+                }
+            }
+        ]
+    },
+    "readable location 14": {
+        "name": "lazy_alloc7",
+        "offset_in_mo": 216,
+        "width": 64,
+        "constraints": [
+            {
+                "type": 23,
+                "type_name": "Eq",
+                "left": {
+                    "type": 0,
+                    "type_name": "Constant",
+                    "width": 1,
+                    "value": 0
+                },
+                "right": {
+                    "type": 23,
+                    "type_name": "Eq",
+                    "left": {
+                        "type": 0,
+                        "type_name": "Constant",
+                        "width": 32,
+                        "value": 1
+                    },
+                    "right": {
+                        "type": 5,
+                        "type_name": "Concat",
+                        "name": "lazy_alloc7",
+                        "index": 240,
+                        "width": 32
+                    }
+                }
+            }
+        ]
+    }
+}

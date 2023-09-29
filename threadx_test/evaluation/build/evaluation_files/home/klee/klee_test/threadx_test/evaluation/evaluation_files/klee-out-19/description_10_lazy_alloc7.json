@@ -1,0 +1,20 @@
+{
+    "readable location 0": {
+        "name": "lazy_alloc7",
+        "offset_in_mo": 208,
+        "width": 64,
+        "constraints": []
+    },
+    "readable location 1": {
+        "name": "lazy_alloc7",
+        "offset_in_mo": 208,
+        "width": 64,
+        "constraints": []
+    },
+    "readable location 2": {
+        "name": "lazy_alloc7",
+        "offset_in_mo": 216,
+        "width": 64,
+        "constraints": []
+    }
+}

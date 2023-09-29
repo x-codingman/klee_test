@@ -1,0 +1,12 @@
+Error: invalid function pointer
+File: threadx/threadx/common/src/tx_queue_send.c
+Line: 272
+assembly.ll line: 876
+State: 14
+Stack: 
+	#000000876 in _tx_queue_send(queue_ptr=symbolic, source_ptr=symbolic, wait_option=symbolic) at threadx/threadx/common/src/tx_queue_send.c:272
+	#100029227 in _txe_queue_send(queue_ptr=symbolic, source_ptr=symbolic, wait_option=symbolic) at threadx/threadx/common/src/txe_queue_send.c:154
+	#200013666 in _txm_module_manager_tx_queue_send_dispatch(module_instance=symbolic, param_0=symbolic, param_1=symbolic, param_2=symbolic) at threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:1608
+	#300006932 in _txm_module_manager_kernel_dispatch(kernel_request=43, param_0=symbolic, param_1=symbolic, param_2=symbolic) at threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:447
+	#400000236 in m_txe_queue_send(queue_ptr=symbolic, source_ptr=symbolic, wait_option=symbolic) at threadx/threadx/common_modules/module_lib/src/txm_queue_send.c:77
+	#500000210 in main() at evaluation_files/queue_send.c:17

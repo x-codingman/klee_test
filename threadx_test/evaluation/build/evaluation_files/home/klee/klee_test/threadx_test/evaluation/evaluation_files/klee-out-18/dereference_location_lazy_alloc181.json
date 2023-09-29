@@ -1,0 +1,10 @@
+{
+    "name": "lazy_alloc181",
+    "size": 432,
+    "dereference location": {
+        "name": "lazy_alloc181",
+        "offset": 72,
+        "width": 64,
+        "point to": "lazy_alloc182"
+    }
+}

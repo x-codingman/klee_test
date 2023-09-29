@@ -1,0 +1,20 @@
+build/bin/klee --search=dfs /home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/thread_wait_abort.linked.bc
+PID: 296608
+Using monotonic steady clock with 1/1000000000s resolution
+Started: 2023-09-28 12:56:59
+BEGIN searcher description
+DFSSearcher
+END searcher description
+Finished: 2023-09-28 12:57:51
+Elapsed: 00:00:52
+KLEE: done: explored paths = 573
+KLEE: done: avg. constructs per query = 31
+KLEE: done: total queries = 342
+KLEE: done: valid queries = 6
+KLEE: done: invalid queries = 336
+KLEE: done: query cex = 342
+
+KLEE: done: total instructions = 34487
+KLEE: done: completed paths = 477
+KLEE: done: partially completed paths = 96
+KLEE: done: generated tests = 479

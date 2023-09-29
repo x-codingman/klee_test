@@ -2301,11 +2301,23 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
       if(state.biCount.count(i)==0){
         state.biCount[i]=0;
       }else if(state.biCount[i]>10){
+        Solver::Validity res;
+        
+        bool success = solver->evaluate(state.constraints, cond, res,
+                                  state.queryMetaData);
+        solver->setTimeout(time::Span());
+        if (!success) {
+          state.pc = state.prevPC;
+          terminateStateOnSolverError(state, "Query timed out (Br).");
+          break;
+        }
         klee_debug_message("DEBUG: Try to break the loop");
         state.biCount[i]=0;
         biMap[i]=1;
         transferToBasicBlock(bi->getSuccessor(1), bi->getParent(), state);
-        addConstraint(state, Expr::createIsZero(cond));
+        // If we want to break the loop, we first need to check if we need to add the constraint
+        if(res == Solver::Unknown)
+          addConstraint(state, Expr::createIsZero(cond));
         break;
       }else{
         state.biCount[i]++;
@@ -4933,13 +4945,26 @@ void Executor::executeMemoryOperation(
           if(!dyn_cast<ConcatExpr>(result) && !elementType->isFunctionTy()){
 
             unitializedPointerDereferenceReport(target);
+            
             MemoryObject *newMo = lazyAlloc(state, size, !mo->isAGlobal(), target,
               alignment);
             ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-            wos->write(mo->getOffsetExpr(address), newMo->getBaseExpr());
+            wos->write(0, newMo->getBaseExpr());
             klee_debug_message("DEBUG: Detect a unintialzied constant pointer.");
             klee_debug_message("DEBUG: Alloc a new memory object for it. Alloc size:%lu and address:%lu",elementSize,newMo->address);
             result = newMo->getBaseExpr();
+            state.addressSpace.address_mo_info[result]=newMo;
+            //Initialize the mo if there is no record for whether it is controllable.
+            if(state.addressSpace.mo_controllable_info.count(mo)==0){
+              state.addressSpace.mo_controllable_info[mo].first=false;
+              state.addressSpace.mo_controllable_info[mo].second=NULL;
+            }
+            state.addressSpace.mo_controllable_info[newMo].first=false;
+            // We need to check if it is right!
+            state.addressSpace.mo_controllable_info[newMo].second=result;
+            // Record the controllable info of the pointer.
+            state.addressSpace.pointer_of_mo_controllable_info[newMo] = false;
+
           }else{
             klee_debug_message("DEBUG: dump address and result");
             address.get()->dump();
@@ -6695,7 +6720,10 @@ void Executor::detectInformationLeak(ExecutionState &state, ref<Expr> &address, 
           std::pair<MemoryObject*, uint64_t> mo_pair = state.addressSpace.findMemoryObject(CE);
           address_test = state.addressSpace.getOriginalExprFromMo(mo_pair.first);
           address_offset = mo_pair.second;
-          assert(address && "FIX ME: find mo with no existing record");
+          assert(address_test && "FIX ME: find mo with no existing record");
+  }
+  if(ConstantExpr *CE = dyn_cast<ConstantExpr>(address_test)){
+    return;
   }
 
   // We assume there is an Informationleak vulnerability if the value is extracted from 
@@ -6712,6 +6740,7 @@ void Executor::detectInformationLeak(ExecutionState &state, ref<Expr> &address, 
     }else{
       // Check if the pointer is belong to an lazy initialized memory object
       // TODO
+      return;
     }
   }
 

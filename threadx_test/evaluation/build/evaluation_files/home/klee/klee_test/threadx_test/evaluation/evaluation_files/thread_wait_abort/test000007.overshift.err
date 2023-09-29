@@ -1,0 +1,14 @@
+Error: overshift error
+File: threadx/threadx/common/src/tx_thread_system_resume.c
+Line: 217
+assembly.ll line: 1118
+State: 10
+Stack: 
+	#000042119 in klee_overshift_check(bitWidth=64, shift=symbolic) at runtime/Intrinsic/klee_overshift_check.c:27
+	#100001118 in _tx_thread_system_resume(thread_ptr=94722905082496) at threadx/threadx/common/src/tx_thread_system_resume.c:217
+	#200023375 in _tx_thread_wait_abort(thread_ptr=symbolic) at threadx/threadx/common/src/tx_thread_wait_abort.c:212
+	#300023268 in _txe_thread_wait_abort(thread_ptr=symbolic) at threadx/threadx/common/src/txe_thread_wait_abort.c:97
+	#400017463 in _txm_module_manager_tx_thread_wait_abort_dispatch(module_instance=symbolic, param_0=symbolic) at threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2674
+	#500007169 in _txm_module_manager_kernel_dispatch(kernel_request=72, param_0=symbolic, param_1=0, param_2=0) at threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:695
+	#600000215 in m_txe_thread_wait_abort(thread_ptr=symbolic) at threadx/threadx/common_modules/module_lib/src/txm_thread_wait_abort.c:73
+	#700000198 in main() at evaluation_files/thread_wait_abort.c:13

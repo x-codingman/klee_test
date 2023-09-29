@@ -1,0 +1,53 @@
+array _tx_thread_current_ptr[8] : w32 -> w8 = symbolic
+array lazy_alloc1[120] : w32 -> w8 = symbolic
+array lazy_alloc4[432] : w32 -> w8 = symbolic
+array lazy_alloc6[2312] : w32 -> w8 = symbolic
+array lazy_alloc7[432] : w32 -> w8 = symbolic
+array queue_ptr[8] : w32 -> w8 = symbolic
+array source_ptr[8] : w32 -> w8 = symbolic
+array wait_option[8] : w32 -> w8 = symbolic
+(query [(Eq 93850810051200
+             (ReadLSB w64 0 _tx_thread_current_ptr))
+         (Eq 93850809903616
+             (ReadLSB w64 264 lazy_alloc4))
+         (Eq 0
+             (And w64 (ReadLSB w64 24 lazy_alloc6)
+                      2))
+         (Eq 93850791475968
+             (ReadLSB w64 0 queue_ptr))
+         (Eq 1364542805
+             (ReadLSB w64 0 lazy_alloc1))
+         (Eq 0
+             (ReadLSB w64 0 wait_option))
+         (Eq false
+             (Eq 0
+                 (ReadLSB w32 28 lazy_alloc1)))
+         (Eq false
+             (Eq 0
+                 N0:(ReadLSB w32 72 lazy_alloc1)))
+         (Eq false (Eq 1 N0))
+         (Eq 93850810054784
+             (ReadLSB w64 64 lazy_alloc1))
+         (Eq 93850810055232
+             (ReadLSB w64 208 lazy_alloc7))
+         (Eq 93850810055680
+             (ReadLSB w64 216 lazy_alloc7))
+         (Eq 93850809955008
+             (ReadLSB w64 0 source_ptr))
+         (Eq 93850809955168
+             (ReadLSB w64 232 lazy_alloc7))
+         (Eq false
+             (Ult 1
+                  (ReadLSB w32 16 lazy_alloc1)))
+         (Eq 0
+             (ReadLSB w64 184 lazy_alloc7))
+         (Eq 0
+             (ReadLSB w32 100 lazy_alloc7))
+         (Eq false
+             (Eq 0
+                 (ReadLSB w32 92 lazy_alloc7)))
+         (Eq 0
+             (ReadLSB w32 96 lazy_alloc7))
+         (Ule 64
+              (ZExt w64 (ReadLSB w32 88 lazy_alloc7)))]
+        false)

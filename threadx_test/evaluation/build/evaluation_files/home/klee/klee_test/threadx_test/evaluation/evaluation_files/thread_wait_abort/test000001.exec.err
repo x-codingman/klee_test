@@ -1,0 +1,12 @@
+Error: invalid function pointer
+File: threadx/threadx/common/src/tx_thread_wait_abort.c
+Line: 186
+assembly.ll line: 23360
+State: 8
+Stack: 
+	#000023360 in _tx_thread_wait_abort(thread_ptr=symbolic) at threadx/threadx/common/src/tx_thread_wait_abort.c:186
+	#100023268 in _txe_thread_wait_abort(thread_ptr=symbolic) at threadx/threadx/common/src/txe_thread_wait_abort.c:97
+	#200017463 in _txm_module_manager_tx_thread_wait_abort_dispatch(module_instance=symbolic, param_0=symbolic) at threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2674
+	#300007169 in _txm_module_manager_kernel_dispatch(kernel_request=72, param_0=symbolic, param_1=0, param_2=0) at threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:695
+	#400000215 in m_txe_thread_wait_abort(thread_ptr=symbolic) at threadx/threadx/common_modules/module_lib/src/txm_thread_wait_abort.c:73
+	#500000198 in main() at evaluation_files/thread_wait_abort.c:13

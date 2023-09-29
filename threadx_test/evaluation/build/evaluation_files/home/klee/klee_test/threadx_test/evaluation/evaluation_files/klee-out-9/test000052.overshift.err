@@ -1,0 +1,14 @@
+Error: overshift error
+File: threadx/threadx/common/src/tx_thread_system_suspend.c
+Line: 270
+assembly.ll line: 1707
+State: 9
+Stack: 
+	#000042141 in klee_overshift_check(bitWidth=64, shift=symbolic) at runtime/Intrinsic/klee_overshift_check.c:27
+	#100001707 in _tx_thread_system_suspend(thread_ptr=93926444345984) at threadx/threadx/common/src/tx_thread_system_suspend.c:270
+	#200024615 in _tx_thread_priority_change(thread_ptr=symbolic, new_priority=symbolic, old_priority=symbolic) at threadx/threadx/common/src/tx_thread_priority_change.c:204
+	#300024497 in _txe_thread_priority_change(thread_ptr=symbolic, new_priority=symbolic, old_priority=symbolic) at threadx/threadx/common/src/txe_thread_priority_change.c:127
+	#400016773 in _txm_module_manager_tx_thread_priority_change_dispatch(module_instance=symbolic, param_0=symbolic, param_1=symbolic, param_2=symbolic) at threadx/threadx/common_modules/module_manager/inc/txm_module_manager_dispatch.h:2431
+	#500007116 in _txm_module_manager_kernel_dispatch(kernel_request=63, param_0=symbolic, param_1=symbolic, param_2=symbolic) at threadx/threadx/common_modules/module_manager/src/txm_module_manager_kernel_dispatch.c:615
+	#600000237 in m_txe_thread_priority_change(thread_ptr=symbolic, new_priority=symbolic, old_priority=symbolic) at threadx/threadx/common_modules/module_lib/src/txm_thread_priority_change.c:78
+	#700000210 in main() at evaluation_files/thread_priority_change.c:17

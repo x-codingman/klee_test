@@ -1,0 +1,10 @@
+{
+    "name": "queue_ptr",
+    "size": 8,
+    "dereference location": {
+        "name": "queue_ptr",
+        "offset": 0,
+        "width": 64,
+        "point to": "lazy_alloc1"
+    }
+}

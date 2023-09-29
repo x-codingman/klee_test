@@ -72,3 +72,7 @@
 ## 
 - 增加处理constant的未初始化的global pointer
 - 增加处理asm的情况，对asm的执行返回符号值（如果需要返回的话）
+- 修改loop的break机制，增加state的branch指令记录和全局的branch的指令记录
+- 修改threadx的代码编译部分，增加对参数检查函数的重写
+- 修复writable记录id的不连续问题
+- 修复loop的break机制中，添加对约束的检查

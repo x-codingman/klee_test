@@ -4945,10 +4945,11 @@ void Executor::executeMemoryOperation(
           if(!dyn_cast<ConcatExpr>(result) && !elementType->isFunctionTy()){
 
             unitializedPointerDereferenceReport(target);
+            
             MemoryObject *newMo = lazyAlloc(state, size, !mo->isAGlobal(), target,
               alignment);
             ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-            wos->write(mo->getOffsetExpr(address), newMo->getBaseExpr());
+            wos->write(0, newMo->getBaseExpr());
             klee_debug_message("DEBUG: Detect a unintialzied constant pointer.");
             klee_debug_message("DEBUG: Alloc a new memory object for it. Alloc size:%lu and address:%lu",elementSize,newMo->address);
             result = newMo->getBaseExpr();
@@ -6719,7 +6720,10 @@ void Executor::detectInformationLeak(ExecutionState &state, ref<Expr> &address, 
           std::pair<MemoryObject*, uint64_t> mo_pair = state.addressSpace.findMemoryObject(CE);
           address_test = state.addressSpace.getOriginalExprFromMo(mo_pair.first);
           address_offset = mo_pair.second;
-          assert(address && "FIX ME: find mo with no existing record");
+          assert(address_test && "FIX ME: find mo with no existing record");
+  }
+  if(ConstantExpr *CE = dyn_cast<ConstantExpr>(address_test)){
+    return;
   }
 
   // We assume there is an Informationleak vulnerability if the value is extracted from 
@@ -6736,6 +6740,7 @@ void Executor::detectInformationLeak(ExecutionState &state, ref<Expr> &address, 
     }else{
       // Check if the pointer is belong to an lazy initialized memory object
       // TODO
+      return;
     }
   }
 

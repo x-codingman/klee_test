@@ -12,7 +12,7 @@
 #include "ExecutionState.h"
 #include "Memory.h"
 #include "TimingSolver.h"
-
+#include "klee/Support/ErrorHandling.h"
 #include "klee/Expr/Expr.h"
 #include "klee/Statistics/TimerStatIncrementer.h"
 
@@ -263,7 +263,8 @@ bool AddressSpace::lazyResolve(ExecutionState &state,
         }
         if (!mustBeTrue){
           needBound = true;
-          printf("Error: out of bound pointer\n");
+          //printf("Error: out of bound pointer\n");
+          klee_debug_message("ERROR: out of bound pointer");
         }
         result.first = op.first;
         result.second = op.second;

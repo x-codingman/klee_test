@@ -2314,10 +2314,15 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         klee_debug_message("DEBUG: Try to break the loop");
         state.biCount[i]=0;
         biMap[i]=1;
-        transferToBasicBlock(bi->getSuccessor(1), bi->getParent(), state);
-        // If we want to break the loop, we first need to check if we need to add the constraint
         if(res == Solver::Unknown)
           addConstraint(state, Expr::createIsZero(cond));
+        if(res == Solver::True){
+          transferToBasicBlock(bi->getSuccessor(0), bi->getParent(), state);
+          break;
+        }
+        if(res == Solver::False)
+          transferToBasicBlock(bi->getSuccessor(1), bi->getParent(), state);
+        // If we want to break the loop, we first need to check if we need to add the constraint
         break;
       }else{
         state.biCount[i]++;
@@ -4715,6 +4720,8 @@ void Executor::executeMemoryOperation(
     }
 
     std::vector<ref<Expr>> kids = getAddKids(address);
+    klee_debug_message("DEBUG: dump the address expression");
+    address.get()->dump();
     for(int i=0; i<kids.size();i++){
 
       if(state.addressSpace.address_mo_info.count(kids[i])>0){
@@ -4766,7 +4773,7 @@ void Executor::executeMemoryOperation(
     if (isWrite) {
         // Detect the information leak vulnerability.
   
-      detectInformationLeak(state, address, value, target);
+      //detectInformationLeak(state, address, value, target);
       // add memory address constraint
       // Test if the attacker can write a desired value on the memory.
       uint64_t desired_value = 0;
@@ -5736,8 +5743,6 @@ std::vector<ref<Expr>> Executor::getAddKids(ref<Expr> addExpr){
     if(e.get()->getKind() == Expr::Add) {
       ref<Expr> kid0=e.get()->getKid(0);
       ref<Expr> kid1=e.get()->getKid(1);
-      result.push_back(kid0);
-      result.push_back(kid1);
       q.push(kid0);
       q.push(kid1);
     }else{

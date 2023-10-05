@@ -4949,7 +4949,7 @@ void Executor::executeMemoryOperation(
             MemoryObject *newMo = lazyAlloc(state, size, !mo->isAGlobal(), target,
               alignment);
             ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-            wos->write(0, newMo->getBaseExpr());
+            wos->write(mo->getOffsetExpr(address), newMo->getBaseExpr());
             klee_debug_message("DEBUG: Detect a unintialzied constant pointer.");
             klee_debug_message("DEBUG: Alloc a new memory object for it. Alloc size:%lu and address:%lu",elementSize,newMo->address);
             result = newMo->getBaseExpr();

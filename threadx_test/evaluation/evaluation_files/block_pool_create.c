@@ -4,6 +4,8 @@
 
 extern TX_THREAD *    _tx_thread_current_ptr;
 
+UCHAR                   pool_start[9120];
+
 int main()
 {
     klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);
@@ -14,8 +16,6 @@ int main()
     klee_make_symbolic_controllable(&name_ptr, sizeof(name_ptr), "name_ptr", true);
     ULONG block_size;
     klee_make_symbolic_controllable(&block_size, sizeof(block_size), "block_size", true);
-    VOID * pool_start;
-    klee_make_symbolic_controllable(&pool_start, sizeof(pool_start), "pool_start", true);
     ULONG pool_size;
     klee_make_symbolic_controllable(&pool_size, sizeof(pool_size), "pool_size", true);
     UINT pool_control_block_size;

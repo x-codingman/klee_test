@@ -76,3 +76,7 @@
 - 修改threadx的代码编译部分，增加对参数检查函数的重写
 - 修复writable记录id的不连续问题
 - 修复loop的break机制中，添加对约束的检查
+
+## 2023-10-6
+- 对writable的记录进行修改，希望记录writable的value是可以控制的。
+- 优化对inter-analysis的大规模测试。增加jsonCollect.py用于整理所有记录的json文件。

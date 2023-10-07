@@ -3,6 +3,7 @@ import subprocess
 import concurrent.futures
 import os
 import json
+from multiprocessing import Pool
 
 
 output_dir = "/home/klee/threadx/symbolic_execution/output/"
@@ -54,7 +55,8 @@ def run_command(func_name):
             "--search=dfs", 
             "-debug-print-instructions=all:stderr",
             "--test-info-output-dir="+test_info_dir+shlex.quote(func_name),
-            "--output-dir="+output_dir+shlex.quote(func_name), 
+            "--output-dir="+output_dir+shlex.quote(func_name),
+            "--test-target-name="+shlex.quote(func_name),
             test_files_dir+shlex.quote(func_name)+".linked.bc"
         ]
         print("Executing command: " + " ".join(command))
@@ -76,5 +78,9 @@ def run_command(func_name):
 
 print(func_names)
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
-    executor.map(run_command, func_names)
+P = Pool(processes=1)
+P.map(run_command,func_names)
+
+
+# with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
+#     executor.map(run_command, func_names)

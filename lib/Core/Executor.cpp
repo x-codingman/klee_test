@@ -434,7 +434,8 @@ cl::opt<bool> DebugCheckForImpliedValues(
 // add to debug
 extern unsigned long uxTopaddress;
 unsigned allocname = 1;
-// add 
+// add
+std::string test_target_name;
 std::string dereference_location_file;
 std::string writable_location_file;
 std::string  description_file; 
@@ -1091,7 +1092,7 @@ Executor::StatePair Executor::fork(ExecutionState &current, ref<Expr> condition,
                                    bool isInternal, BranchType reason) {
   Solver::Validity res;
 
-  klee_debug_message("DEBUG: forking state!!!");
+  
   std::map<ExecutionState *, std::vector<SeedInfo>>::iterator it =
       seedMap.find(&current);
   bool isSeeding = it != seedMap.end();
@@ -1206,7 +1207,7 @@ Executor::StatePair Executor::fork(ExecutionState &current, ref<Expr> condition,
   } else {
     TimerStatIncrementer timer(stats::forkTime);
     ExecutionState *falseState, *trueState = &current;
-
+    klee_debug_message("DEBUG: forking state!!!");
     ++stats::forks;
 
     falseState = trueState->branch();
@@ -2283,6 +2284,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
     BranchInst *bi = cast<BranchInst>(i);
 
     if(biMap[i]==1){
+       klee_debug_message("DEBUG: terminate the State, try to break the loop");
       terminateState(state);
       break;
     }
@@ -2314,8 +2316,12 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         klee_debug_message("DEBUG: Try to break the loop");
         state.biCount[i]=0;
         biMap[i]=1;
-        if(res == Solver::Unknown)
+        if(res == Solver::Unknown){
           addConstraint(state, Expr::createIsZero(cond));
+          transferToBasicBlock(bi->getSuccessor(1), bi->getParent(), state);
+          break;
+        }
+          
         if(res == Solver::True){
           transferToBasicBlock(bi->getSuccessor(0), bi->getParent(), state);
           break;
@@ -4221,14 +4227,13 @@ void Executor::callExternalFunction(ExecutionState &state, KInstruction *target,
       size_t alignment = bytes;
       const llvm::Value *allocSite = state.prevPC->inst;
       MemoryObject *newMo = memory->allocate(size, 0, 1, allocSite, alignment);
-      std::string moName = "asm_result" + llvm::utostr(++asmResultCount);
+      std::string moName = "asm_return" + llvm::utostr(++asmResultCount);
       executeMakeSymbolic(state, newMo, moName);
       // After executeMakeSymbolic(), get the new objecstate
       const ObjectState *nos = state.addressSpace.findObject(newMo);
       ref<Expr> e = nos->read(0, width);
       
       e.get()->dump();
-      klee_debug_message("DEBUG: test!");
       bindLocal(target, state, e);
     }
     return;
@@ -4786,9 +4791,10 @@ void Executor::executeMemoryOperation(
       
       //Check if the MO of the address is controllable
       bool address_controllable = getMoControllableInfo(state, mo);
-      // if(address_controllable){
+      
       ref<Expr> address_test = address;
       uint64_t address_offset = 0;
+      // Extract the original expression
       if(ConstantExpr *CE = dyn_cast<ConstantExpr>(address)){
           std::pair<MemoryObject*, uint64_t> mo_pair = state.addressSpace.findMemoryObject(CE);
           address_test = state.addressSpace.getOriginalExprFromMo(mo_pair.first);
@@ -4859,8 +4865,8 @@ void Executor::executeMemoryOperation(
         }
         assert(success && "FIXME: Unhandled solver failure");
 
-        // FIX ME HERE. We need to to consider whether the controllable flag needs to be added. 
-        // if(value_test_result)
+        // FIX ME HERE. We need to to consider whether the controllable flag needs to be added for value_test_result. 
+        //if(value_test_result){
         std::string address_test_name;
         uint64_t offset;
         unsigned width;
@@ -4894,6 +4900,7 @@ void Executor::executeMemoryOperation(
                           target->info->file.c_str(), target->info->line);
         }    
       }
+      
     }
   }
 
@@ -6632,7 +6639,7 @@ bool Executor::recordWritableLocationsToJson(ExecutionState &state, const Memory
   // unsigned width; 
   json j;
   // getExprInfo(address,moName,offset,width);
-  std::string filename = description_file+"_"+std::to_string(state.id)+"_"+moName+".json";
+  std::string filename = description_file+"_"+test_target_name+"_"+std::to_string(state.id)+"_"+moName+".json";
   std::ifstream inFile(filename);
   if (inFile.is_open()) {
     inFile >> j;
@@ -6654,10 +6661,10 @@ bool Executor::recordWritableLocationsToJson(ExecutionState &state, const Memory
 
   uint64_t id = 0;
   // Lookup the last id
-  std::string writableKey = "writeable location "+std::to_string(id);
+  std::string writableKey = "writable location "+std::to_string(id);
   while(j.count(writableKey)>0){
     id++;
-    writableKey = "writeable location "+std::to_string(id);
+    writableKey = "writable location "+std::to_string(id);
   }
   j["name"] = moName;
   j["size"] = mo->size;                
@@ -6904,7 +6911,6 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
         if(isSatisfied){
           klee_debug_message("The offset is :%d", ptrOffset-mo1Size);
           return true;
-          break;
         }else{
           // because locationKey will not be changed after continue statement
           locationKey = "writable location " + llvm::utostr(++locationCount);
@@ -6960,7 +6966,6 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
 MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
   MemoryObjectV2 *moV2 = new MemoryObjectV2();
   //read json
-  klee_debug_message("hello");
   
   moV2->size = j["size"];
   // Initialize the locations
@@ -6989,7 +6994,7 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
   // FIX ME HERE. naming issues
   std::string name =
       "V2MoAlloc" + llvm::utostr(++V2allocNameCount); 
-  klee_debug_message("DEBUG: Memory object V2 alloc name: %s",name.c_str());
+  //klee_debug_message("DEBUG: Memory object V2 alloc name: %s",name.c_str());
   executeMakeSymbolic(state, mo, name);
   state.addressSpace.record.push_back(mo);
   // mo->name = name;
@@ -7212,6 +7217,8 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
   processTree = std::make_unique<PTree>(state);
 
   //run(*state);
+  interAnalysisMain(*state,"/home/klee/klee_test/threadx_test/evaluation/jsonFilesPath.txt");
+  return;
   std::string jsonFlieName1 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/queue_send_notify/description_lazy_alloc1.json";
   std::string jsonFlieName2 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/thread_time_slice_change/description_lazy_alloc1.json";
   bool result = interAnalysis(*state, jsonFlieName1, jsonFlieName2);
@@ -7229,40 +7236,33 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
     statsTracker->done();
 }
 
-void Executor::interAnalysisMain(ExecutionState &state, std::string directoryPath){
+void Executor::interAnalysisMain(ExecutionState &state, std::string filePath){
   std::vector<std::string> jsonFiles;
-  // First we traverse the json files
-    DIR* dir = opendir(directoryPath.c_str());
-    if (dir == nullptr) {
-        std::cerr << "Failed to open directory: " << directoryPath << std::endl;
-        return;
-    }
+  std::ifstream file(filePath);
+  std::string line;
+      if (!file.is_open()) {
+          std::cerr << "Unable to open file" << filePath.c_str() << std::endl;
+          return;
+      }
 
-    struct dirent* entry;
-    while ((entry = readdir(dir)) != nullptr) {
-        if (entry->d_type == DT_REG) { // If the entry is a regular file
-            std::string filePath = directoryPath + "/" + entry->d_name;
-            if (filePath.substr(filePath.find_last_of(".") + 1) == "json") {
-                    std::ifstream file(filePath);
-                    if (!file.is_open()) {
-                      klee_debug_message("DEBUG: fail to open the dir");
-                      return;
-                      }         
-                    jsonFiles.push_back(filePath);
-                    file.close();
-            }
+      while (std::getline(file, line)) {
+          klee_debug_message("DEBUG: read line :%s", line.c_str());
+          jsonFiles.push_back(line);
+      }
+    
+    // Second we try to process the inter analysis.
+    klee_debug_message("DEBUG: INTER ANALYSIS PROCESSING");
+    for(int i=0;i<jsonFiles.size();i++){
+      for(int j=0; j<jsonFiles.size();j++){
+        bool result = interAnalysis(state, jsonFiles[i], jsonFiles[j]);
+        if(result){
+          klee_debug_message("DEBUG: DETECT KERNEL MEMORY TAMPERING");
+          klee_debug_message("DEBUG: Json file 1: %s", jsonFiles[i].c_str());
+          klee_debug_message("DEBUG: Json file 2: %s", jsonFiles[j].c_str());
         }
+      }
     }
-  closedir(dir);
-  // Second we try to process the inter analysis.
-  for(int i=0;i<jsonFiles.size();i++){
-    for(int j=0; j<jsonFiles.size();j++){
-      interAnalysis(state, jsonFiles[i], jsonFiles[j]);
-    }
-  }
-  return;
-
-  
+    return;
 }
 
 
@@ -7282,15 +7282,17 @@ bool Executor::interAnalysis(ExecutionState &state, std::string jsonFlieName1, s
         klee_error("Cannot open the file: %s", jsonFlieName2.c_str());
   }
       file2.close();
-  std::string name = j2["name"];
-  std::cout << j2.dump(4) << std::endl; 
-  std::cout << name << std::endl; 
+
   MemoryObjectV2 *moV2 = jsonToMoV2(state, j2);
-  if(moV2 == NULL) return false;
+  if(moV2 == NULL){
+    klee_debug_message("DEBUG: Can not convert json to MoV2");
+    return false;
+  } 
   bool result = canPointToOtherMemoryObject(state,*moV2, j1);
-  klee_debug_message("at the end");
   return result;
 }
+
+
 
 
 

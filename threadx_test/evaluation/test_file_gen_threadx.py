@@ -50,7 +50,9 @@ def generate_c_file(func_name, params):
 #include "klee/klee.h"
 #include "klee_help.h"\n\n'''
 
+
     content += 'extern TX_THREAD *    _tx_thread_current_ptr;\n\n'
+    content += 'UCHAR                   pool_start[9120];\n\n'
     content += 'int main()\n{\n'
     content += '    klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);\n'
     content += '    _txm_module_kernel_call_dispatcher=_txm_module_manager_kernel_dispatch;\n'
@@ -61,8 +63,9 @@ def generate_c_file(func_name, params):
             call_params.append(param_name)
             content += f'    klee_make_symbolic_controllable(&{param_name}, sizeof({param_name}), "{param_name}", true);\n'
         else:
-            content += f"    {param_type} {param_name};\n"
-            content += f'    klee_make_symbolic_controllable(&{param_name}, sizeof({param_name}), "{param_name}", true);\n'
+            if(param_name != 'pool_start'):
+                content += f"    {param_type} {param_name};\n"
+                content += f'    klee_make_symbolic_controllable(&{param_name}, sizeof({param_name}), "{param_name}", true);\n'
             call_params.append(param_name)
 
     func_call = "{}({});".format("m_txe_"+func_name, ', '.join(call_params))

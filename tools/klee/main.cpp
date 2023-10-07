@@ -63,6 +63,7 @@ using namespace llvm;
 using namespace klee;
 
 // add
+extern std::string test_target_name;
 extern std::string dereference_location_file;
 extern std::string writable_location_file;
 extern std::string description_file;
@@ -159,6 +160,13 @@ namespace {
   cl::opt<std::string>
   DereferenceLOCInputDir("dereference-locations-input-dir",
                     cl::desc("Directory in which to read the dereference locations (default=path of the input file)"),
+                    cl::init(""),
+                    cl::cat(StartCat));
+  
+  //add
+  cl::opt<std::string>
+  TestTargetName("test-target-name",
+                    cl::desc("The name of the target tested (default="")"),
                     cl::init(""),
                     cl::cat(StartCat));
 
@@ -471,6 +479,10 @@ KleeHandler::KleeHandler(int argc, char **argv)
         klee_error("no dereference locations files exit in the directory: %s", dereference_locations_directory.c_str());
     }
   }
+
+
+  //initialize test_target_name
+  test_target_name = TestTargetName.c_str();
   // open warnings.txt
   std::string file_path = getOutputFilename("warnings.txt");
   if ((klee_warning_file = fopen(file_path.c_str(), "w")) == NULL)

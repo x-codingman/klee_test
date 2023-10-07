@@ -34,7 +34,7 @@
 - 注释 txe_queue_create.c里面的TX_DISABLE和TX_RESOTRE
 - 注释 txe_mutex_get.c里面的TX_DISABLE和TX_RESOTRE
 
-- 注释/home/klee/threadx/threadx/ports_module/cortex_m33/gnu/inc/tx_port.h 的674行constant地址赋值
+- 注释/home/klee/threadx/threadx/ports_module/cortex_m33/gnu/inc/tx_port.h 的674行constant地址赋值, 对constant值进行了寻址操作。
 
 
 ### 额外修改

@@ -12,10 +12,18 @@ int main(){
     test_api_1(test_ptr_1);
 }
 
+// void test_api_1(test_structure_1_t * test_ptr_1){
+//     if(test_ptr_1 > ATTACK_CAPABILITY_REGION_END || test_ptr_1 < ATTACK_CAPABILITY_REGION_START){
+//         if(test_ptr_1->a == 0){
+//             *(test_ptr_1->p)=0;
+//         }
+//     }
+// }
+
 void test_api_1(test_structure_1_t * test_ptr_1){
     if(test_ptr_1 > ATTACK_CAPABILITY_REGION_END || test_ptr_1 < ATTACK_CAPABILITY_REGION_START){
         if(test_ptr_1->a == 0){
-            *(test_ptr_1->p)=0;
+            test_ptr_1->p->p->a=0;
         }
     }
 }

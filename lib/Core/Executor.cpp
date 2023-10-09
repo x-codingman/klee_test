@@ -6912,6 +6912,7 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
                                                     state.queryMetaData);
         if(isSatisfied){
           klee_debug_message("The offset is :%d", ptrOffset-mo1Size);
+          klee_test_info("The offset is :%d", ptrOffset-mo1Size);
           return true;
         }else{
           // because locationKey will not be changed after continue statement
@@ -7219,7 +7220,7 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
   processTree = std::make_unique<PTree>(state);
 
   //run(*state);
-  interAnalysisMain(*state,"/home/klee/threadx/symbolic_execution/jsonFilesPath.txt");
+  interAnalysisMain(*state,"/home/klee/klee_test/threadx_test/evaluation/jsonFilesPath.txt");
   return;
   std::string jsonFlieName1 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/queue_send_notify/description_lazy_alloc1.json";
   std::string jsonFlieName2 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/thread_time_slice_change/description_lazy_alloc1.json";
@@ -7280,7 +7281,10 @@ void Executor::interAnalysisMain(ExecutionState &state, std::string filePath){
           klee_debug_message("DEBUG: DETECT KERNEL MEMORY TAMPERING");
           klee_debug_message("DEBUG: Json file 1: %s", jsonFilesInfo[i].jsonFile.c_str());
           klee_debug_message("DEBUG: Json file 2: %s", jsonFilesInfo[j].jsonFile.c_str());
-          klee_test_info(" DETECT KERNEL MEMORY TAMPERING: Json file1 :%s Json file2:%s\n",
+          klee_test_info(" DETECT KERNEL MEMORY TAMPERING: %s with %s\n \
+                          Json file1 :%s\n Json file2:%s\n",
+                          jsonFilesInfo[i].apiName.c_str(),
+                          jsonFilesInfo[j].apiName.c_str(),
                           jsonFilesInfo[i].jsonFile.c_str(),
                           jsonFilesInfo[j].jsonFile.c_str()
                           );

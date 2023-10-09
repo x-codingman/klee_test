@@ -4769,6 +4769,8 @@ void Executor::executeMemoryOperation(
   // to be bounded
   if (needBound) {
     addConstraint(state, mo->getBoundsCheckPointer(address));
+    terminateState(state);
+    return;
   }
 
 
@@ -4944,7 +4946,7 @@ void Executor::executeMemoryOperation(
             unsigned elementSize; 
             if (elementType->isFunctionTy()){
               // just allocate 8 bytes for a virtual function
-            klee_debug_message("DEBUG: found a function pointer here!!");
+            klee_debug_message("ERROR: found a function pointer here!!");
             elementSize = 8;
             }
             else{
@@ -4956,7 +4958,7 @@ void Executor::executeMemoryOperation(
           
           // We need to handle that the result is a constant value.
           // Such as unintialized global values.
-          if(!dyn_cast<ConcatExpr>(result) && !elementType->isFunctionTy()){
+          if(dyn_cast<ConstantExpr>(result) && !elementType->isFunctionTy()){
 
             unitializedPointerDereferenceReport(target);
             
@@ -7207,34 +7209,60 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
     statsTracker->done();
 }
 
+typedef struct TestItem{
+  std::string jsonFile;
+  std::string apiName;
+  std::string moName;
+}TestItem_t;
+
 void Executor::interAnalysisMain(ExecutionState &state, std::string filePath){
-  std::vector<std::string> jsonFiles;
+  std::vector<TestItem_t> jsonFilesInfo;
   std::ifstream file(filePath);
   std::string line;
       if (!file.is_open()) {
           std::cerr << "Unable to open file" << filePath.c_str() << std::endl;
           return;
       }
-
       while (std::getline(file, line)) {
           klee_debug_message("DEBUG: read line :%s", line.c_str());
-          jsonFiles.push_back(line);
+          TestItem_t temp;
+          temp.jsonFile=line;
+          std::getline(file, line);
+          klee_debug_message("DEBUG: read line :%s", line.c_str());
+          temp.apiName=line;
+          std::getline(file, line);
+          klee_debug_message("DEBUG: read line :%s", line.c_str());
+          temp.moName=line;
+          jsonFilesInfo.push_back(temp);
       }
-    
     // Second we try to process the inter analysis.
     klee_debug_message("DEBUG: INTER ANALYSIS PROCESSING");
-    for(int i=0;i<jsonFiles.size();i++){
-      for(int j=0; j<jsonFiles.size();j++){
-        bool result = interAnalysis(state, jsonFiles[i], jsonFiles[j]);
+    // Record the problemed APIs to filter the matching result.
+    std::set<std::string> isTested;
+    
+    for(int i=0;i<jsonFilesInfo.size();i++){
+      for(int j=0; j<jsonFilesInfo.size();j++){
+        std::string testTag = jsonFilesInfo[i].apiName+jsonFilesInfo[i].moName+jsonFilesInfo[j].apiName+jsonFilesInfo[j].moName;
+        if(isTested.count(testTag)!=0){
+          continue;
+        }
+        bool result = interAnalysis(state, jsonFilesInfo[i].jsonFile, jsonFilesInfo[j].jsonFile);
         if(result){
           klee_debug_message("DEBUG: DETECT KERNEL MEMORY TAMPERING");
-          klee_debug_message("DEBUG: Json file 1: %s", jsonFiles[i].c_str());
-          klee_debug_message("DEBUG: Json file 2: %s", jsonFiles[j].c_str());
+          klee_debug_message("DEBUG: Json file 1: %s", jsonFilesInfo[i].jsonFile.c_str());
+          klee_debug_message("DEBUG: Json file 2: %s", jsonFilesInfo[j].jsonFile.c_str());
+          klee_test_info(" DETECT KERNEL MEMORY TAMPERING: Json file1 :%s Json file2:%s\n",
+                          jsonFilesInfo[i].jsonFile.c_str(),
+                          jsonFilesInfo[j].jsonFile.c_str()
+                          );
+          isTested.insert(testTag);
         }
       }
     }
     return;
 }
+
+
 
 
 bool Executor::interAnalysis(ExecutionState &state, std::string jsonFlieName1, std::string jsonFlieName2){

@@ -80,3 +80,6 @@
 ## 2023-10-6
 - 对writable的记录进行修改，希望记录writable的value是可以控制的。
 - 优化对inter-analysis的大规模测试。增加jsonCollect.py用于整理所有记录的json文件。
+
+## 2023-10-9
+- 对于klee运行过程中产生的out of bound类型错误，暂时采取的措施是终止该state。

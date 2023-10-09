@@ -37,7 +37,7 @@
 
     
 
-    bool is_unprivilged_memory(uint32_t ptr, uint32_t size){
+    bool is_unprivilged_memory(void* ptr, uint32_t size){
         if (ATTACK_CAPABILITY_REGION_START < ptr && ATTACK_CAPABILITY_REGION_END > (ptr+size)){
             return true;
         }else{

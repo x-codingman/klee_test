@@ -29,3 +29,6 @@
 
 ## 10-7
 - 全局变量，有些全局变量的初始化会影响程序的执行路径。例如_tx_thread_system_state。
+## 10-8
+- tizenRT的测试结果中，state异常终止，导致test case losing的情况（未解决）
+- Inter-analysis中，mo的边界需要考虑，没有约束的写的位置会直接匹配成功？（（已解决）

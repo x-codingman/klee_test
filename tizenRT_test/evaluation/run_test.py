@@ -7,6 +7,7 @@ import json
 
 output_dir = "/home/klee/tizenrt/symbolic_execution/output/"
 test_files_dir = "/home/klee/tizenrt/symbolic_execution/build/test_files/test_files/"
+test_info_dir = "/home/klee/tizenrt/symbolic_execution/test-info-output/"
 
 
 func_names = []
@@ -42,8 +43,10 @@ def run_command(func_name):
         command = [
             "/home/klee/klee_test/build/bin/klee", 
             "--search=dfs", 
-            "-debug-print-instructions=all:stderr", 
-            "--output-dir="+output_dir+shlex.quote(func_name), 
+            "-debug-print-instructions=all:stderr",
+            "--test-info-output-dir="+test_info_dir+shlex.quote(func_name),
+            "--output-dir="+output_dir+shlex.quote(func_name),
+            "--test-target-name="+shlex.quote(func_name),
             test_files_dir+shlex.quote(func_name)+".test.bc"
         ]
         print("Executing command: " + " ".join(command))
@@ -65,5 +68,5 @@ def run_command(func_name):
 
 print(func_names)
 
-with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
+with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
     executor.map(run_command, func_names)

@@ -6242,7 +6242,7 @@ ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, st
     }else{
       uint64_t offset = j["index"];
       offset += relativeOffset;
-      if ((!isUnderflow || (offset < relativeOffset)) && (offset <= mo->size)){
+      if ((!isUnderflow || (offset < relativeOffset)) && (offset < mo->size)){
         const auto op = state.addressSpace.objects.lookup(mo);
         ObjectState *os = op->second.get();
         // now we assume only concrete offset will appear
@@ -6268,8 +6268,8 @@ ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, st
     }else{
       uint64_t offset = j["index"];
       offset += relativeOffset;
-      if ((!isUnderflow || (offset < relativeOffset)) && (offset <= mo->size)){
-        unsigned width = j["width"];
+      unsigned width = j["width"];
+      if ((!isUnderflow || (offset < relativeOffset)) && (offset + width/8 -1 < mo->size)){
         const auto op = state.addressSpace.objects.lookup(mo);
         ObjectState *os = op->second.get();
         expression = os->read(offset, width);
@@ -7217,7 +7217,7 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
   processTree = std::make_unique<PTree>(state);
 
   //run(*state);
-  interAnalysisMain(*state,"/home/klee/klee_test/threadx_test/evaluation/jsonFilesPath.txt");
+  interAnalysisMain(*state,"/home/klee/threadx/symbolic_execution/jsonFilesPath.txt");
   return;
   std::string jsonFlieName1 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/queue_send_notify/description_lazy_alloc1.json";
   std::string jsonFlieName2 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/thread_time_slice_change/description_lazy_alloc1.json";

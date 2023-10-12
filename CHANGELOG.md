@@ -83,3 +83,7 @@
 
 ## 2023-10-9
 - 对于klee运行过程中产生的out of bound类型错误，暂时采取的措施是终止该state。
+- 更正，此前对asm的处理为对所有external fucntion的处理，均返回符号值。
+
+## 2023-10-12
+- 更新bitcast机制，增加对已分配的constant pointer的类型转换支持，但是该类型转换可能存在问题，需要对可能的问题进行标注（TODO）

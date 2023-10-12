@@ -80,8 +80,8 @@ print(func_names)
 
 # P = Pool(processes=1)
 # P.map(run_command,func_names)
-for func_name in func_names:
-    run_command(func_name)
+# for func_name in func_names:
+#     run_command(func_name)
 
-# with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
-#     executor.map(run_command, func_names)
+with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+    executor.map(run_command, func_names)

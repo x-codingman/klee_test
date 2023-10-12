@@ -2995,20 +2995,23 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
   case Instruction::BitCast: {
     ref<Expr> result = eval(ki, 0, state).value;
 
+    
     // add to reallocate memory for symbolic pointer to conversion type
     // version 3
     Type * fromType =
     ki->inst->getOperand(0)->getType()->getPointerElementType(); unsigned
     fromSize = kmodule->targetData->getTypeStoreSize(fromType); Type *
     elementType = ki->inst->getType()->getPointerElementType(); unsigned
-    elementSize = kmodule->targetData->getTypeStoreSize(elementType); if
-    (isa<ConcatExpr>(result) &&
+    elementSize = kmodule->targetData->getTypeStoreSize(elementType);
+
+     if(
     ki->inst->getOperand(0)->getType()->isPointerTy() &&
     ki->inst->getType()->isPointerTy() && elementSize > fromSize){
       ObjectPair op;
       bool needBound = false;
       if (state.addressSpace.address_mo_info.count(result)!=0)
       {
+         klee_debug_message("DEBUG: BITCASTING CHANGE MO!!!"); 
         const MemoryObject *oldMo = state.addressSpace.address_mo_info[result];
         
         // Fix here, the old memory is not really deleted
@@ -3029,6 +3032,11 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         // executeMakeSymbolic(state, newMo, name);
         state.addressSpace.address_mo_info[result] = newMo;
         state.addressSpace.mo_controllable_info[newMo] = state.addressSpace.mo_controllable_info[oldMo];
+
+        // If result is a constant expr, we should update the result.
+        if(isa<ConstantExpr>(result)){
+          result = newMo->getBaseExpr();
+        }
       }
     }
 
@@ -4227,7 +4235,7 @@ void Executor::callExternalFunction(ExecutionState &state, KInstruction *target,
       size_t alignment = bytes;
       const llvm::Value *allocSite = state.prevPC->inst;
       MemoryObject *newMo = memory->allocate(size, 0, 1, allocSite, alignment);
-      std::string moName = "asm_return" + llvm::utostr(++asmResultCount);
+      std::string moName = "external_return" + llvm::utostr(++asmResultCount);
       executeMakeSymbolic(state, newMo, moName);
       // After executeMakeSymbolic(), get the new objecstate
       const ObjectState *nos = state.addressSpace.findObject(newMo);
@@ -4697,8 +4705,12 @@ void Executor::executeMemoryOperation(
   Expr::Width type = (isWrite ? value->getWidth()
                               : getWidthForLLVMType(target->inst->getType()));
   unsigned bytes = Expr::getMinBytesForWidth(type);
-
+  ref<Expr> originalAddress = address;
+  klee_debug_message("DEBUG: state id %d", state.id);
+  klee_debug_message("DEBUG: dump the address expression before symplifying");
+  address.get()->dump();
   if (!isa<ConstantExpr>(address))
+    
     address = ConstraintManager::simplifyExpr(state.constraints, address);
   if (isWrite && !isa<ConstantExpr>(value)){
     value = ConstraintManager::simplifyExpr(state.constraints, value);
@@ -4713,32 +4725,40 @@ void Executor::executeMemoryOperation(
       state.addressSpace.lazyResolve(state, solver, address, op, needBound);
   if (!success) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(address)) {
-      klee_debug_message("DEBUG: dump address value");
+      klee_debug_message("DEBUG: dump the address expression");
       address.get()->dump();
       klee_debug_message("DEBUG: lazyResolve failed, found a constant address, "
                          "its value is: %lu",
                          CE->getZExtValue());
-      
-      
+      //address = originalAddress;
     } else {
       klee_debug_message("DEBUG: lazyResolve failed, found a symbolic pointer");
     }
+    // if(state.addressSpace.address_mo_info.count(address)>0){
+    //       const MemoryObject *newMo = state.addressSpace.address_mo_info[address];
+    //       addConstraint(state, EqExpr::create(address,newMo->getBaseExpr()));
+    //       if (!isa<ConstantExpr>(address))
+    //         address = ConstraintManager::simplifyExpr(state.constraints, address);
+    //       klee_debug_message("DEBUG: Binding a symbolic pointer with address expression:");
+    //       address.get()->dump();
+    // }else{
+        std::vector<ref<Expr>> kids = getAddKids(address);
+        klee_debug_message("DEBUG: dump the address expression");
+        address.get()->dump();
+        for(int i=0; i<kids.size();i++){
 
-    std::vector<ref<Expr>> kids = getAddKids(address);
-    klee_debug_message("DEBUG: dump the address expression");
-    address.get()->dump();
-    for(int i=0; i<kids.size();i++){
+          if(state.addressSpace.address_mo_info.count(kids[i])>0){
+          const MemoryObject *newMo = state.addressSpace.address_mo_info[kids[i]];
+          addConstraint(state, EqExpr::create(kids[i],newMo->getBaseExpr()));
+          if (!isa<ConstantExpr>(address))
+            address = ConstraintManager::simplifyExpr(state.constraints, address);
+          klee_debug_message("DEBUG: Binding a symbolic pointer with address expression:");
+          kids[i].get()->dump();
+          }
 
-      if(state.addressSpace.address_mo_info.count(kids[i])>0){
-      const MemoryObject *newMo = state.addressSpace.address_mo_info[kids[i]];
-      addConstraint(state, EqExpr::create(kids[i],newMo->getBaseExpr()));
-      if (!isa<ConstantExpr>(address))
-        address = ConstraintManager::simplifyExpr(state.constraints, address);
-      klee_debug_message("DEBUG: Binding a symbolic pointer with address expression:");
-      kids[i].get()->dump();
-      }
+        }
+    //}
 
-    }
     // if(state.addressSpace.address_mo_info.count(kid)>0){
     //   const MemoryObject *newMo = state.addressSpace.address_mo_info[kid];
     //   addConstraint(state, EqExpr::create(kid,newMo->getBaseExpr()));
@@ -4911,6 +4931,7 @@ void Executor::executeMemoryOperation(
       terminateStateOnError(state, "memory error: object read only",
                             StateTerminationType::ReadOnly);
     } else {
+       klee_debug_message("DEBUG: dump the address and value");
       address.get()->dump();
       value.get()->dump();
       ObjectState *wos = state.addressSpace.getWriteable(mo, os);
@@ -4918,7 +4939,7 @@ void Executor::executeMemoryOperation(
     }
   } else {
     ref<Expr> result = os->read(mo->getOffsetExpr(address), type);
-    klee_debug_message("DEBUG: dump the result of address");
+    klee_debug_message("DEBUG: dump the resolve result of address");
     result.get()->dump();
 
 
@@ -4958,7 +4979,8 @@ void Executor::executeMemoryOperation(
           
           // We need to handle that the result is a constant value.
           // Such as unintialized global values.
-          if(dyn_cast<ConstantExpr>(result) && !elementType->isFunctionTy()){
+          // TODO: the non concat expr may including other situations
+          if(!dyn_cast<ConcatExpr>(result) && !elementType->isFunctionTy()){
 
             unitializedPointerDereferenceReport(target);
             
@@ -4982,7 +5004,7 @@ void Executor::executeMemoryOperation(
             state.addressSpace.pointer_of_mo_controllable_info[newMo] = false;
 
           }else{
-            klee_debug_message("DEBUG: dump address and result");
+            klee_debug_message("DEBUG: dump address and result in execution memory operation");
             address.get()->dump();
             result.get()->dump();
 
@@ -6532,6 +6554,11 @@ ref<Expr> Executor::jsonToExpr(ExecutionState &state, const MemoryObject* mo, st
     assert("FIXME in exprToJson(): Unprocessed expression types");
     break;
   }
+  if (!expression){
+    if(res) {
+      *res=false;
+    }
+  }
   return expression;
 }
 
@@ -6569,6 +6596,7 @@ Expr::Kind Executor::getExprInfo(const ref<Expr>  &e, std::string &moName, uint6
     assert("FIXME in executeMemoryOperation(): Unprocessed expression types");
     break;
   }
+
   return k;
 }
 
@@ -6891,7 +6919,7 @@ bool Executor::canPointToOtherMemoryObject(ExecutionState &state, MemoryObjectV2
         if (!constraint){
           klee_second_test_info("The constaint exceeds the mo range: %s.",
                                 constraintJson.dump(4).c_str());
-          // return false;
+          
         }
         if (matchRes == false)
           break;
@@ -7222,8 +7250,8 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
   //run(*state);
   interAnalysisMain(*state,"/home/klee/klee_test/threadx_test/evaluation/jsonFilesPath.txt");
   return;
-  std::string jsonFlieName1 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/queue_send_notify/description_lazy_alloc1.json";
-  std::string jsonFlieName2 = "/home/klee/klee_test/threadx_test/evaluation/build/evaluation_files/home/klee/klee_test/threadx_test/evaluation/evaluation_files/thread_time_slice_change/description_lazy_alloc1.json";
+  std::string jsonFlieName1 = "/home/klee/klee_test/inter-analysis-result/test-info-output/semaphore_ceiling_put/description_semaphore_ceiling_put_497_lazy_alloc1.json";
+  std::string jsonFlieName2 = "/home/klee/klee_test/inter-analysis-result/test-info-output/queue_create/description_queue_create_19_lazy_alloc1.json";
   bool result = interAnalysis(*state, jsonFlieName1, jsonFlieName2);
   klee_debug_message("DEBUG: Inter Analysis return %d",result);
   processTree = nullptr;
@@ -7272,15 +7300,16 @@ void Executor::interAnalysisMain(ExecutionState &state, std::string filePath){
     
     for(int i=0;i<jsonFilesInfo.size();i++){
       for(int j=0; j<jsonFilesInfo.size();j++){
-        std::string testTag = jsonFilesInfo[i].apiName+jsonFilesInfo[i].moName+jsonFilesInfo[j].apiName+jsonFilesInfo[j].moName;
+        std::string testTag = jsonFilesInfo[i].apiName+jsonFilesInfo[j].apiName;
         if(isTested.count(testTag)!=0){
           continue;
         }
         bool result = interAnalysis(state, jsonFilesInfo[i].jsonFile, jsonFilesInfo[j].jsonFile);
+        klee_debug_message("DEBUG: Json file 1: %s", jsonFilesInfo[i].jsonFile.c_str());
+        klee_debug_message("DEBUG: Json file 2: %s", jsonFilesInfo[j].jsonFile.c_str());
         if(result){
           klee_debug_message("DEBUG: DETECT KERNEL MEMORY TAMPERING");
-          klee_debug_message("DEBUG: Json file 1: %s", jsonFilesInfo[i].jsonFile.c_str());
-          klee_debug_message("DEBUG: Json file 2: %s", jsonFilesInfo[j].jsonFile.c_str());
+         
           klee_test_info(" DETECT KERNEL MEMORY TAMPERING: %s with %s\n \
                           Json file1 :%s\n Json file2:%s\n",
                           jsonFilesInfo[i].apiName.c_str(),

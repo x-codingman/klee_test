@@ -7,27 +7,28 @@ def file_content(file_path):
         return file.read()
 
 def list_json_files(directory):
-    json_files_by_size = {}
     json_files = []
 
     for root, dirs, files in os.walk(directory):
+        json_files_by_size = {}
+
         for file in files:
             if file.endswith(".json"):
                 json_filepath = os.path.join(root, file)
                 json_files.append(json_filepath)
                 json_file_size = os.path.getsize(json_filepath)
                 json_files_by_size.setdefault(json_file_size, []).append(json_filepath)
-
-    # filter duplicate files
-    for size, files in json_files_by_size.items():
-        if len(files) > 1:
-            checked = set()
-            for i in range(len(files)):
-                if files[i] not in checked:
-                    for j in range(i+1, len(files)):
-                        if file_content(files[i]) == file_content(files[j]):
-                            json_files.remove(files[j])
-                            checked.add(files[j])
+        
+        # filter duplicate files
+        for size, files in json_files_by_size.items():
+            if len(files) > 1:
+                checked = set()
+                for i in range(len(files)):
+                    if files[i] not in checked:
+                        for j in range(i+1, len(files)):
+                            if file_content(files[i]) == file_content(files[j]):
+                                json_files.remove(files[j])
+                                checked.add(files[j])
 
     return json_files
 

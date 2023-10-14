@@ -4889,6 +4889,7 @@ void Executor::executeMemoryOperation(
 
         // FIX ME HERE. We need to to consider whether the controllable flag needs to be added for value_test_result. 
         //if(value_test_result){
+        if(!dyn_cast<ConstantExpr>(value)){
         std::string address_test_name;
         uint64_t offset;
         unsigned width;
@@ -4920,7 +4921,8 @@ void Executor::executeMemoryOperation(
         }else{
           klee_test_info("Error: unresolved address test on file %s: line %d.", 
                           target->info->file.c_str(), target->info->line);
-        }    
+        }  
+        }  
       }
       
     }
@@ -7248,7 +7250,7 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
   processTree = std::make_unique<PTree>(state);
 
   //run(*state);
-  interAnalysisMain(*state,"/home/klee/klee_test/threadx_test/evaluation/jsonFilesPath.txt");
+  interAnalysisMain(*state,"/home/klee/threadx/symbolic_execution/jsonFilesPath.txt");
   return;
   std::string jsonFlieName1 = "/home/klee/klee_test/inter-analysis-result/test-info-output/semaphore_ceiling_put/description_semaphore_ceiling_put_497_lazy_alloc1.json";
   std::string jsonFlieName2 = "/home/klee/klee_test/inter-analysis-result/test-info-output/queue_create/description_queue_create_19_lazy_alloc1.json";
@@ -7300,11 +7302,15 @@ void Executor::interAnalysisMain(ExecutionState &state, std::string filePath){
     
     for(int i=0;i<jsonFilesInfo.size();i++){
       for(int j=0; j<jsonFilesInfo.size();j++){
-        std::string testTag = jsonFilesInfo[i].apiName+jsonFilesInfo[j].apiName;
-        if(isTested.count(testTag)!=0){
-          continue;
-        }
-        bool result = interAnalysis(state, jsonFilesInfo[i].jsonFile, jsonFilesInfo[j].jsonFile);
+        // std::string testTag = jsonFilesInfo[i].apiName+jsonFilesInfo[j].apiName;
+        // if(isTested.count(testTag)!=0){
+        //   continue;
+        // }
+        ExecutionState *analysisState = state.branch();
+        addedStates.push_back(analysisState);
+        processTree->attach(state.ptreeNode, analysisState, &state, BranchType::NONE);
+        bool result = interAnalysis(*analysisState, jsonFilesInfo[i].jsonFile, jsonFilesInfo[j].jsonFile);
+        terminateState(*analysisState);
         klee_debug_message("DEBUG: Json file 1: %s", jsonFilesInfo[i].jsonFile.c_str());
         klee_debug_message("DEBUG: Json file 2: %s", jsonFilesInfo[j].jsonFile.c_str());
         if(result){
@@ -7317,7 +7323,7 @@ void Executor::interAnalysisMain(ExecutionState &state, std::string filePath){
                           jsonFilesInfo[i].jsonFile.c_str(),
                           jsonFilesInfo[j].jsonFile.c_str()
                           );
-          isTested.insert(testTag);
+          // isTested.insert(testTag);
         }
       }
     }

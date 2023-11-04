@@ -45,7 +45,13 @@
         }
     }
 
- 
+    #define MAKE_SYMBOLIC_CONTROLLABLE(ptr) klee_make_symbolic_controllable(&ptr, sizeof(ptr),"",true);
+
+
+    #define MAKE_SYMBOLIC_UNCONTROLLABLE(ptr) klee_make_symbolic_controllable(&ptr, sizeof(ptr),"",false);
+
+
+
     
 
 

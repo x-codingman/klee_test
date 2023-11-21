@@ -4889,7 +4889,8 @@ void Executor::executeMemoryOperation(
 
         // FIX ME HERE. We need to to consider whether the controllable flag needs to be added for value_test_result. 
         //if(value_test_result){
-        if(!dyn_cast<ConstantExpr>(value)){
+        bool controllable = state.addressSpace.mo_controllable_info[mo].first;
+        if(address_controllable && !controllable && !dyn_cast<ConstantExpr>(value)){
         std::string address_test_name;
         uint64_t offset;
         unsigned width;
@@ -7302,10 +7303,10 @@ void Executor::interAnalysisMain(ExecutionState &state, std::string filePath){
     
     for(int i=0;i<jsonFilesInfo.size();i++){
       for(int j=0; j<jsonFilesInfo.size();j++){
-        // std::string testTag = jsonFilesInfo[i].apiName+jsonFilesInfo[j].apiName;
-        // if(isTested.count(testTag)!=0){
-        //   continue;
-        // }
+        std::string testTag = jsonFilesInfo[i].apiName+jsonFilesInfo[j].apiName;
+        if(isTested.count(testTag)!=0){
+          continue;
+        }
         ExecutionState *analysisState = state.branch();
         addedStates.push_back(analysisState);
         processTree->attach(state.ptreeNode, analysisState, &state, BranchType::NONE);
@@ -7323,7 +7324,7 @@ void Executor::interAnalysisMain(ExecutionState &state, std::string filePath){
                           jsonFilesInfo[i].jsonFile.c_str(),
                           jsonFilesInfo[j].jsonFile.c_str()
                           );
-          // isTested.insert(testTag);
+          isTested.insert(testTag);
         }
       }
     }

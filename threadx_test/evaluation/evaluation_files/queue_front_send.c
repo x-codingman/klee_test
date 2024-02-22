@@ -10,11 +10,11 @@ int main()
 {
     klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);
     _txm_module_kernel_call_dispatcher=_txm_module_manager_kernel_dispatch;
-    TX_QUEUE * queue_ptr;
-    klee_make_symbolic_controllable(&queue_ptr, sizeof(queue_ptr), "queue_ptr", true);
-    VOID * source_ptr;
-    klee_make_symbolic_controllable(&source_ptr, sizeof(source_ptr), "source_ptr", true);
-    ULONG wait_option;
-    klee_make_symbolic_controllable(&wait_option, sizeof(wait_option), "wait_option", true);
-    m_txe_queue_front_send(queue_ptr, source_ptr, wait_option);
+    TX_QUEUE * KLEE_TX_queue_ptr;
+    klee_make_symbolic_controllable(&KLEE_TX_queue_ptr, sizeof(KLEE_TX_queue_ptr), "KLEE_TX_queue_ptr", true);
+    VOID * KLEE_TX_source_ptr;
+    klee_make_symbolic_controllable(&KLEE_TX_source_ptr, sizeof(KLEE_TX_source_ptr), "KLEE_TX_source_ptr", true);
+    ULONG KLEE_TX_wait_option;
+    klee_make_symbolic_controllable(&KLEE_TX_wait_option, sizeof(KLEE_TX_wait_option), "KLEE_TX_wait_option", true);
+    m_txe_queue_front_send(KLEE_TX_queue_ptr, KLEE_TX_source_ptr, KLEE_TX_wait_option);
 }

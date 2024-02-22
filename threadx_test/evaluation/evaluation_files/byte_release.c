@@ -10,7 +10,7 @@ int main()
 {
     klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);
     _txm_module_kernel_call_dispatcher=_txm_module_manager_kernel_dispatch;
-    VOID * memory_ptr;
-    klee_make_symbolic_controllable(&memory_ptr, sizeof(memory_ptr), "memory_ptr", true);
-    m_txe_byte_release(memory_ptr);
+    VOID * KLEE_TX_memory_ptr;
+    klee_make_symbolic_controllable(&KLEE_TX_memory_ptr, sizeof(KLEE_TX_memory_ptr), "KLEE_TX_memory_ptr", true);
+    m_txe_byte_release(KLEE_TX_memory_ptr);
 }

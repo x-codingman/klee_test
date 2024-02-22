@@ -52,4 +52,11 @@ UINT _txe_thread_suspend(TX_THREAD *thread_ptr);
 UINT _txe_thread_terminate(TX_THREAD *thread_ptr);
 UINT _txe_thread_time_slice_change(TX_THREAD *thread_ptr, ULONG new_time_slice, ULONG *old_time_slice);
 UINT _txe_thread_wait_abort(TX_THREAD *thread_ptr);
+UINT _txe_timer_activate(TX_TIMER *timer_ptr);
 UINT _txe_timer_change(TX_TIMER *timer_ptr, ULONG initial_ticks, ULONG reschedule_ticks);
+UINT _txe_timer_create(TX_TIMER *timer_ptr, CHAR *name_ptr, VOID (*expiration_function)(ULONG input), ULONG expiration_input, ULONG initial_ticks, ULONG reschedule_ticks, UINT auto_activate, UINT timer_control_block_size);
+UINT _txe_timer_deactivate(TX_TIMER *timer_ptr);
+UINT _txe_timer_delete(TX_TIMER *timer_ptr);
+UINT _txe_timer_info_get(TX_TIMER *timer_ptr, CHAR **name, UINT *active, ULONG *remaining_ticks, ULONG *reschedule_ticks, TX_TIMER **next_timer);
+
+

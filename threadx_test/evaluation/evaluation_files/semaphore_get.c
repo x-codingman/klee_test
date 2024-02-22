@@ -10,9 +10,9 @@ int main()
 {
     klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);
     _txm_module_kernel_call_dispatcher=_txm_module_manager_kernel_dispatch;
-    TX_SEMAPHORE * semaphore_ptr;
-    klee_make_symbolic_controllable(&semaphore_ptr, sizeof(semaphore_ptr), "semaphore_ptr", true);
-    ULONG wait_option;
-    klee_make_symbolic_controllable(&wait_option, sizeof(wait_option), "wait_option", true);
-    m_txe_semaphore_get(semaphore_ptr, wait_option);
+    TX_SEMAPHORE * KLEE_TX_semaphore_ptr;
+    klee_make_symbolic_controllable(&KLEE_TX_semaphore_ptr, sizeof(KLEE_TX_semaphore_ptr), "KLEE_TX_semaphore_ptr", true);
+    ULONG KLEE_TX_wait_option;
+    klee_make_symbolic_controllable(&KLEE_TX_wait_option, sizeof(KLEE_TX_wait_option), "KLEE_TX_wait_option", true);
+    m_txe_semaphore_get(KLEE_TX_semaphore_ptr, KLEE_TX_wait_option);
 }

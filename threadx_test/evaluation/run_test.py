@@ -20,7 +20,11 @@ command_clean_dir = [
         test_info_dir+"*"
     ]
 print("Executing command: " + " ".join(command_clean_dir))
-subprocess.run(command_clean_dir, check=True)
+
+
+# Execute the command
+subprocess.run(" ".join(command_clean_dir), shell=True, check=True)
+
 
 for dirpath, dirnames, filenames in os.walk(test_files_dir):
     for file in filenames:

@@ -10,11 +10,11 @@ int main()
 {
     klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);
     _txm_module_kernel_call_dispatcher=_txm_module_manager_kernel_dispatch;
-    TX_EVENT_FLAGS_GROUP * group_ptr;
-    klee_make_symbolic_controllable(&group_ptr, sizeof(group_ptr), "group_ptr", true);
-    CHAR * name_ptr;
-    klee_make_symbolic_controllable(&name_ptr, sizeof(name_ptr), "name_ptr", true);
-    UINT event_control_block_size;
-    klee_make_symbolic_controllable(&event_control_block_size, sizeof(event_control_block_size), "event_control_block_size", true);
-    m_txe_event_flags_create(group_ptr, name_ptr, event_control_block_size);
+    TX_EVENT_FLAGS_GROUP * KLEE_TX_group_ptr;
+    klee_make_symbolic_controllable(&KLEE_TX_group_ptr, sizeof(KLEE_TX_group_ptr), "KLEE_TX_group_ptr", true);
+    CHAR * KLEE_TX_name_ptr;
+    klee_make_symbolic_controllable(&KLEE_TX_name_ptr, sizeof(KLEE_TX_name_ptr), "KLEE_TX_name_ptr", true);
+    UINT KLEE_TX_event_control_block_size;
+    klee_make_symbolic_controllable(&KLEE_TX_event_control_block_size, sizeof(KLEE_TX_event_control_block_size), "KLEE_TX_event_control_block_size", true);
+    m_txe_event_flags_create(KLEE_TX_group_ptr, KLEE_TX_name_ptr, KLEE_TX_event_control_block_size);
 }

@@ -4235,7 +4235,7 @@ void Executor::callExternalFunction(ExecutionState &state, KInstruction *target,
       size_t alignment = bytes;
       const llvm::Value *allocSite = state.prevPC->inst;
       MemoryObject *newMo = memory->allocate(size, 0, 1, allocSite, alignment);
-      std::string moName = "external_return" + llvm::utostr(++asmResultCount);
+      std::string moName = "lazy_alloc_external_return" + llvm::utostr(++asmResultCount);
       executeMakeSymbolic(state, newMo, moName);
       // After executeMakeSymbolic(), get the new objecstate
       const ObjectState *nos = state.addressSpace.findObject(newMo);
@@ -4866,7 +4866,15 @@ void Executor::executeMemoryOperation(
         // to record any pointer which can point to MPU region
         // if (!address_controllable && value_test_result && address_test_result) 
         if (value_test_result && address_test_result){
-          recordDereferenceLocationsToJson(state, address_test, mo);
+          std::string  value_name;
+          uint64_t value_offset;
+          bool value_controllable=false;
+          unsigned width;
+          Expr::Kind valueType = getExprInfo(value, value_name, value_offset, width);
+          if(value_name.find("KLEE_TX_")!=std::string::npos){
+            value_controllable=true;
+          }
+          recordDereferenceLocationsToJson(state, address_test, mo,target, value_controllable);
         }
       //}else{
         // Check the value to see whether it can reach the range of dangrous region.
@@ -4890,15 +4898,23 @@ void Executor::executeMemoryOperation(
         // FIX ME HERE. We need to to consider whether the controllable flag needs to be added for value_test_result. 
         //if(value_test_result){
         bool controllable = state.addressSpace.mo_controllable_info[mo].first;
-        if(address_controllable && !controllable && !dyn_cast<ConstantExpr>(value)){
-        std::string address_test_name;
-        uint64_t offset;
+        if(address_controllable  && !dyn_cast<ConstantExpr>(value)){
+        std::string address_test_name, value_name;
+        uint64_t offset,value_offset;
+        bool value_controllable=false;
         unsigned width;
+        Expr::Kind valueType = getExprInfo(value, value_name, value_offset, width);
+        if(value_name.find("KLEE_TX_")!=std::string::npos){
+          value_controllable=true;
+        }
+        klee_debug_message("DEBUG: sxh test1");
         Expr::Kind exprType = getExprInfo(address_test, address_test_name, offset, width); 
         if (exprType == Expr::Read || exprType == Expr::Concat){
           // only record the mo directly pointed by pointer parameter
+          // Only record the parameters
           int index1 = address_test_name.find("lazy_alloc");
           int index2 = address_test_name.find("const");
+          klee_debug_message("DEBUG: sxh test2");
           if(index1==std::string::npos && index2==std::string::npos){
             // ref<Expr> offset = mo->getOffsetExpr(address);
             // if(ConstantExpr* ce = dyn_cast<ConstantExpr>(offset)){
@@ -4917,7 +4933,8 @@ void Executor::executeMemoryOperation(
             // }
             klee_debug_message("DEBUG: record writable location");
             address_test.get()->dump();
-            recordWritableLocationsToJson(state, mo, address_offset, type);
+         
+            recordWritableLocationsToJson(state, mo, address_offset, type,value_controllable);
           }
         }else{
           klee_test_info("Error: unresolved address test on file %s: line %d.", 
@@ -6603,7 +6620,8 @@ Expr::Kind Executor::getExprInfo(const ref<Expr>  &e, std::string &moName, uint6
   return k;
 }
 
-void Executor::recordDereferenceLocationsToJson(ExecutionState &state, ref<Expr> address, const MemoryObject *mo){
+void Executor::recordDereferenceLocationsToJson(ExecutionState &state, ref<Expr> address, 
+const MemoryObject *mo, KInstruction *target, bool value_controllabe){
   std::string moName;
   uint64_t offset;
   unsigned width; 
@@ -6652,8 +6670,8 @@ void Executor::recordDereferenceLocationsToJson(ExecutionState &state, ref<Expr>
     j["name"] = moName;
     j["size"] = state.addressSpace.findMemoryObjectFromName(moName)->size;
     // j["dereference location"] = {{"name", moName}, {"offset", offset}, {"width", width}, {"constraints", constraintsJson}}; 
-    j["dereference location"] = {{"name", moName}, {"offset", offset}, {"width", width}, {"point to", mo->name}};
-
+    j["dereference location"] = {{"name", moName}, {"offset", offset}, {"value_controllable",value_controllabe},{"width", width}, {"point to", mo->name}};
+    j["line"] = target->info->line;
     std::string filename = dereference_location_file+"_"+moName+".json";
     std::ofstream file(filename);
     klee_debug_message(filename.c_str());
@@ -6666,7 +6684,8 @@ void Executor::recordDereferenceLocationsToJson(ExecutionState &state, ref<Expr>
 }
 
 
-bool Executor::recordWritableLocationsToJson(ExecutionState &state, const MemoryObject *mo, uint64_t address_offset, Expr::Width width){
+bool Executor::recordWritableLocationsToJson(ExecutionState &state, const MemoryObject *mo, 
+uint64_t address_offset, Expr::Width width, bool value_controllabe){
   std::string moName = mo->name;
   // uint64_t offset;
   // unsigned width; 
@@ -6701,7 +6720,7 @@ bool Executor::recordWritableLocationsToJson(ExecutionState &state, const Memory
   }
   j["name"] = moName;
   j["size"] = mo->size;                
-  j[writableKey] = {{"offset_in_mo", address_offset}, {"width", width}, {"constraints", constraintsJson} }; 
+  j[writableKey] = {{"offset_in_mo", address_offset}, {"width", width},{"value_controllable", value_controllabe}, {"constraints", constraintsJson} }; 
           
   std::ofstream file(filename);
   klee_debug_message(filename.c_str());
@@ -7251,7 +7270,7 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
   processTree = std::make_unique<PTree>(state);
 
   //run(*state);
-  interAnalysisMain(*state,"/home/klee/threadx/symbolic_execution/jsonFilesPath.txt");
+  interAnalysisMain(*state,"/home/klee/klee_test/threadx_test/evaluation/jsonFilesPath.txt");
   return;
   std::string jsonFlieName1 = "/home/klee/klee_test/inter-analysis-result/test-info-output/semaphore_ceiling_put/description_semaphore_ceiling_put_497_lazy_alloc1.json";
   std::string jsonFlieName2 = "/home/klee/klee_test/inter-analysis-result/test-info-output/queue_create/description_queue_create_19_lazy_alloc1.json";
@@ -7300,9 +7319,11 @@ void Executor::interAnalysisMain(ExecutionState &state, std::string filePath){
     klee_debug_message("DEBUG: INTER ANALYSIS PROCESSING");
     // Record the problemed APIs to filter the matching result.
     std::set<std::string> isTested;
-    
+    int total = jsonFilesInfo.size()*jsonFilesInfo.size();
+    int count = 0;
     for(int i=0;i<jsonFilesInfo.size();i++){
       for(int j=0; j<jsonFilesInfo.size();j++){
+        count++;
         std::string testTag = jsonFilesInfo[i].apiName+jsonFilesInfo[j].apiName;
         if(isTested.count(testTag)!=0){
           continue;
@@ -7312,10 +7333,10 @@ void Executor::interAnalysisMain(ExecutionState &state, std::string filePath){
         processTree->attach(state.ptreeNode, analysisState, &state, BranchType::NONE);
         bool result = interAnalysis(*analysisState, jsonFilesInfo[i].jsonFile, jsonFilesInfo[j].jsonFile);
         terminateState(*analysisState);
-        klee_debug_message("DEBUG: Json file 1: %s", jsonFilesInfo[i].jsonFile.c_str());
-        klee_debug_message("DEBUG: Json file 2: %s", jsonFilesInfo[j].jsonFile.c_str());
+        //klee_debug_message("DEBUG: Json file 1: %s", jsonFilesInfo[i].jsonFile.c_str());
+        //klee_debug_message("DEBUG: Json file 2: %s", jsonFilesInfo[j].jsonFile.c_str());
         if(result){
-          klee_debug_message("DEBUG: DETECT KERNEL MEMORY TAMPERING");
+          //klee_debug_message("DEBUG: DETECT KERNEL MEMORY TAMPERING");
           
           klee_test_info(" DETECT KERNEL MEMORY TAMPERING: %s with %s\n \
                           Json file1 :%s\n Json file2:%s\n",
@@ -7326,6 +7347,11 @@ void Executor::interAnalysisMain(ExecutionState &state, std::string filePath){
                           );
           isTested.insert(testTag);
         }
+        
+        // Print the process
+        
+        double progress = static_cast<double>(count) / total;
+        klee_debug_message("DEBUG: Progress: %d%\r",static_cast<int>(progress * 100));
       }
     }
     return;
@@ -7355,8 +7381,10 @@ bool Executor::interAnalysis(ExecutionState &state, std::string jsonFlieName1, s
   if(moV2 == NULL){
     klee_debug_message("DEBUG: Can not convert json to MoV2");
     return false;
-  } 
+  }
+  
   bool result = canPointToOtherMemoryObject(state,*moV2, j1);
+  
   return result;
 }
 

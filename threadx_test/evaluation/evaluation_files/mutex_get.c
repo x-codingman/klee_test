@@ -10,9 +10,9 @@ int main()
 {
     klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);
     _txm_module_kernel_call_dispatcher=_txm_module_manager_kernel_dispatch;
-    TX_MUTEX * mutex_ptr;
-    klee_make_symbolic_controllable(&mutex_ptr, sizeof(mutex_ptr), "mutex_ptr", true);
-    ULONG wait_option;
-    klee_make_symbolic_controllable(&wait_option, sizeof(wait_option), "wait_option", true);
-    m_txe_mutex_get(mutex_ptr, wait_option);
+    TX_MUTEX * KLEE_TX_mutex_ptr;
+    klee_make_symbolic_controllable(&KLEE_TX_mutex_ptr, sizeof(KLEE_TX_mutex_ptr), "KLEE_TX_mutex_ptr", true);
+    ULONG KLEE_TX_wait_option;
+    klee_make_symbolic_controllable(&KLEE_TX_wait_option, sizeof(KLEE_TX_wait_option), "KLEE_TX_wait_option", true);
+    m_txe_mutex_get(KLEE_TX_mutex_ptr, KLEE_TX_wait_option);
 }

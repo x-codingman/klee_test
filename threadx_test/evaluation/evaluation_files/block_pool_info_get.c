@@ -10,19 +10,19 @@ int main()
 {
     klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);
     _txm_module_kernel_call_dispatcher=_txm_module_manager_kernel_dispatch;
-    TX_BLOCK_POOL * pool_ptr;
-    klee_make_symbolic_controllable(&pool_ptr, sizeof(pool_ptr), "pool_ptr", true);
-    CHAR ** name;
-    klee_make_symbolic_controllable(&name, sizeof(name), "name", true);
-    ULONG * available_blocks;
-    klee_make_symbolic_controllable(&available_blocks, sizeof(available_blocks), "available_blocks", true);
-    ULONG * total_blocks;
-    klee_make_symbolic_controllable(&total_blocks, sizeof(total_blocks), "total_blocks", true);
-    TX_THREAD ** first_suspended;
-    klee_make_symbolic_controllable(&first_suspended, sizeof(first_suspended), "first_suspended", true);
-    ULONG * suspended_count;
-    klee_make_symbolic_controllable(&suspended_count, sizeof(suspended_count), "suspended_count", true);
-    TX_BLOCK_POOL ** next_pool;
-    klee_make_symbolic_controllable(&next_pool, sizeof(next_pool), "next_pool", true);
-    m_txe_block_pool_info_get(pool_ptr, name, available_blocks, total_blocks, first_suspended, suspended_count, next_pool);
+    TX_BLOCK_POOL * KLEE_TX_pool_ptr;
+    klee_make_symbolic_controllable(&KLEE_TX_pool_ptr, sizeof(KLEE_TX_pool_ptr), "KLEE_TX_pool_ptr", true);
+    CHAR ** KLEE_TX_name;
+    klee_make_symbolic_controllable(&KLEE_TX_name, sizeof(KLEE_TX_name), "KLEE_TX_name", true);
+    ULONG * KLEE_TX_available_blocks;
+    klee_make_symbolic_controllable(&KLEE_TX_available_blocks, sizeof(KLEE_TX_available_blocks), "KLEE_TX_available_blocks", true);
+    ULONG * KLEE_TX_total_blocks;
+    klee_make_symbolic_controllable(&KLEE_TX_total_blocks, sizeof(KLEE_TX_total_blocks), "KLEE_TX_total_blocks", true);
+    TX_THREAD ** KLEE_TX_first_suspended;
+    klee_make_symbolic_controllable(&KLEE_TX_first_suspended, sizeof(KLEE_TX_first_suspended), "KLEE_TX_first_suspended", true);
+    ULONG * KLEE_TX_suspended_count;
+    klee_make_symbolic_controllable(&KLEE_TX_suspended_count, sizeof(KLEE_TX_suspended_count), "KLEE_TX_suspended_count", true);
+    TX_BLOCK_POOL ** KLEE_TX_next_pool;
+    klee_make_symbolic_controllable(&KLEE_TX_next_pool, sizeof(KLEE_TX_next_pool), "KLEE_TX_next_pool", true);
+    m_txe_block_pool_info_get(KLEE_TX_pool_ptr, KLEE_TX_name, KLEE_TX_available_blocks, KLEE_TX_total_blocks, KLEE_TX_first_suspended, KLEE_TX_suspended_count, KLEE_TX_next_pool);
 }

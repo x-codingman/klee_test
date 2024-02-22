@@ -296,8 +296,8 @@ private:
                        json &j, bool isUnderflow, bool needMarked = false, bool needMatch = false, bool *res = NULL);
 
  Expr::Kind getExprInfo(const ref<Expr> &e, std::string &moName, uint64_t &offset, unsigned &width );
- void recordDereferenceLocationsToJson(ExecutionState &state, ref<Expr> address, const MemoryObject *mo);
- bool recordWritableLocationsToJson(ExecutionState &state,const MemoryObject *mo, uint64_t address_offset, Expr::Width width);
+ void recordDereferenceLocationsToJson(ExecutionState &state, ref<Expr> address, const MemoryObject *mo,KInstruction *target,bool value_controllabe);
+ bool recordWritableLocationsToJson(ExecutionState &state,const MemoryObject *mo, uint64_t address_offset, Expr::Width width,bool value_controllabe);
  void recordReadableLocationToJson(ExecutionState &state, const MemoryObject *mo, uint64_t offset, Expr::Width width);
  bool getMoControllableInfo(ExecutionState &state, const MemoryObject* mo);
  void detectInformationLeak(ExecutionState &state, ref<Expr> &address, ref<Expr> &value, KInstruction *target);

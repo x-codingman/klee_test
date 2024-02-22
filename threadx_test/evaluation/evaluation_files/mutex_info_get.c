@@ -10,19 +10,19 @@ int main()
 {
     klee_make_symbolic_controllable(&_tx_thread_current_ptr, sizeof(_tx_thread_current_ptr), "_tx_thread_current_ptr", false);
     _txm_module_kernel_call_dispatcher=_txm_module_manager_kernel_dispatch;
-    TX_MUTEX * mutex_ptr;
-    klee_make_symbolic_controllable(&mutex_ptr, sizeof(mutex_ptr), "mutex_ptr", true);
-    CHAR ** name;
-    klee_make_symbolic_controllable(&name, sizeof(name), "name", true);
-    ULONG * count;
-    klee_make_symbolic_controllable(&count, sizeof(count), "count", true);
-    TX_THREAD ** owner;
-    klee_make_symbolic_controllable(&owner, sizeof(owner), "owner", true);
-    TX_THREAD ** first_suspended;
-    klee_make_symbolic_controllable(&first_suspended, sizeof(first_suspended), "first_suspended", true);
-    ULONG * suspended_count;
-    klee_make_symbolic_controllable(&suspended_count, sizeof(suspended_count), "suspended_count", true);
-    TX_MUTEX ** next_mutex;
-    klee_make_symbolic_controllable(&next_mutex, sizeof(next_mutex), "next_mutex", true);
-    m_txe_mutex_info_get(mutex_ptr, name, count, owner, first_suspended, suspended_count, next_mutex);
+    TX_MUTEX * KLEE_TX_mutex_ptr;
+    klee_make_symbolic_controllable(&KLEE_TX_mutex_ptr, sizeof(KLEE_TX_mutex_ptr), "KLEE_TX_mutex_ptr", true);
+    CHAR ** KLEE_TX_name;
+    klee_make_symbolic_controllable(&KLEE_TX_name, sizeof(KLEE_TX_name), "KLEE_TX_name", true);
+    ULONG * KLEE_TX_count;
+    klee_make_symbolic_controllable(&KLEE_TX_count, sizeof(KLEE_TX_count), "KLEE_TX_count", true);
+    TX_THREAD ** KLEE_TX_owner;
+    klee_make_symbolic_controllable(&KLEE_TX_owner, sizeof(KLEE_TX_owner), "KLEE_TX_owner", true);
+    TX_THREAD ** KLEE_TX_first_suspended;
+    klee_make_symbolic_controllable(&KLEE_TX_first_suspended, sizeof(KLEE_TX_first_suspended), "KLEE_TX_first_suspended", true);
+    ULONG * KLEE_TX_suspended_count;
+    klee_make_symbolic_controllable(&KLEE_TX_suspended_count, sizeof(KLEE_TX_suspended_count), "KLEE_TX_suspended_count", true);
+    TX_MUTEX ** KLEE_TX_next_mutex;
+    klee_make_symbolic_controllable(&KLEE_TX_next_mutex, sizeof(KLEE_TX_next_mutex), "KLEE_TX_next_mutex", true);
+    m_txe_mutex_info_get(KLEE_TX_mutex_ptr, KLEE_TX_name, KLEE_TX_count, KLEE_TX_owner, KLEE_TX_first_suspended, KLEE_TX_suspended_count, KLEE_TX_next_mutex);
 }

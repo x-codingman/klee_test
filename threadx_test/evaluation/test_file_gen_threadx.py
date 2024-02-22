@@ -37,7 +37,7 @@ def extract_params(param_str):
             else:
                 type_name, var_name = re.match(r'(\w+(?:\s*\*\s*\*?)?)\s*(\w+)', segment).groups()
                 param_type = type_name.strip()
-                param_name = var_name.strip()
+                param_name = "KLEE_TX_"+var_name.strip()
                 params.append((param_type, param_name))
 
     return params

@@ -4622,12 +4622,14 @@ void Executor::executeMemoryOperation(
   bool success =
       state.addressSpace.lazyResolve(state, solver, address, op, needBound);
   if (!success) {
+    // The unintialized global variable would be initialized as zero
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(address)) {
       klee_debug_message("DEBUG: lazyResolve failed, found a constant address, "
                          "its value is: %lu",
                          CE->getZExtValue());
       
-      unitializedPointerDereferenceReport(target);
+        int value =  CE->getZExtValue();
+        unitializedPointerDereferenceReport(target, value);
     } else {
       klee_debug_message("DEBUG: lazyResolve failed, found a symbolic pointer");
     }
@@ -6100,8 +6102,8 @@ void Executor::vulnerabilityReport(std::string report_str, KInstruction *target)
 
 }
 
-void Executor::unitializedPointerDereferenceReport(KInstruction *target){
-  std::string report_str = "Uninitialized pointer dereferencing!! Found a unresolved constant address";
+void Executor::unitializedPointerDereferenceReport(KInstruction *target, int value){
+  std::string report_str = "Uninitialized pointer dereferencing!! Found a unresolved constant address, its value is " + std::to_string(value);
   vulnerabilityReport(report_str, target);
 }
 

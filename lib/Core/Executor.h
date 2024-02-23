@@ -301,7 +301,7 @@ private:
  void detectInfomationLeak(ExecutionState &state, ref<Expr> &address, ref<Expr> &value, KInstruction *target);
  void vulnerabilityReport(std::string report_str,KInstruction *target);
  void detectUnintializedPointersDereferencing(ExecutionState &state, ref<Expr> &address, KInstruction *target);
- void unitializedPointerDereferenceReport(KInstruction *target);
+ void unitializedPointerDereferenceReport(KInstruction *target, int value);
   /// Allocate and bind a new object in a particular state. NOTE: This
   /// function may fork.
   ///

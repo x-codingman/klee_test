@@ -56,7 +56,7 @@ import re
 # exit()
 
 
-with open('funcs_info_v2.json', 'r') as f:
+with open('funcs_info_v3.json', 'r') as f:
     funcs = json.load(f)
 
 for func in funcs:
@@ -66,13 +66,14 @@ for func in funcs:
     declarations = []
     klee_calls = []
     conditions = []
-    for arg_name, arg_type, control_flag in zip(arg_names, arg_types, control_flags):
-        declarations.append(f'{arg_type.strip()} {arg_name.strip()};\n')
-        if control_flag.strip() == "restricted":
-            conditions.append( f'if ({arg_name.strip()} < ATTACK_CAPABILITY_REGION_START || {arg_name.strip()} > ATTACK_CAPABILITY_REGION_END) {{ return 0; }}\n')
-            klee_calls.append(f'klee_make_symbolic_controllable(&{arg_name.strip()}, sizeof({arg_name.strip()}), "{arg_name.strip()}", true);\n')
-        else:    
-            klee_calls.append(f'klee_make_symbolic_controllable(&{arg_name.strip()}, sizeof({arg_name.strip()}), "{arg_name.strip()}", {control_flag.strip()});\n')
+    if  func["arg_nums"] != 0:
+        for arg_name, arg_type, control_flag in zip(arg_names, arg_types, control_flags):
+            declarations.append(f'{arg_type.strip()} {arg_name.strip()};\n')
+            if control_flag.strip() == "restricted":
+                conditions.append( f'if ({arg_name.strip()} < ATTACK_CAPABILITY_REGION_START || {arg_name.strip()} > ATTACK_CAPABILITY_REGION_END) {{ return 0; }}\n')
+                klee_calls.append(f'klee_make_symbolic_controllable(&{arg_name.strip()}, sizeof({arg_name.strip()}), "{arg_name.strip()}", true);\n')
+            else:    
+                klee_calls.append(f'klee_make_symbolic_controllable(&{arg_name.strip()}, sizeof({arg_name.strip()}), "{arg_name.strip()}", {control_flag.strip()});\n')
     declaration_code = ''.join(declarations)
     klee_call_code = ''.join(klee_calls)
     condition_code = ''.join(conditions)
@@ -89,6 +90,9 @@ for func in funcs:
         file.write('#include <queue.h>\n')
         file.write('#include <klee/klee.h>\n')
         file.write('#include <list.h>\n')
+        file.write('#include <stream_buffer.h>\n')
+        file.write('#include <timers.h>\n')
+        file.write('#include <event_groups.h>\n')
         file.write('#define STACK_SIZE 200\n')
         file.write('#define MPU_ENABLE_ADDRESS_START 0xefff2000\n')
         file.write('#define MPU_ENABLE_ADDRESS_END 0xefff4000\n')

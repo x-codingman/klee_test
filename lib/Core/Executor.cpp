@@ -4795,7 +4795,7 @@ void Executor::executeMemoryOperation(
 
 
 
-  // Detect the arbitrary writing operation
+  
   if (state.addressSpace.isSymbolicBaseAddress(mo->getBaseExpr())) {
     if (isWrite) {
         // Detect the information leak vulnerability.
@@ -4821,13 +4821,21 @@ void Executor::executeMemoryOperation(
           std::pair<MemoryObject*, uint64_t> mo_pair = state.addressSpace.findMemoryObject(CE);
           address_test = state.addressSpace.getOriginalExprFromMo(mo_pair.first);
           address_offset = mo_pair.second;
-          assert(address && "FIX ME: find mo with no existing record");
+          if(CE -> getZExtValue() ==0 ){
+            klee_test_info("Error: find a constant variable dereferencing."
+                          "on file %s: line %d.",
+                            target->info->file.c_str());
+          }
+          
+          assert(address_test && "FIX ME: find mo with no existing record");
       }
-      if (isFirstAPI){
+        
+      // The following code aims to detect if the address can out of the bound of the mo.
 
 
-        //Check the address to see whether it can reach dangrous region.
-        //First we check if address > desired_address_start has a solution
+        // The following code aims to detect the arbitrary writing operation
+        // Check the address to see whether it can reach dangrous region.
+        // First we check if address > desired_address_start has a solution
         success = solver->mayBeTrue(
         state.addressConstraintsForTargetApp,
         UgeExpr::create(address_test, ConstantExpr::create(desired_address_start, address_test->getWidth())),
@@ -4865,17 +4873,17 @@ void Executor::executeMemoryOperation(
         }
         // to record any pointer which can point to MPU region
         // if (!address_controllable && value_test_result && address_test_result) 
-        if (value_test_result && address_test_result){
-          std::string  value_name;
-          uint64_t value_offset;
-          bool value_controllable=false;
-          unsigned width;
-          Expr::Kind valueType = getExprInfo(value, value_name, value_offset, width);
-          if(value_name.find("KLEE_TX_")!=std::string::npos){
-            value_controllable=true;
-          }
-          recordDereferenceLocationsToJson(state, address_test, mo,target, value_controllable);
-        }
+        // if (value_test_result && address_test_result){
+        //   std::string  value_name;
+        //   uint64_t value_offset;
+        //   bool value_controllable=false;
+        //   unsigned width;
+        //   Expr::Kind valueType = getExprInfo(value, value_name, value_offset, width);
+        //   if(value_name.find("KLEE_TX_")!=std::string::npos){
+        //     value_controllable=true;
+        //   }
+        //   recordDereferenceLocationsToJson(state, address_test, mo,target, value_controllable);
+        // }
       //}else{
         // Check the value to see whether it can reach the range of dangrous region.
         // First we check if value > desired_address_start has a solution
@@ -4933,16 +4941,16 @@ void Executor::executeMemoryOperation(
             // }
             klee_debug_message("DEBUG: record writable location");
             address_test.get()->dump();
-         
+            
+            #ifdef INTER_ANALYSIS_ENABLE
             recordWritableLocationsToJson(state, mo, address_offset, type,value_controllable);
+            #endif
           }
         }else{
           klee_test_info("Error: unresolved address test on file %s: line %d.", 
                           target->info->file.c_str(), target->info->line);
         }  
         }  
-      }
-      
     }
   }
 
@@ -5001,14 +5009,12 @@ void Executor::executeMemoryOperation(
           // Such as unintialized global values.
           // TODO: the non concat expr may including other situations
           if(!dyn_cast<ConcatExpr>(result) && !elementType->isFunctionTy()){
-
-            unitializedPointerDereferenceReport(target);
+            klee_debug_message("DEBUG: Detect a unintialzied constant pointer.");
             
             MemoryObject *newMo = lazyAlloc(state, size, !mo->isAGlobal(), target,
               alignment);
             ObjectState *wos = state.addressSpace.getWriteable(mo, os);
             wos->write(mo->getOffsetExpr(address), newMo->getBaseExpr());
-            klee_debug_message("DEBUG: Detect a unintialzied constant pointer.");
             klee_debug_message("DEBUG: Alloc a new memory object for it. Alloc size:%lu and address:%lu",elementSize,newMo->address);
             result = newMo->getBaseExpr();
             state.addressSpace.address_mo_info[result]=newMo;

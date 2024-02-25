@@ -151,14 +151,14 @@
         "arg_nums": 2,
         "arguments": "xTask, uxIndexToClear",
         "type": "TaskHandle_t, UBaseType_t",
-        "control_flags": "true, true"
+        "control_flags": "false, true"
     },
     {
         "name": "ulTaskGenericNotifyValueClear",
         "arg_nums": 3,
         "arguments": "xTask, uxIndexToClear, ulBitsToClear",
         "type": "TaskHandle_t, UBaseType_t, uint32_t",
-        "control_flags": "true, true, true"
+        "control_flags": "false, true, true"
     },
     {
         "name": "vTaskSetTimeOutState",
@@ -175,112 +175,112 @@
         "control_flags": "restricted, restricted"
     },
     {
-        "name": "MPU_xQueueGenericSend",
+        "name": "xQueueGenericSend",
         "arg_nums": 4,
         "arguments": "xQueue, pvItemToQueue, xTicksToWait, xCopyPosition",
         "type": "QueueHandle_t, const void * const, TickType_t, const BaseType_t",
         "control_flags": "false, restricted, true, true"
     },
     {
-        "name": "MPU_xQueueReceive",
+        "name": "xQueueReceive",
         "arg_nums": 3,
         "arguments": "xQueue, pvBuffer, xTicksToWait",
         "type": "QueueHandle_t, void * const, TickType_t",
         "control_flags": "false, restricted, true"
     },
     {
-        "name": "MPU_xQueuePeek",
+        "name": "xQueuePeek",
         "arg_nums": 3,
         "arguments": "xQueue, pvBuffer, xTicksToWait",
         "type": "QueueHandle_t, void * const, TickType_t",
         "control_flags": "false, restricted, true"
     },
     {
-        "name": "MPU_xQueueSemaphoreTake",
+        "name": "xQueueSemaphoreTake",
         "arg_nums": 2,
         "arguments": "xQueue, xTicksToWait",
         "type": "QueueHandle_t, TickType_t",
         "control_flags": "false, true"
     },
     {
-        "name": "MPU_uxQueueMessagesWaiting",
+        "name": "uxQueueMessagesWaiting",
         "arg_nums": 1,
         "arguments": "xQueue",
         "type": "const QueueHandle_t",
         "control_flags": "false"
     },
     {
-        "name": "MPU_uxQueueSpacesAvailable",
+        "name": "uxQueueSpacesAvailable",
         "arg_nums": 1,
         "arguments": "xQueue",
         "type": "const QueueHandle_t",
         "control_flags": "false"
     },
     {
-        "name": "MPU_xQueueGetMutexHolder",
+        "name": "xQueueGetMutexHolder",
         "arg_nums": 1,
         "arguments": "xSemaphore",
         "type": "QueueHandle_t",
         "control_flags": "false"
     },
     {
-        "name": "MPU_xQueueTakeMutexRecursive",
+        "name": "xQueueTakeMutexRecursive",
         "arg_nums": 2,
         "arguments": "xMutex, xTicksToWait",
         "type": "QueueHandle_t, TickType_t",
         "control_flags": "false, true"
     },
     {
-        "name": "MPU_xQueueGiveMutexRecursive",
+        "name": "xQueueGiveMutexRecursive",
         "arg_nums": 1,
         "arguments": "pxMutex",
         "type": "QueueHandle_t",
         "control_flags": "false"
     },
     {
-        "name": "MPU_vQueueAddToRegistry",
+        "name": "vQueueAddToRegistry",
         "arg_nums": 2,
         "arguments": "xQueue, pcName",
         "type": "QueueHandle_t, const char *",
         "control_flags": "false, true"
     },
     {
-        "name": "MPU_vQueueUnregisterQueue",
+        "name": "vQueueUnregisterQueue",
         "arg_nums": 1,
         "arguments": "xQueue",
         "type": "QueueHandle_t",
         "control_flags": "false"
     },
     {
-        "name": "MPU_xQueueAddToSet",
+        "name": "xQueueAddToSet",
         "arg_nums": 2,
         "arguments": "xQueueOrSemaphore, xQueueSet",
         "type": "QueueSetMemberHandle_t, QueueSetHandle_t",
         "control_flags": "false, false"
     },
     {
-        "name": "MPU_xQueueSelectFromSet",
+        "name": "xQueueSelectFromSet",
         "arg_nums": 2,
         "arguments": "xQueueSet, xTicksToWait",
         "type": "QueueSetHandle_t, const TickType_t",
         "control_flags": "false, true"
     },
     {
-        "name": "MPU_vQueueSetQueueNumber",
+        "name": "vQueueSetQueueNumber",
         "arg_nums": 2,
         "arguments": "xQueue, uxQueueNumber",
         "type": "QueueHandle_t, UBaseType_t",
         "control_flags": "false, true"
     },
     {
-        "name": "MPU_uxQueueGetQueueNumber",
+        "name": "uxQueueGetQueueNumber",
         "arg_nums": 1,
         "arguments": "xQueue",
         "type": "QueueHandle_t",
         "control_flags": "false"
     },
     {
-        "name": "MPU_ucQueueGetQueueType",
+        "name": "ucQueueGetQueueType",
         "arg_nums": 1,
         "arguments": "xQueue",
         "type": "QueueHandle_t",
@@ -290,185 +290,165 @@
 
     
     {
-        "name": "MPU_vTimerSetTimerID",
+        "name": "vTimerSetTimerID",
         "arg_nums": 2,
         "arguments": "xTimer, pvNewID",
         "type": "TimerHandle_t, void *",
-        "control_flags": "true, true"
+        "control_flags": "false, true"
     },
     {
-        "name": "MPU_xTimerIsTimerActive",
+        "name": "xTimerIsTimerActive",
         "arg_nums": 1,
         "arguments": "xTimer",
         "type": "TimerHandle_t",
-        "control_flags": "true"
+        "control_flags": "false"
     },
     {
-        "name": "MPU_xTimerGetTimerDaemonTaskHandle",
-        "arg_nums": 1,
-        "arguments": "void",
+        "name": "xTimerGetTimerDaemonTaskHandle",
+        "arg_nums": 0,
+        "arguments": "",
         "type": "",
-        "control_flags": "true"
+        "control_flags": ""
     },
     {
-        "name": "MPU_xTimerGenericCommand",
+        "name": "xTimerGenericCommand",
         "arg_nums": 5,
         "arguments": "xTimer, xCommandID, xOptionalValue, pxHigherPriorityTaskWoken, xTicksToWait",
         "type": "TimerHandle_t, const BaseType_t, const TickType_t, BaseType_t * const, const TickType_t",
-        "control_flags": "true, true, true, true, true"
+        "control_flags": "false, true, true, restricted, true"
     },
     {
-        "name": "MPU_vTimerSetReloadMode",
+        "name": "vTimerSetReloadMode",
         "arg_nums": 2,
         "arguments": "xTimer, uxAutoReload",
         "type": "TimerHandle_t, const UBaseType_t",
-        "control_flags": "true, true"
+        "control_flags": "false, true"
     },
     {
-        "name": "MPU_xTimerGetReloadMode",
+        "name": "xTimerGetReloadMode",
         "arg_nums": 1,
         "arguments": "xTimer",
         "type": "TimerHandle_t",
-        "control_flags": "true"
+        "control_flags": "false"
     },
     {
-        "name": "MPU_uxTimerGetReloadMode",
+        "name": "uxTimerGetReloadMode",
         "arg_nums": 1,
         "arguments": "xTimer",
         "type": "TimerHandle_t",
-        "control_flags": "true"
+        "control_flags": "false"
     },
     {
-        "name": "MPU_xTimerGetPeriod",
+        "name": "xTimerGetPeriod",
         "arg_nums": 1,
         "arguments": "xTimer",
         "type": "TimerHandle_t",
-        "control_flags": "true"
+        "control_flags": "false"
     },
     {
-        "name": "MPU_xTimerGetExpiryTime",
+        "name": "xTimerGetExpiryTime",
         "arg_nums": 1,
         "arguments": "xTimer",
         "type": "TimerHandle_t",
-        "control_flags": "true"
+        "control_flags": "false"
     },
+    
     {
-        "name": "MPU_xTimerCreate",
-        "arg_nums": 5,
-        "arguments": "pcTimerName, xTimerPeriodInTicks, uxAutoReload, pvTimerID, pxCallbackFunction",
-        "type": "const char * const, const TickType_t, const UBaseType_t, void * const, TimerCallbackFunction_t",
-        "control_flags": "true, true, true, true, true"
-    },
-    {
-        "name": "MPU_xTimerCreateStatic",
-        "arg_nums": 6,
-        "arguments": "pcTimerName, xTimerPeriodInTicks, uxAutoReload, pvTimerID, pxCallbackFunction, pxTimerBuffer",
-        "type": "const char * const, const TickType_t, const UBaseType_t, void * const, TimerCallbackFunction_t, StaticTimer_t *",
-        "control_flags": "true, true, true, true, true, true"
-    },
-    {
-        "name": "MPU_xTimerGetStaticBuffer",
-        "arg_nums": 2,
-        "arguments": "xTimer, ppxTimerBuffer",
-        "type": "TimerHandle_t, StaticTimer_t **",
-        "control_flags": "true, true"
-    },
-    {
-        "name": "MPU_xEventGroupWaitBits",
+        "name": "xEventGroupWaitBits",
         "arg_nums": 5,
         "arguments": "xEventGroup, uxBitsToWaitFor, xClearOnExit, xWaitForAllBits, xTicksToWait",
         "type": "EventGroupHandle_t, const EventBits_t, const BaseType_t, const BaseType_t, TickType_t",
-        "control_flags": "true, true, true, true, true"
+        "control_flags": "false, true, true, true, true"
     },
     {
-        "name": "MPU_xEventGroupClearBits",
+        "name": "xEventGroupClearBits",
         "arg_nums": 2,
         "arguments": "xEventGroup, uxBitsToClear",
         "type": "EventGroupHandle_t, const EventBits_t",
-        "control_flags": "true, true"
+        "control_flags": "false, true"
     },
     {
-        "name": "MPU_xEventGroupSetBits",
+        "name": "xEventGroupSetBits",
         "arg_nums": 2,
         "arguments": "xEventGroup, uxBitsToSet",
         "type": "EventGroupHandle_t, const EventBits_t",
-        "control_flags": "true, true"
+        "control_flags": "false, true"
     },
     {
-        "name": "MPU_xEventGroupSync",
+        "name": "xEventGroupSync",
         "arg_nums": 4,
         "arguments": "xEventGroup, uxBitsToSet, uxBitsToWaitFor, xTicksToWait",
         "type": "EventGroupHandle_t, const EventBits_t, const EventBits_t, TickType_t",
-        "control_flags": "true, true, true, true"
+        "control_flags": "false, true, true, true"
     },
     {
-        "name": "MPU_uxEventGroupGetNumber",
+        "name": "uxEventGroupGetNumber",
         "arg_nums": 1,
         "arguments": "xEventGroup",
         "type": "void *",
-        "control_flags": "true"
+        "control_flags": "false"
     },
     {
-        "name": "MPU_vEventGroupSetNumber",
+        "name": "vEventGroupSetNumber",
         "arg_nums": 2,
         "arguments": "xEventGroup, uxEventGroupNumber",
         "type": "void *, UBaseType_t",
-        "control_flags": "true, true"
+        "control_flags": "false, true"
     },
     {
-        "name": "MPU_xStreamBufferSend",
+        "name": "xStreamBufferSend",
         "arg_nums": 4,
         "arguments": "xStreamBuffer, pvTxData, xDataLengthBytes, xTicksToWait",
         "type": "StreamBufferHandle_t, const void *, size_t, TickType_t",
-        "control_flags": "true, true, true, true"
+        "control_flags": "false, true, true, true"
     },
     {
-        "name": "MPU_xStreamBufferReceive",
+        "name": "xStreamBufferReceive",
         "arg_nums": 4,
         "arguments": "xStreamBuffer, pvRxData, xBufferLengthBytes, xTicksToWait",
         "type": "StreamBufferHandle_t, void *, size_t, TickType_t",
-        "control_flags": "true, true, true, true"
+        "control_flags": "false, restricted, true, true"
     },
     {
-        "name": "MPU_xStreamBufferIsFull",
+        "name": "xStreamBufferIsFull",
         "arg_nums": 1,
         "arguments": "xStreamBuffer",
         "type": "StreamBufferHandle_t",
-        "control_flags": "true"
+        "control_flags": "false"
     },
     {
-        "name": "MPU_xStreamBufferIsEmpty",
+        "name": "xStreamBufferIsEmpty",
         "arg_nums": 1,
         "arguments": "xStreamBuffer",
         "type": "StreamBufferHandle_t",
-        "control_flags": "true"
+        "control_flags": "false"
     },
     {
-        "name": "MPU_xStreamBufferSpacesAvailable",
+        "name": "xStreamBufferSpacesAvailable",
         "arg_nums": 1,
         "arguments": "xStreamBuffer",
         "type": "StreamBufferHandle_t",
-        "control_flags": "true"
+        "control_flags": "false"
     },
     {
-        "name": "MPU_xStreamBufferBytesAvailable",
+        "name": "xStreamBufferBytesAvailable",
         "arg_nums": 1,
         "arguments": "xStreamBuffer",
         "type": "StreamBufferHandle_t",
-        "control_flags": "true"
+        "control_flags": "false"
     },
     {
-        "name": "MPU_xStreamBufferSetTriggerLevel",
+        "name": "xStreamBufferSetTriggerLevel",
         "arg_nums": 2,
         "arguments": "xStreamBuffer, xTriggerLevel",
         "type": "StreamBufferHandle_t, size_t",
-        "control_flags": "true, true"
+        "control_flags": "false, true"
     },
     {
-        "name": "MPU_xStreamBufferNextMessageLengthBytes",
+        "name": "xStreamBufferNextMessageLengthBytes",
         "arg_nums": 1,
         "arguments": "xStreamBuffer",
         "type": "StreamBufferHandle_t",
-        "control_flags": "true"
+        "control_flags": "false"
     }
 ]

@@ -87,3 +87,9 @@
 
 ## 2023-10-12
 - 更新bitcast机制，增加对已分配的constant pointer的类型转换支持，但是该类型转换可能存在问题，需要对可能的问题进行标注（TODO）
+
+# Change for ThreadX
+
+## 2024-06-15
+- 为识别modifiable field， 修改了针对value_controllable的识别
+- 

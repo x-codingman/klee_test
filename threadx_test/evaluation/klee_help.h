@@ -10,6 +10,8 @@
     #define MPU_ENABLE_ADDRESS_END 0xefff4000
     #define ATTACK_CAPABILITY_REGION_START 0x80000000
     #define ATTACK_CAPABILITY_REGION_END 0x8fffffff
+    #define KERNEL_OBJECT_MEMORY_START 0x90000000
+    #define KERNEL_OBJECT_MEMORY_END 0xa0000000
 
     extern ALIGN_TYPE _txm_module_manager_kernel_dispatch(ULONG kernel_request, ALIGN_TYPE param_0, ALIGN_TYPE param_1, ALIGN_TYPE param_2);
      ULONG (*_txm_module_kernel_call_dispatcher)(ULONG kernel_request, ULONG param_1, ULONG param_2, ULONG param3);
@@ -37,13 +39,20 @@
 
     
 
-    bool is_unprivilged_memory(void* ptr, uint32_t size){
+bool is_unprivilged_memory(uint64_t ptr, uint32_t size){
         if (ATTACK_CAPABILITY_REGION_START < ptr && ATTACK_CAPABILITY_REGION_END > ptr){
             return true;
         }else{
             return false;
         }
-    }
+}
+bool is_kernel_object_memory(uint64_t ptr, uint32_t size){
+        if (KERNEL_OBJECT_MEMORY_START < ptr && KERNEL_OBJECT_MEMORY_END > ptr){
+            return true;
+        }else{
+            return false;
+        }
+}
 
     #define MAKE_SYMBOLIC_CONTROLLABLE(ptr) klee_make_symbolic_controllable(&ptr, sizeof(ptr),"",true);
 

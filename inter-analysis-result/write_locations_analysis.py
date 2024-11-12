@@ -217,15 +217,19 @@ def traverse_and_record_json_data(directory):
                     
                     # Read and record JSON data
                     with open(json_path, 'r') as f:
+                        
                         json_data = json.load(f)
+                        if json_data['name'] != "lazy_alloc1":
+                            continue
                         if subdir_data == []:
                             for key, value in json_data.items():
                                 if key.startswith("writable location"):
                                     flag = True
                                     if value.get("constraints")==[]:
                                         flag = False
-                                    subdir_data.append({"name":json_data["name"],"size":json_data["size"],"width":int(value.get("width"))/8,"offset":value.get("offset_in_mo"),"value_controllable":value.get("value_controllable"),"has_constraints":flag})
-                            continue
+                                    else:
+                                        flag = len(value.get("constraints"))
+                                    subdir_data.append({"name":json_data["name"],"size":json_data["size"],"width":int(value.get("width"))/8,"offset":int(value.get("offset_in_mo"))/2,"value_controllable":value.get("value_controllable"),"can_value_be_forged_id": value.get("can_value_be_forged_id"),"has_constraints":flag})
                         for key, value in json_data.items():
                                 if key.startswith("writable location"):
                                     is_coverd = False
@@ -235,7 +239,7 @@ def traverse_and_record_json_data(directory):
                                             flag = True
                                             if value.get("constraints")==[]:
                                                 flag = False
-                                                if subdir_data[i]["has_constraints"] == True:
+                                                if subdir_data[i]["has_constraints"] != False:
                                                     subdir_data[i]["has_constraints"] = False
                                                     #print(subdirectory_path)
                                                     print("Change has_constraints!!!")
@@ -248,7 +252,9 @@ def traverse_and_record_json_data(directory):
                                         print("Uncoverd location!")
                                         if value.get("constraints")==[]:
                                             flag = False
-                                        subdir_data.append({"name":json_data["name"],"size":json_data["size"],"width":int(value.get("width"))/8,"offset":value.get("offset_in_mo"),"value_controllable":value.get("value_controllable"),"has_constraints":flag})
+                                        else:
+                                            flag = len(value.get("constraints"))
+                                        subdir_data.append({"name":json_data["name"],"size":json_data["size"],"width":int(value.get("width"))/8,"offset":int(value.get("offset_in_mo"))/2,"value_controllable":value.get("value_controllable"),"can_value_be_forged_id": value.get("can_value_be_forged_id"),"has_constraints":flag})
 
                         # for key, value in json_data.items():
                         #     if key == "value_controllable" and value == "true"
@@ -265,9 +271,9 @@ directory = '/home/klee/threadx/symbolic_execution/test-info-output'
 recorded_data = traverse_and_record_json_data(directory)
 output_file = 'writable_location_each_syscall_analysis.xlsx'
 df = convert_to_excel(recorded_data, output_file)
-plot_offset_scatter(df)
-analyze_type_writable_locations(df)
-df = type_analysis_of_writable_locations(df)
+# plot_offset_scatter(df)
+# analyze_type_writable_locations(df)
+# df = type_analysis_of_writable_locations(df)
 
-df.to_excel('writable_location_type_analysis.xlsx', index=True)
+# df.to_excel('writable_location_type_analysis.xlsx', index=True)
 #print(recorded_data) # This will print the recorded data according to the requirement.

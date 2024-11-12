@@ -47,7 +47,7 @@ def run_command(func_name):
         "-rf", 
         output_dir+shlex.quote(func_name)
     ]
-    print("Executing command: " + " ".join(command_clean_dir))
+    #print("Executing command: " + " ".join(command_clean_dir))
     subprocess.run(command_clean_dir, check=True)
 
 
@@ -65,6 +65,7 @@ def run_command(func_name):
         ]
         print("Executing command: " + " ".join(command))
         subprocess.run(command, stdout=temp_file, stderr=temp_file)
+        print(func_name+" finished")
 
     output_path = output_dir+shlex.quote(func_name)+"_output.txt"
 

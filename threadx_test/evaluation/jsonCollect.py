@@ -32,6 +32,7 @@ def list_json_files(directory):
 
     return json_files
 
+# e.g., description_block_allocate_7_lazy_alloc1
 def extract_api_info(file_path):
     pattern = r"/description_(.+?)_(\d+)_(\w+)\.json$"
     match = re.search(pattern, file_path)
@@ -44,12 +45,13 @@ def main():
     
     json_files = list_json_files(directory)
 
-    with open("jsonFilesPath.txt", "w") as f:
+    with open("jsonFilesPathNew.txt", "w") as f:
         for file_path in json_files:
             api_name, mo_name = extract_api_info(file_path)
-            f.write(file_path + '\n')
-            f.write(api_name + '\n')
-            f.write(mo_name + '\n')
+            if mo_name == "lazy_alloc1":
+                f.write(file_path + '\n')
+                f.write(api_name + '\n')
+                f.write(mo_name + '\n')
 
     print(f"All .json files have been recorded to jsonFilesPath.txt.")
 

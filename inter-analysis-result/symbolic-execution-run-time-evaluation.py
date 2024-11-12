@@ -45,7 +45,7 @@ def extract_info(directory):
                         generated_tests = content.split('generated tests = ')[1].split('\n')[0]
 
                         # 添加到DataFrame
-                        df = df.append({'System Call': folder, 'Elapsed': elapsed, 'Explored Paths': explored_paths, 
+                        df = df.append({'System Call': folder, 'Elapsed': time_tranform(elapsed), 'Explored Paths': explored_paths, 
                                         'Avg. Constructs Per Query': avg_constructs, 'Total Queries': total_queries, 
                                         'Valid Queries': valid_queries, 'Invalid Queries': invalid_queries, 
                                         'Query Cex': query_cex, 'Total Instructions': total_instructions, 
@@ -67,5 +67,5 @@ def extract_info(directory):
 directory_path = '/home/klee/threadx/symbolic_execution/output'
 dataframe = extract_info(directory_path)
 print(dataframe)
-dataframe.to_excel('symbolic-execution-run-time-evaluation.xlsx', index=False)
+dataframe.to_excel('tables-v3/symbolic-execution-run-time-evaluation.xlsx', index=False)
 

@@ -39,6 +39,7 @@
 #include <unordered_map>
 #include <vector>
 
+
 // add
 #include "klee/Core/InterAnalysis.h"
 #include <nlohmann/json.hpp>
@@ -296,8 +297,8 @@ private:
                        json &j, bool isUnderflow, bool needMarked = false, bool needMatch = false, bool *res = NULL);
 
  Expr::Kind getExprInfo(const ref<Expr> &e, std::string &moName, uint64_t &offset, unsigned &width );
- void recordDereferenceLocationsToJson(ExecutionState &state, ref<Expr> address, const MemoryObject *mo,KInstruction *target,bool value_controllabe);
- bool recordWritableLocationsToJson(ExecutionState &state,const MemoryObject *mo, uint64_t address_offset, Expr::Width width,bool value_controllabe);
+ void recordDereferenceLocationsToJson(ExecutionState &state, ref<Expr> address, const MemoryObject *mo,KInstruction *target,bool value_controllabe_v1,bool value_controllabe_v2, bool can_value_be_forged_id);
+ bool recordWritableLocationsToJson(ExecutionState &state,const MemoryObject *mo, uint64_t address_offset, Expr::Width width,bool value_controllabe, bool can_value_be_forged_id);
  void recordReadableLocationToJson(ExecutionState &state, const MemoryObject *mo, uint64_t offset, Expr::Width width);
  bool getMoControllableInfo(ExecutionState &state, const MemoryObject* mo);
  void detectInformationLeak(ExecutionState &state, ref<Expr> &address, ref<Expr> &value, KInstruction *target);
@@ -311,6 +312,8 @@ private:
  bool interAnalysis(ExecutionState &state, std::string jsonFlieName1, std::string jsonFlieName2);
  MemoryObjectV2* jsonToMoV2(ExecutionState &state, json j);
  void interAnalysisMain(ExecutionState &state, std::string directoryPath);
+
+ std::string captureStdout(ref<Expr> &expr);
   /// Allocate and bind a new object in a particular state. NOTE: This
   /// function may fork.
   ///

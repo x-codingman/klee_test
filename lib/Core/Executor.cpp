@@ -441,6 +441,7 @@ std::string writable_location_file;
 std::string  description_file; 
 unsigned writable_location_id = 0;
 unsigned readable_location_id = 0;
+unsigned dereference_id = 0;
 bool isFirstAPI = true;
 uint64_t V2allocNameCount = 0;
 uint64_t allocLocationCount = 0;
@@ -1274,12 +1275,15 @@ Executor::StatePair Executor::fork(ExecutionState &current, ref<Expr> condition,
     ref<Expr> left_value, right_value;
     left_value=condition->getKid(0);
     right_value=condition->getKid(1);
-    
+    klee_debug_message("DEBUG: Check condition!!!");
     condition->dump();
     left_value->dump();
     right_value->dump();
     // If the condition contains symbolic pointer ,we just ingore it.
-    if(current.addressSpace.address_mo_info.count(left_value)==0 && 
+    std::string condition_expression = condition->dump1();
+    
+    if(condition_expression.find("ptr")==std::string::npos &&
+    current.addressSpace.address_mo_info.count(left_value)==0 && 
     current.addressSpace.address_mo_info.count(right_value)==0){
       addConstraint(*trueState, condition);
       addConstraint(*falseState, Expr::createIsZero(condition));
@@ -1287,6 +1291,7 @@ Executor::StatePair Executor::fork(ExecutionState &current, ref<Expr> condition,
       falseState->addAddressConstraintsForTargetApp(Expr::createIsZero(condition));
     }else{
       klee_debug_message("DEBUG: add constraints in addressConstraintsForTargetApp");
+      condition->dump();
       trueState->addAddressConstraintsForTargetApp(condition);
       falseState->addAddressConstraintsForTargetApp(Expr::createIsZero(condition));
     }
@@ -4708,6 +4713,11 @@ void Executor::executeMemoryOperation(
   ref<Expr> originalAddress = address;
   klee_debug_message("DEBUG: state id %d", state.id);
   klee_debug_message("DEBUG: dump the address expression before symplifying");
+  // Add for debug
+  // for (auto &constraint:state.addressConstraintsForTargetApp){
+  //         constraint.get()->dump();
+  // }
+  
   address.get()->dump();
   if (!isa<ConstantExpr>(address))
     
@@ -4778,13 +4788,14 @@ void Executor::executeMemoryOperation(
                                         needBound)) {
       klee_debug_message("DEBUG: FIX ME resolve failed");
       terminateStateOnError(state, "resolve failed", StateTerminationType::Ptr);
+      return;
     }
   }
 
 
   const MemoryObject *mo = op.first;
   const ObjectState *os = op.second;
-
+  klee_debug_message("DEBUG: FIX ME resolve failed");
   // It is supposed that the address containing symbolic index of an array need
   // to be bounded
   if (needBound) {
@@ -4803,17 +4814,17 @@ void Executor::executeMemoryOperation(
       //detectInformationLeak(state, address, value, target);
       // add memory address constraint
       // Test if the attacker can write a desired value on the memory.
-      uint64_t desired_value = 0;
+      uint64_t desired_value = 0x54485244;
       uint64_t desired_address_start=MPU_ENABLE_ADDRESS;
       uint64_t desired_address_end=MPU_ENABLE_ADDRESS;
       solver->setTimeout(coreSolverTimeout);
       bool value_test_result = false;
       bool address_test_result = false;
       bool success;
-      
+      klee_debug_message("DEBUG: sxh test5");
       //Check if the MO of the address is controllable
       bool address_controllable = getMoControllableInfo(state, mo);
-      
+      klee_debug_message("DEBUG: this addresscontrollable is %d", address_controllable);
       ref<Expr> address_test = address;
       uint64_t address_offset = 0;
       // Extract the original expression
@@ -4825,7 +4836,7 @@ void Executor::executeMemoryOperation(
       }
       if (isFirstAPI){
 
-
+        klee_debug_message("DEBUG: sxh test3");
         //Check the address to see whether it can reach dangrous region.
         //First we check if address > desired_address_start has a solution
         success = solver->mayBeTrue(
@@ -4845,36 +4856,67 @@ void Executor::executeMemoryOperation(
 
         //After that, we check if the value can be written with desired value. 
         success = solver->mayBeTrue(
-            state.constraints,
-            EqExpr::create(ConstantExpr::create(desired_value, Expr::Bool), ZExtExpr::create(value,Expr::Bool)),
+            state.addressConstraintsForTargetApp,
+            EqExpr::create(ConstantExpr::create(desired_value, Expr::Int32), ZExtExpr::create(value,Expr::Int32)),
             value_test_result, state.queryMetaData);
         assert(success && "FIXME: Unhandled solver failure");
-
-        if (address_controllable && value_test_result && address_test_result ) {
-          std::string currentVulnerabilityInfo =
-              target->info->file + ":" + std::to_string(target->info->line);
-          auto it = testInfoRecordSet.find(currentVulnerabilityInfo);
-          if (it == testInfoRecordSet.end()) {
-            testInfoRecordSet.insert(currentVulnerabilityInfo);
-            klee_test_info("Error: write vulnerability"
-                          "on file %s: line %d. desired value: %lu, desired address %lu-%lu",
-                            target->info->file.c_str(),
-                          target->info->line, desired_value,
-                          desired_address_start,desired_address_end);
-          }
+        klee_debug_message("DEBUG: dump the  value");
+        
+        for (auto &constraint:state.addressConstraintsForTargetApp){
+          constraint.get()->dump();
         }
+        klee_debug_message("DEBUG: dump the desired value %d, can_be_type_id, %d",desired_value,value_test_result);
+
+        // if (address_controllable && value_test_result && address_test_result ) {
+        //   std::string currentVulnerabilityInfo =
+        //       target->info->file + ":" + std::to_string(target->info->line);
+        //   auto it = testInfoRecordSet.find(currentVulnerabilityInfo);
+        //   if (it == testInfoRecordSet.end()) {
+        //     testInfoRecordSet.insert(currentVulnerabilityInfo);
+        //     klee_test_info("Error: write vulnerability"
+        //                   "on file %s: line %d. desired value: %lu, desired address %lu-%lu",
+        //                     target->info->file.c_str(),
+        //                   target->info->line, desired_value,
+        //                   desired_address_start,desired_address_end);
+        //   }
+        // }
         // to record any pointer which can point to MPU region
         // if (!address_controllable && value_test_result && address_test_result) 
-        if (value_test_result && address_test_result){
+        if (address_test_result){
           std::string  value_name;
           uint64_t value_offset;
-          bool value_controllable=false;
+          bool value_controllable_v1=false;
+          bool value_controllable_v2=true;
           unsigned width;
           Expr::Kind valueType = getExprInfo(value, value_name, value_offset, width);
+          
+          address_test.get()->dump();
+          value_name = value.get()->dump1();
+          klee_debug_message("DEBUG: dump the value for dereference:\n %s\n",value_name);
+          // Test if the value can be affected by the parameter
           if(value_name.find("KLEE_TX_")!=std::string::npos){
-            value_controllable=true;
+            value_controllable_v1=true;
           }
-          recordDereferenceLocationsToJson(state, address_test, mo,target, value_controllable);
+          // we check if the value is a field of the lazy_alloc1
+          {
+              size_t pos_lazy_alloc1 = value_name.find("lazy_alloc1 ");
+              if (pos_lazy_alloc1 == std::string::npos) {
+                  value_controllable_v2=false; // 如果不包含 "lazy_alloc1"，直接返回 false
+              }
+
+              // 检查是否包含 "lazy_alloc" 后面跟着数字的字符串
+              size_t pos_lazy_alloc = value_name.find("lazy_alloc");
+              while (pos_lazy_alloc != std::string::npos) {
+                  // 如果找到了 "lazy_alloc"，检查其后面的字符是否是数字
+                  if (pos_lazy_alloc > pos_lazy_alloc1) {
+                      value_controllable_v2 = false; // 如果找到了带数字的 "lazy_alloc"，返回 false
+                      break;
+                  }
+                  // 继续寻找下一个 "lazy_alloc"
+                  pos_lazy_alloc = value_name.find("lazy_alloc", pos_lazy_alloc + 1);
+              }
+          }
+          recordDereferenceLocationsToJson(state, address_test, mo,target, value_controllable_v1,value_controllable_v2,value_test_result);
         }
       //}else{
         // Check the value to see whether it can reach the range of dangrous region.
@@ -4903,8 +4945,9 @@ void Executor::executeMemoryOperation(
         uint64_t offset,value_offset;
         bool value_controllable=false;
         unsigned width;
-        Expr::Kind valueType = getExprInfo(value, value_name, value_offset, width);
-        if(value_name.find("KLEE_TX_")!=std::string::npos){
+
+        value_name = value.get()->dump1();
+        if(value_name.find("KLEE_TX_")!=std::string::npos && value_name.find("lazy_alloc")==std::string::npos){
           value_controllable=true;
         }
         klee_debug_message("DEBUG: sxh test1");
@@ -4933,8 +4976,10 @@ void Executor::executeMemoryOperation(
             // }
             klee_debug_message("DEBUG: record writable location");
             address_test.get()->dump();
-         
-            recordWritableLocationsToJson(state, mo, address_offset, type,value_controllable);
+            value.get()->dump();
+            klee_debug_message("value name is: %s", value_name.c_str());
+            klee_debug_message("offset is: %d", address_offset);
+            recordWritableLocationsToJson(state, mo, address_offset, type,value_controllable, value_test_result);
           }
         }else{
           klee_test_info("Error: unresolved address test on file %s: line %d.", 
@@ -5000,7 +5045,7 @@ void Executor::executeMemoryOperation(
           // We need to handle that the result is a constant value.
           // Such as unintialized global values.
           // TODO: the non concat expr may including other situations
-          if(!dyn_cast<ConcatExpr>(result) && !elementType->isFunctionTy()){
+          if(dyn_cast<ConstantExpr>(result) && !dyn_cast<ConcatExpr>(result) && !elementType->isFunctionTy()){
 
             unitializedPointerDereferenceReport(target);
             
@@ -6614,6 +6659,7 @@ Expr::Kind Executor::getExprInfo(const ref<Expr>  &e, std::string &moName, uint6
   }
   default:
     assert("FIXME in executeMemoryOperation(): Unprocessed expression types");
+    klee_debug_message("FIXME in executeMemoryOperation(): Unprocessed expression types");
     break;
   }
 
@@ -6621,10 +6667,10 @@ Expr::Kind Executor::getExprInfo(const ref<Expr>  &e, std::string &moName, uint6
 }
 
 void Executor::recordDereferenceLocationsToJson(ExecutionState &state, ref<Expr> address, 
-const MemoryObject *mo, KInstruction *target, bool value_controllabe){
+const MemoryObject *mo, KInstruction *target, bool value_controllabe_v1, bool value_controllable_v2, bool can_value_be_forged_id){
   std::string moName;
-  uint64_t offset;
-  unsigned width; 
+  uint64_t offset=-1;
+  unsigned width=-1; 
   switch(address.get()->getKind()){
     case Expr::Concat:{
       ConcatExpr* address_concat = dyn_cast<ConcatExpr>(address);
@@ -6651,10 +6697,32 @@ const MemoryObject *mo, KInstruction *target, bool value_controllabe){
     }
     default:
       assert("FIXME in executeMemoryOperation(): Unprocessed expression types");
+      klee_debug_message("FIXME in executeMemoryOperation(): Unprocessed expression types");
+      moName = std::string ("unknow");
       break;
     }
 
     json j;
+    std::string filename = dereference_location_file+"_"+test_target_name+"_"+std::to_string(state.id)+"_"+moName+".json";
+    std::ifstream inFile(filename);
+    if (inFile.is_open()) {
+      inFile >> j;
+      inFile.close();
+    } else {
+      assert("Cannot open the file");
+    }
+
+    std::vector<json> constraintsJson;  
+          
+    ConstraintSet cs;
+    ConstraintManager cm(cs);
+    for (auto &constraint:state.addressConstraintsForTargetApp){
+      if (cm.containMo(constraint, moName)){
+        json constraintJson;
+        exprToJson(constraint, constraintJson);
+        constraintsJson.push_back(constraintJson);
+      }
+    }
     // std::vector<json> constraintsJson;
 
     // ConstraintSet cs;
@@ -6666,13 +6734,25 @@ const MemoryObject *mo, KInstruction *target, bool value_controllabe){
     //     constraintsJson.push_back(constraintJson);
     //   }
     // }
+    uint64_t id = 0;
+    // Lookup the last id
+    std::string dereferenceKey = "dereference location "+std::to_string(id);
+    while(j.count(dereferenceKey)>0){
+      id++;
+      dereferenceKey = "dereference location "+std::to_string(id);
+    }
 
     j["name"] = moName;
-    j["size"] = state.addressSpace.findMemoryObjectFromName(moName)->size;
+    const MemoryObject *mo1 = state.addressSpace.findMemoryObjectFromName(moName);
+    if(mo1!=NULL){
+       j["size"] = mo1->size;
+    }else{
+      j["size"] = -1;
+    }
+   
     // j["dereference location"] = {{"name", moName}, {"offset", offset}, {"width", width}, {"constraints", constraintsJson}}; 
-    j["dereference location"] = {{"name", moName}, {"offset", offset}, {"value_controllable",value_controllabe},{"width", width}, {"point to", mo->name}};
-    j["line"] = target->info->line;
-    std::string filename = dereference_location_file+"_"+moName+".json";
+    j[dereferenceKey] = {{"line", target->info->line},{"name", moName}, {"offset", offset}, {"value_controllable_v1",value_controllabe_v1},{"value_controllable_v2",value_controllable_v2},{"can_value_be_forged_id",can_value_be_forged_id},{"width", width}, {"point to", mo->name}, {"constraints", constraintsJson} };
+    
     std::ofstream file(filename);
     klee_debug_message(filename.c_str());
     if (file.is_open()){
@@ -6685,7 +6765,7 @@ const MemoryObject *mo, KInstruction *target, bool value_controllabe){
 
 
 bool Executor::recordWritableLocationsToJson(ExecutionState &state, const MemoryObject *mo, 
-uint64_t address_offset, Expr::Width width, bool value_controllabe){
+uint64_t address_offset, Expr::Width width, bool value_controllabe, bool can_value_be_forged_id){
   std::string moName = mo->name;
   // uint64_t offset;
   // unsigned width; 
@@ -6720,7 +6800,7 @@ uint64_t address_offset, Expr::Width width, bool value_controllabe){
   }
   j["name"] = moName;
   j["size"] = mo->size;                
-  j[writableKey] = {{"offset_in_mo", address_offset}, {"width", width},{"value_controllable", value_controllabe}, {"constraints", constraintsJson} }; 
+  j[writableKey] = {{"offset_in_mo", address_offset}, {"width", width},{"value_controllable", value_controllabe}, {"can_value_be_forged_id",can_value_be_forged_id},{"constraints", constraintsJson} }; 
           
   std::ofstream file(filename);
   klee_debug_message(filename.c_str());
@@ -7057,6 +7137,14 @@ MemoryObjectV2* Executor::jsonToMoV2(ExecutionState &state, json j){
   int locationCount = 0;
   std:: string locationKey = "writable location " + llvm::utostr(locationCount);
   while(j.count(locationKey)>0){
+    
+    // We check if this is a modifiable field.
+    // We only symbolize modifiable field. 
+    if(j[locationKey]["value_controllable"] == false){
+      locationKey = "writable location " + llvm::utostr(++locationCount);
+      continue;
+    }
+      
     uint64_t offset = j[locationKey]["offset_in_mo"];
     Expr::Width size = j[locationKey]["width"];
 
@@ -7270,7 +7358,7 @@ void Executor::runInterAnalysis(llvm::Function *f, int argc, char **argv,
   processTree = std::make_unique<PTree>(state);
 
   //run(*state);
-  interAnalysisMain(*state,"/home/klee/klee_test/threadx_test/evaluation/jsonFilesPath.txt");
+  interAnalysisMain(*state,"/home/klee/klee_test/threadx_test/evaluation/jsonFilesPathNew.txt");
   return;
   std::string jsonFlieName1 = "/home/klee/klee_test/inter-analysis-result/test-info-output/semaphore_ceiling_put/description_semaphore_ceiling_put_497_lazy_alloc1.json";
   std::string jsonFlieName2 = "/home/klee/klee_test/inter-analysis-result/test-info-output/queue_create/description_queue_create_19_lazy_alloc1.json";
@@ -7390,6 +7478,23 @@ bool Executor::interAnalysis(ExecutionState &state, std::string jsonFlieName1, s
 
 
 
+ std::string Executor::captureStdout(ref<Expr> &expr) {
+    std::ostringstream oss;
+      // 保存原始的缓冲区指针
+      std::streambuf* orig_buf = std::cerr.rdbuf();
+      // 将 std::cerr 的缓冲区指向 oss
+      std::cerr.rdbuf(oss.rdbuf());
 
+      // 调用需要劫持输出的函数
+      expr.get()->dump();
 
+      // 将缓冲区恢复到原始状态
+      std::cerr.rdbuf(orig_buf);
+
+      // 从 oss 获取捕获的输出
+      std::string captured_output = oss.str();
+
+      // 输出捕获的内容
+      return captured_output;
+}
 

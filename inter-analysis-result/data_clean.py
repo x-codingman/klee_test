@@ -7,7 +7,7 @@ from openpyxl.utils import get_column_letter
 pattern = r"KLEE:  DETECT KERNEL MEMORY TAMPERING: (\w+) with (\w+)"
 # Read the file and extract pairs
 pairs = []
-with open('/home/klee/klee_test/inter-analysis-result/test-info-inter-analysis/test_info.txt', 'r') as file:
+with open('/home/klee/klee_test/inter-analysis-result-v2/test-info-inter-analysis/test_info.txt', 'r') as file:
     for line in file:
         match = re.search(pattern, line)
         if match:
@@ -45,4 +45,4 @@ for col in ws.columns:
     ws.column_dimensions[get_column_letter(column)].width = adjusted_width
 
 # Save the workbook
-wb.save('output.xlsx')
+wb.save('tables-v2/output.xlsx')

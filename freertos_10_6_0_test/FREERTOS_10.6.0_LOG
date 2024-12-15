@@ -25,3 +25,7 @@
 ### 可能存在的问题
 - 对xTaskCallApplicationTaskHook函数的调用，其函数指针可以被控制。
 - xQueueSelectFromSet可能存在问题，存在局部变量指针，在lazyrelove的时候报错
+
+
+- 误报总结-12-04-2024
+* limited memory write的误报。

@@ -4,6 +4,15 @@
     #include "stdbool.h"
     #include <stdint.h>
 
+#define MPU_ENABLE_ADDRESS_START 0xefff2000
+#define MPU_ENABLE_ADDRESS_END 0xefff4000
+#define OTHER_REGION_START 0x70000000
+#define OTHER_REGION_END 0x7fffffff
+#define ATTACK_CAPABILITY_REGION_START 0x80000000
+#define ATTACK_CAPABILITY_REGION_END 0x8fffffff
+#define KERNEL_REGION_START 0x90000000
+#define KERNEL_REGION_END 0x9fffffff
+
 #define portTOTAL_NUM_REGIONS 8
 #define portIS_PRIVILEGED()      xIsPrivileged() 
 

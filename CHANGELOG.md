@@ -87,3 +87,9 @@
 
 ## 2023-10-12
 - 更新bitcast机制，增加对已分配的constant pointer的类型转换支持，但是该类型转换可能存在问题，需要对可能的问题进行标注（TODO）
+
+
+## 2024-11-17
+- 增加collect_vul_data.py，该文件用于处理test_info.txt中的数据。
+- 增加对arbitrary memory write的漏洞类型识别，分为arbitrary memory write以及limited memory write（攻击者可以控制写的地址但是无法控制写的内容。
+- 增加对uninitialized pointer的识别。

@@ -234,6 +234,17 @@ bool AddressSpace::lazyResolve(ExecutionState &state,
     if (res) {
       const MemoryObject *mo = res->first;
       if (example - mo->address < mo->size) {
+        bool mustBeTrue;
+        if (!solver->mustBeTrue(state.constraints,
+                               mo->getBoundsCheckPointer(address), mustBeTrue,
+                               state.queryMetaData)){
+          // klee_message("Error: solver timed out");
+        }
+        if (!mustBeTrue){
+          needBound = true;
+          //printf("Error: out of bound pointer\n");
+          // klee_debug_message("ERROR: out of bound pointer");
+        }
         result.first = res->first;
         result.second = res->second.get();
         // success = true;

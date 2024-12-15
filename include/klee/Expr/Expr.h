@@ -224,6 +224,9 @@ public:
   /// dump - Print the expression to stderr.
   void dump() const;
 
+  // dump - Print the expression as a string.
+  std::string dump1() const;
+
   /// Returns the pre-computed hash of the current expression
   virtual unsigned hash() const { return hashValue; }
 

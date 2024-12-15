@@ -60,7 +60,12 @@ with open('funcs_info_v3.json', 'r') as f:
     funcs = json.load(f)
 
 for func in funcs:
-    arg_names = func["arguments"].split(',')
+    old_arg_names = func["arguments"].split(',')
+    arg_names = []
+    if func["arg_nums"] != 0:
+        for arg_name in old_arg_names:
+            arg_names.append("KLEE_"+arg_name.strip())
+        func["arguments"] = ','.join(arg_names)
     arg_types = func["type"].split(',')
     control_flags = func["control_flags"].split(',')
     declarations = []
@@ -71,6 +76,9 @@ for func in funcs:
             declarations.append(f'{arg_type.strip()} {arg_name.strip()};\n')
             if control_flag.strip() == "restricted":
                 conditions.append( f'if ({arg_name.strip()} < ATTACK_CAPABILITY_REGION_START || {arg_name.strip()} > ATTACK_CAPABILITY_REGION_END) {{ return 0; }}\n')
+                klee_calls.append(f'klee_make_symbolic_controllable(&{arg_name.strip()}, sizeof({arg_name.strip()}), "{arg_name.strip()}", true);\n')
+            elif control_flag.strip() == "false":
+                conditions.append( f'if ({arg_name.strip()} < KERNEL_REGION_START || {arg_name.strip()} > KERNEL_REGION_END) {{ return 0; }}\n')
                 klee_calls.append(f'klee_make_symbolic_controllable(&{arg_name.strip()}, sizeof({arg_name.strip()}), "{arg_name.strip()}", true);\n')
             else:    
                 klee_calls.append(f'klee_make_symbolic_controllable(&{arg_name.strip()}, sizeof({arg_name.strip()}), "{arg_name.strip()}", {control_flag.strip()});\n')

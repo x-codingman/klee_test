@@ -1279,7 +1279,9 @@ Executor::StatePair Executor::fork(ExecutionState &current, ref<Expr> condition,
     left_value->dump();
     right_value->dump();
     // If the condition contains symbolic pointer ,we just ingore it.
-    if(current.addressSpace.address_mo_info.count(left_value)==0 && 
+    std::string condition_expression = condition->dump1();
+    if(condition_expression.find("ptr")==std::string::npos &&
+    current.addressSpace.address_mo_info.count(left_value)==0 && 
     current.addressSpace.address_mo_info.count(right_value)==0){
       addConstraint(*trueState, condition);
       addConstraint(*falseState, Expr::createIsZero(condition));
@@ -3016,6 +3018,7 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         
         // Fix here, the old memory is not really deleted
         // remove the memory object from the record
+        bool controllable = state.addressSpace.mo_controllable_info[oldMo].first;
         state.addressSpace.record.remove(oldMo);
         size_t alignment = 8;
         ref<Expr> size = Expr::createPointer(elementSize);
@@ -3023,11 +3026,11 @@ void Executor::executeInstruction(ExecutionState &state, KInstruction *ki) {
         if (isDesiredType(elementType)) {
             klee_debug_message("DEBUG: alloc TCB in executeMemoryOperation!!"); 
             size_t stackSize=0x1000;
-            newMo=lazyAllocTCBSymbolic(state,(size_t)elementSize,stackSize,false,alignment);
+            newMo=lazyAllocTCBSymbolic(state,(size_t)elementSize,stackSize,false,alignment, controllable);
         }
 
         if(newMo==NULL)
-          newMo = lazyAlloc(state, size, false, ki, alignment);
+          newMo = lazyAlloc(state, size, false, ki, alignment, controllable);
         // std::string name = "";
         // executeMakeSymbolic(state, newMo, name);
         state.addressSpace.address_mo_info[result] = newMo;
@@ -4413,7 +4416,7 @@ ObjectState *Executor::bindObjectInState(ExecutionState &state,
 // If there is symbolic size, fix the code.
 MemoryObject *Executor::lazyAlloc(ExecutionState &state, ref<Expr> size,
                                   bool isLocal, KInstruction *target,
-                                  size_t allocationAlignment) {
+                                  size_t allocationAlignment, bool controllable) {
   size = toUnique(state, size);
   MemoryObject *mo = NULL;
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(size)) {
@@ -4442,8 +4445,9 @@ MemoryObject *Executor::lazyAlloc(ExecutionState &state, ref<Expr> size,
         state, "Pointing object of the symbolic pointer has symbolic size",
         StateTerminationType::Ptr);
   }
-  std::string name =
-      "lazy_alloc" + llvm::utostr(allocname++); // address->toString();
+  std::string name = controllable ? "lazy_alloc_controllable" + llvm::utostr(allocname++):
+      "lazy_alloc_uncontrollable" + llvm::utostr(allocname++); // address->toString();
+  
   klee_debug_message("DEBUG: Lazy alloc name: %s",name.c_str());
   executeMakeSymbolic(state, mo, name);
   state.addressSpace.record.push_back(mo);
@@ -4454,7 +4458,7 @@ MemoryObject *Executor::lazyAlloc(ExecutionState &state, ref<Expr> size,
 // add alloc task TCB structures
 MemoryObject *Executor::lazyAllocTCBSymbolic(ExecutionState &state, size_t size,
                                              size_t stackSize, bool isLocal,
-                                             size_t allocationAlignment) {
+                                             size_t allocationAlignment, bool controllable) {
 
   MemoryObject *mo = NULL;
 
@@ -4476,6 +4480,9 @@ MemoryObject *Executor::lazyAllocTCBSymbolic(ExecutionState &state, size_t size,
   } else {
     klee_debug_message("DEBUG: Alloc stack, top address: %lu",
                        stackMo->address + stackSize / 2);
+
+    // If it is a stack, we assume it is controllable.
+    std::string name = "lazy_alloc_controllable" + llvm::utostr(allocname++);
     executeMakeSymbolic(state, stackMo, "symbolic stack");
     state.addressSpace.record.push_back(stackMo);
   }
@@ -4486,7 +4493,9 @@ MemoryObject *Executor::lazyAllocTCBSymbolic(ExecutionState &state, size_t size,
                        "lazyAllocTCBSymbolic!!! states size: %d",
                        (int)states.size());
   } else {
-    executeMakeSymbolic(state, mo, "symbolic_TCB");
+    std::string name = controllable ? "lazy_alloc_controllable" + llvm::utostr(allocname++):
+      "lazy_alloc_uncontrollable" + llvm::utostr(allocname++); // address->toString();
+    executeMakeSymbolic(state, mo, name);
     state.addressSpace.record.push_back(mo);
     bool needBound = false;
     ObjectPair op;
@@ -4730,7 +4739,7 @@ void Executor::executeMemoryOperation(
       klee_debug_message("DEBUG: lazyResolve failed, found a constant address, "
                          "its value is: %lu",
                          CE->getZExtValue());
-      //address = originalAddress;
+      unitializedPointerDereferenceReport(target);
     } else {
       klee_debug_message("DEBUG: lazyResolve failed, found a symbolic pointer");
     }
@@ -4787,10 +4796,12 @@ void Executor::executeMemoryOperation(
 
   // It is supposed that the address containing symbolic index of an array need
   // to be bounded
+  // What will happed if we do not add constraint?
   if (needBound) {
     addConstraint(state, mo->getBoundsCheckPointer(address));
-    terminateState(state);
-    return;
+    klee_debug_message("DEBUG: Pointer Out of Bound");
+    std::string report_str = "Pointer Out of Bound";
+    vulnerabilityReport(report_str, target);
   }
 
 
@@ -4799,8 +4810,13 @@ void Executor::executeMemoryOperation(
   if (state.addressSpace.isSymbolicBaseAddress(mo->getBaseExpr())) {
     if (isWrite) {
         // Detect the information leak vulnerability.
-  
-      //detectInformationLeak(state, address, value, target);
+      std::string address_expr = address.get()->dump1();
+      bool address_controllable = getMoControllableInfo(state, mo) || address_expr.find("KLEE")!=std::string::npos;
+      if (address_controllable){
+         detectInformationLeak(state, address, value, target);
+      }
+      klee_debug_message("DEBUG: address controllable flag: %d",address_controllable);
+
       // add memory address constraint
       // Test if the attacker can write a desired value on the memory.
       uint64_t desired_value = 0;
@@ -4812,7 +4828,7 @@ void Executor::executeMemoryOperation(
       bool success;
       
       //Check if the MO of the address is controllable
-      bool address_controllable = getMoControllableInfo(state, mo);
+      
       
       ref<Expr> address_test = address;
       uint64_t address_offset = 0;
@@ -4832,24 +4848,29 @@ void Executor::executeMemoryOperation(
         
       // The following code aims to detect if the address can out of the bound of the mo.
 
-
+        if (!solver->mustBeTrue(state.constraints,
+                               mo->getBoundsCheckPointer(address), address_test_result,
+                               state.queryMetaData)){
+           klee_message("Error: solver timed out");
+        }
+       
         // The following code aims to detect the arbitrary writing operation
         // Check the address to see whether it can reach dangrous region.
         // First we check if address > desired_address_start has a solution
-        success = solver->mayBeTrue(
-        state.addressConstraintsForTargetApp,
-        UgeExpr::create(address_test, ConstantExpr::create(desired_address_start, address_test->getWidth())),
-        address_test_result, state.queryMetaData);
-        assert(success && "FIXME: Unhandled solver failure");
+        // success = solver->mayBeTrue(
+        // state.addressConstraintsForTargetApp,
+        // UgeExpr::create(address_test, ConstantExpr::create(desired_address_start, address_test->getWidth())),
+        // address_test_result, state.queryMetaData);
+        // assert(success && "FIXME: Unhandled solver failure");
 
-        //If so, then we check if address < desired_address_end has a solution
-        if(address_test_result){
-          success = solver->mayBeTrue(
-          state.addressConstraintsForTargetApp,
-          UleExpr::create(address_test,ConstantExpr::create(desired_address_end, address_test->getWidth())),
-          address_test_result, state.queryMetaData);
-        }
-        assert(success && "FIXME: Unhandled solver failure");
+        // //If so, then we check if address < desired_address_end has a solution
+        // if(address_test_result){
+        //   success = solver->mayBeTrue(
+        //   state.addressConstraintsForTargetApp,
+        //   UleExpr::create(address_test,ConstantExpr::create(desired_address_end, address_test->getWidth())),
+        //   address_test_result, state.queryMetaData);
+        // }
+        // assert(success && "FIXME: Unhandled solver failure");
 
         //After that, we check if the value can be written with desired value. 
         success = solver->mayBeTrue(
@@ -4857,20 +4878,40 @@ void Executor::executeMemoryOperation(
             EqExpr::create(ConstantExpr::create(desired_value, Expr::Bool), ZExtExpr::create(value,Expr::Bool)),
             value_test_result, state.queryMetaData);
         assert(success && "FIXME: Unhandled solver failure");
-
-        if (address_controllable && value_test_result && address_test_result ) {
+        // In this case, the attacker can achieve arbitrary memory write.
+        bool isConstrained = checkConstraints(state);
+        if (address_controllable && address_test_result ) {
+        // TODO
+        // We need to check if the pointed memory object is constrained?
+        // If yes, it is a limited memory write vulnerability.
+        // If no, it is a arbitrary memory write vulnerability.
+          
           std::string currentVulnerabilityInfo =
               target->info->file + ":" + std::to_string(target->info->line);
           auto it = testInfoRecordSet.find(currentVulnerabilityInfo);
           if (it == testInfoRecordSet.end()) {
             testInfoRecordSet.insert(currentVulnerabilityInfo);
-            klee_test_info("Error: write vulnerability"
+            klee_test_info("Error: arbitrary memory write vulnerability (V1)"
                           "on file %s: line %d. desired value: %lu, desired address %lu-%lu",
                             target->info->file.c_str(),
                           target->info->line, desired_value,
                           desired_address_start,desired_address_end);
           }
         }
+        // else if (address_controllable && address_test_result) {
+        //   // In this case, the attacker can write arbitrary memory with fixed value.
+        //   std::string currentVulnerabilityInfo =
+        //       target->info->file + ":" + std::to_string(target->info->line);
+        //   auto it = testInfoRecordSet.find(currentVulnerabilityInfo);
+        //   if (it == testInfoRecordSet.end()) {
+        //     testInfoRecordSet.insert(currentVulnerabilityInfo);
+        //     klee_test_info("Error: Limited memory write vulnerability (V2)"
+        //                   "on file %s: line %d. desired value: %lu, desired address %lu-%lu",
+        //                     target->info->file.c_str(),
+        //                   target->info->line, desired_value,
+        //                   desired_address_start,desired_address_end);
+        //   }
+        // }
         // to record any pointer which can point to MPU region
         // if (!address_controllable && value_test_result && address_test_result) 
         // if (value_test_result && address_test_result){
@@ -4915,14 +4956,12 @@ void Executor::executeMemoryOperation(
         if(value_name.find("KLEE_TX_")!=std::string::npos){
           value_controllable=true;
         }
-        klee_debug_message("DEBUG: sxh test1");
         Expr::Kind exprType = getExprInfo(address_test, address_test_name, offset, width); 
         if (exprType == Expr::Read || exprType == Expr::Concat){
           // only record the mo directly pointed by pointer parameter
           // Only record the parameters
           int index1 = address_test_name.find("lazy_alloc");
           int index2 = address_test_name.find("const");
-          klee_debug_message("DEBUG: sxh test2");
           if(index1==std::string::npos && index2==std::string::npos){
             // ref<Expr> offset = mo->getOffsetExpr(address);
             // if(ConstantExpr* ce = dyn_cast<ConstantExpr>(offset)){
@@ -5008,43 +5047,51 @@ void Executor::executeMemoryOperation(
           // We need to handle that the result is a constant value.
           // Such as unintialized global values.
           // TODO: the non concat expr may including other situations
-          if(!dyn_cast<ConcatExpr>(result) && !elementType->isFunctionTy()){
-            klee_debug_message("DEBUG: Detect a unintialzied constant pointer.");
-            
-            MemoryObject *newMo = lazyAlloc(state, size, !mo->isAGlobal(), target,
-              alignment);
-            ObjectState *wos = state.addressSpace.getWriteable(mo, os);
-            wos->write(mo->getOffsetExpr(address), newMo->getBaseExpr());
-            klee_debug_message("DEBUG: Alloc a new memory object for it. Alloc size:%lu and address:%lu",elementSize,newMo->address);
-            result = newMo->getBaseExpr();
-            state.addressSpace.address_mo_info[result]=newMo;
-            //Initialize the mo if there is no record for whether it is controllable.
-            if(state.addressSpace.mo_controllable_info.count(mo)==0){
-              state.addressSpace.mo_controllable_info[mo].first=false;
-              state.addressSpace.mo_controllable_info[mo].second=NULL;
-            }
-            state.addressSpace.mo_controllable_info[newMo].first=false;
-            // We need to check if it is right!
-            state.addressSpace.mo_controllable_info[newMo].second=result;
-            // Record the controllable info of the pointer.
-            state.addressSpace.pointer_of_mo_controllable_info[newMo] = false;
+          if(dyn_cast<ConstantExpr>(result) && !dyn_cast<ConcatExpr>(result) && !elementType->isFunctionTy()){
+            //klee_debug_message("DEBUG: Detect a unintialzied constant pointer.");
+            //unitializedPointerDereferenceReport(target);
+            // MemoryObject *newMo = lazyAlloc(state, size, !mo->isAGlobal(), target,
+            //   alignment);
+            // ObjectState *wos = state.addressSpace.getWriteable(mo, os);
+            // wos->write(mo->getOffsetExpr(address), newMo->getBaseExpr());
+            // klee_debug_message("DEBUG: Alloc a new memory object for it. Alloc size:%lu and address:%lu",elementSize,newMo->address);
+            // result = newMo->getBaseExpr();
+            // state.addressSpace.address_mo_info[result]=newMo;
+            // //Initialize the mo if there is no record for whether it is controllable.
+            // if(state.addressSpace.mo_controllable_info.count(mo)==0){
+            //   state.addressSpace.mo_controllable_info[mo].first=false;
+            //   state.addressSpace.mo_controllable_info[mo].second=NULL;
+            // }
+            // state.addressSpace.mo_controllable_info[newMo].first=false;
+            // // We need to check if it is right!
+            // state.addressSpace.mo_controllable_info[newMo].second=result;
+            // // Record the controllable info of the pointer.
+            // state.addressSpace.pointer_of_mo_controllable_info[newMo] = false;
 
           }else{
             klee_debug_message("DEBUG: dump address and result in execution memory operation");
             address.get()->dump();
             result.get()->dump();
 
+            //Initialize the mo if there is no record for whether it is controllable.
+            if(state.addressSpace.mo_controllable_info.count(mo)==0){
+              state.addressSpace.mo_controllable_info[mo].first=false;
+              state.addressSpace.mo_controllable_info[mo].second=NULL;
+            }
+            // Assign the controllable flag as same as its pointer.
+            bool controllable = state.addressSpace.mo_controllable_info[mo].first;
+
             
             MemoryObject *newMo=NULL;
             if (isDesiredType(elementType)) {
                 klee_debug_message("DEBUG: alloc TCB in executeMemoryOperation!!"); 
                 size_t stackSize=0x1000;
-                newMo=lazyAllocTCBSymbolic(state,(size_t)elementSize,stackSize,false,alignment);
+                newMo=lazyAllocTCBSymbolic(state,(size_t)elementSize,stackSize,false,alignment, controllable);
             }
 
             if(newMo==NULL)
               newMo = lazyAlloc(state, size, !mo->isAGlobal(), target,
-              alignment);
+              alignment, controllable);
 
             // if (os->readOnly) {
             //   terminateStateOnError(state, "memory error: object read only",
@@ -5057,13 +5104,7 @@ void Executor::executeMemoryOperation(
             // }
             //addConstraint(state, EqExpr::create(result, newMo->getBaseExpr()));
             state.addressSpace.address_mo_info[result]=newMo;
-            //Initialize the mo if there is no record for whether it is controllable.
-            if(state.addressSpace.mo_controllable_info.count(mo)==0){
-              state.addressSpace.mo_controllable_info[mo].first=false;
-              state.addressSpace.mo_controllable_info[mo].second=NULL;
-            }
-            // Assign the controllable flag as same as its pointer.
-            bool controllable = state.addressSpace.mo_controllable_info[mo].first;
+
             state.addressSpace.mo_controllable_info[newMo].first=controllable;
             state.addressSpace.mo_controllable_info[newMo].second=state.addressSpace.getOriginalExprFromMo(const_cast<MemoryObject*>(mo));
             // Record the controllable info of the pointer.
@@ -6796,10 +6837,12 @@ void Executor::detectInformationLeak(ExecutionState &state, ref<Expr> &address, 
     return;
   }
 
-  // We assume there is an Informationleak vulnerability if the value is extracted from 
-  // a lazy initialized memory object.
+  // There is an Information leak vulnerability when it satisfy two conditions.
+  // 1. The value is extracted from a lazy initialized memory object && the address points to the user space
+  // 2. The lazy initialized memory object is controllable (the location is determined by the attacker)
 
-  // First check if the value is a concrete value.
+  // If the value is a concrete value, there could be an information leak vulnerability.
+  // However, we cannot handle this case due to the complicated propogation related to that value.
   value.get()->dump();
   if(isa<ConstantExpr>(value)){
     // If it is a concrete value, then check if it is an pointer of an initialized memory object
@@ -6816,16 +6859,50 @@ void Executor::detectInformationLeak(ExecutionState &state, ref<Expr> &address, 
 
   // The value is a symbol, then we check if the symbol is belong to a initialized memory object
   // TODO, Is it complete?
-  std::string moName="";
-  uint64_t offset=0;
-  unsigned width=0; 
-  Expr::Kind k = getExprInfo(value, moName, offset, width);
-  const MemoryObject* mo = state.addressSpace.getMoFromName(moName);
-  if(mo == NULL){
+  // std::string moName="";
+  // uint64_t offset=0;
+  // unsigned width=0;
+  // Expr::Kind k = getExprInfo(value, moName, offset, width);
+  // const MemoryObject* mo = state.addressSpace.getMoFromName(moName);
+  // if(mo == NULL){
+  //   return;
+  // }else{
+  //   std::string report_str = "information leak vulnerability";
+  //   recordReadableLocationToJson(state, mo, offset, width);
+  //   vulnerabilityReport(report_str, target);
+  // }
+  bool value_controllable = false;
+  bool address_test_result = false;
+  uint64_t desired_address_start=ATTACK_CAPABILITY_REGION_START;
+  uint64_t desired_address_end=ATTACK_CAPABILITY_REGION_END;
+  bool success = false;
+
+  std::string value_name = value.get()->dump1();
+  if(value_name.find("lazy_alloc")==std::string::npos){
+      value_controllable=true;
+  }
+  if(value_controllable == false){
     return;
-  }else{
-    std::string report_str = "information leak vulnerability";
-    recordReadableLocationToJson(state, mo, offset, width);
+  }
+  // Check if the pointing address is inside the user space.
+  success = solver->mayBeTrue(
+        state.addressConstraintsForTargetApp,
+        UgeExpr::create(address_test, ConstantExpr::create(desired_address_start, address_test->getWidth())),
+        address_test_result, state.queryMetaData);
+        assert(success && "FIXME: Unhandled solver failure");
+
+  //If so, then we check if address < desired_address_end has a solution
+  if(address_test_result){
+    success = solver->mayBeTrue(
+    state.addressConstraintsForTargetApp,
+    UleExpr::create(address_test,ConstantExpr::create(desired_address_end, address_test->getWidth())),
+    address_test_result, state.queryMetaData);
+  }
+  assert(success && "FIXME: Unhandled solver failure");
+  
+  if(address_test_result){
+    std::string report_str = "Information leak vulnerability";
+    //recordReadableLocationToJson(state, mo, offset, width);
     vulnerabilityReport(report_str, target);
   }
 }
@@ -7394,7 +7471,17 @@ bool Executor::interAnalysis(ExecutionState &state, std::string jsonFlieName1, s
   return result;
 }
 
-
+bool Executor::checkConstraints(ExecutionState &state){
+  ConstraintSet cs;
+  ConstraintManager cm(cs);
+  for (auto &constraint:state.addressConstraintsForTargetApp){
+    std::string constraint_string = constraint.get()->dump1();
+    if (constraint_string.find("lazy_alloc")){
+      return true;
+    }
+  }
+  return false;
+}
 
 
 

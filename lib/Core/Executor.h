@@ -272,14 +272,16 @@ private:
                             ref<Expr> size,
                             bool isLocal,
                             KInstruction *target,
-                            size_t allocationAlignment);
+                            size_t allocationAlignment,
+                            bool controllable);
 
  /// add
   MemoryObject *lazyAllocTCBSymbolic(ExecutionState &state,
                             size_t size,
                             size_t stackSize,
                             bool isLocal,
-                            size_t allocationAlignment);
+                            size_t allocationAlignment,
+                            bool controllable);
 
 /// add 
   bool isDesiredType(llvm::Type  *ty);
@@ -311,6 +313,7 @@ private:
  bool interAnalysis(ExecutionState &state, std::string jsonFlieName1, std::string jsonFlieName2);
  MemoryObjectV2* jsonToMoV2(ExecutionState &state, json j);
  void interAnalysisMain(ExecutionState &state, std::string directoryPath);
+ bool checkConstraints(ExecutionState &state);
   /// Allocate and bind a new object in a particular state. NOTE: This
   /// function may fork.
   ///

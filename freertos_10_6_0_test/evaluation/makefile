@@ -4,7 +4,7 @@ BUILD_DIR             := ./build
 BUILD_EXTRA_DIR       := ./build_extra
 BUILD_DIR_ABS         := $(abspath $(BUILD_DIR))
 
-FREERTOS_DIR_REL      := ../../FreeRTOS-Kernel-10.6.0
+FREERTOS_DIR_REL      := ../../../FreeRTOS-Kernel-10.6.0
 FREERTOS_DIR          := $(abspath $(FREERTOS_DIR_REL))
 
 KERNEL_DIR            := ${FREERTOS_DIR}/
@@ -22,6 +22,7 @@ INCLUDE_DIRS          := -I.
 # INCLUDE_DIRS          += -I${TARGET_DIR}/
 INCLUDE_DIRS          += -I${KLEE_INCLUDE_DIR}
 INCLUDE_DIRS          += -I${KERNEL_DIR}/include
+INCLUDE_DIRS          += -I/home/klee/FreeRTOS-Kernel-10.6.0/symbolic_execution
 INCLUDE_DIRS          += -I${KERNEL_DIR}/portable/ThirdParty/GCC/Posix
 INCLUDE_DIRS          += -I${KERNEL_DIR}/portable/ThirdParty/GCC/Posix/utils
 # INCLUDE_DIRS          += -I/home/master/Downloads/FreeRTOSv202212.01/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure/portmacrocommon.h
